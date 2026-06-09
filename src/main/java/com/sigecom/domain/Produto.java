@@ -1,10 +1,17 @@
 package com.sigecom.domain;
 
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "produto")
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Produto {
 
     @Id
@@ -24,29 +31,15 @@ public class Produto {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal preco;
 
+    @Builder.Default
     @Column(name = "qtd_estoque", nullable = false)
     private Integer qtdEstoque = 0;
 
+    @Builder.Default
     @Column(name = "estoque_minimo", nullable = false)
     private Integer estoqueMinimo = 0;
 
+    @Builder.Default
     @Column(nullable = false)
     private boolean ativo = true;
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public CategoriaProduto getCategoria() { return categoria; }
-    public void setCategoria(CategoriaProduto categoria) { this.categoria = categoria; }
-    public String getNome() { return nome; }
-    public void setNome(String nome) { this.nome = nome; }
-    public String getDescricao() { return descricao; }
-    public void setDescricao(String descricao) { this.descricao = descricao; }
-    public BigDecimal getPreco() { return preco; }
-    public void setPreco(BigDecimal preco) { this.preco = preco; }
-    public Integer getQtdEstoque() { return qtdEstoque; }
-    public void setQtdEstoque(Integer qtdEstoque) { this.qtdEstoque = qtdEstoque; }
-    public Integer getEstoqueMinimo() { return estoqueMinimo; }
-    public void setEstoqueMinimo(Integer estoqueMinimo) { this.estoqueMinimo = estoqueMinimo; }
-    public boolean isAtivo() { return ativo; }
-    public void setAtivo(boolean ativo) { this.ativo = ativo; }
 }
