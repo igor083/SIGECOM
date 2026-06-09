@@ -3,11 +3,18 @@ package com.sigecom.domain;
 import com.sigecom.domain.enums.DescricaoLancamento;
 import com.sigecom.domain.enums.TipoLancamento;
 import jakarta.persistence.*;
+import lombok.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "lancamento_financeiro")
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class LancamentoFinanceiro {
 
     @Id
@@ -26,7 +33,6 @@ public class LancamentoFinanceiro {
     @Column(nullable = false)
     private TipoLancamento tipo;
 
-    // Descrição como enum (motivo pré-definido do lançamento)
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private DescricaoLancamento descricao;
@@ -34,26 +40,7 @@ public class LancamentoFinanceiro {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal valor;
 
+    @Builder.Default
     @Column(name = "data_hora", nullable = false, updatable = false)
-    private LocalDateTime dataHora;
-
-    @PrePersist
-    public void prePersist() {
-        this.dataHora = LocalDateTime.now();
-    }
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public Usuario getUsuario() { return usuario; }
-    public void setUsuario(Usuario usuario) { this.usuario = usuario; }
-    public CategoriaFinanceira getCategoria() { return categoria; }
-    public void setCategoria(CategoriaFinanceira categoria) { this.categoria = categoria; }
-    public TipoLancamento getTipo() { return tipo; }
-    public void setTipo(TipoLancamento tipo) { this.tipo = tipo; }
-    public DescricaoLancamento getDescricao() { return descricao; }
-    public void setDescricao(DescricaoLancamento descricao) { this.descricao = descricao; }
-    public BigDecimal getValor() { return valor; }
-    public void setValor(BigDecimal valor) { this.valor = valor; }
-    public LocalDateTime getDataHora() { return dataHora; }
-    public void setDataHora(LocalDateTime dataHora) { this.dataHora = dataHora; }
+    private LocalDateTime dataHora= LocalDateTime.now();
 }
