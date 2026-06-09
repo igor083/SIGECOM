@@ -1,4 +1,4 @@
-package com.sigecom.model.response;
+package com.sigecom.model.response.auth;
 
 import com.sigecom.domain.enums.TipoUsuario;
 import lombok.Builder;

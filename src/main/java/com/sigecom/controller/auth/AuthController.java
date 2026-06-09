@@ -1,9 +1,9 @@
 package com.sigecom.controller.auth;
 
-import com.sigecom.model.request.CadastroRequest;
-import com.sigecom.model.request.LoginRequest;
-import com.sigecom.model.response.LoginResponse;
-import com.sigecom.model.response.UsuarioResponse;
+import com.sigecom.model.request.auth.CadastroRequest;
+import com.sigecom.model.request.auth.LoginRequest;
+import com.sigecom.model.response.auth.LoginResponse;
+import com.sigecom.model.response.auth.UsuarioResponse;
 import com.sigecom.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

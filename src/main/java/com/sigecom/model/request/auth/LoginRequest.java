@@ -1,4 +1,4 @@
-package com.sigecom.model.request;
+package com.sigecom.model.request.auth;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

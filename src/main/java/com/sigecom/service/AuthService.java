@@ -1,10 +1,10 @@
 package com.sigecom.service;
 
 import com.sigecom.domain.Usuario;
-import com.sigecom.model.request.CadastroRequest;
-import com.sigecom.model.request.LoginRequest;
-import com.sigecom.model.response.LoginResponse;
-import com.sigecom.model.response.UsuarioResponse;
+import com.sigecom.model.request.auth.CadastroRequest;
+import com.sigecom.model.request.auth.LoginRequest;
+import com.sigecom.model.response.auth.LoginResponse;
+import com.sigecom.model.response.auth.UsuarioResponse;
 import com.sigecom.repository.UsuarioRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,11 +46,12 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "E-mail já cadastrado");
         }
 
-        Usuario usuario = new Usuario();
-        usuario.setNome(request.nome());
-        usuario.setEmail(request.email());
-        usuario.setSenhaHash(passwordEncoder.encode(request.senha()));
-        usuario.setPerfil(request.perfil());
+        Usuario usuario = Usuario.builder()
+                .nome(request.nome())
+                .email(request.email())
+                .senhaHash(passwordEncoder.encode(request.senha()))
+                .perfil(request.perfil())
+                .build();
 
         Usuario salvo = usuarioRepository.save(usuario);
         log.info("Novo usuário cadastrado: {}", salvo.getEmail());

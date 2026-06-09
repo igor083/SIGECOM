@@ -1,4 +1,4 @@
-package com.sigecom.model.request;
+package com.sigecom.model.request.auth;
 
 import com.sigecom.domain.enums.TipoUsuario;
 import jakarta.validation.constraints.Email;
