@@ -8,6 +8,7 @@ import com.sigecom.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -28,6 +29,7 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/cadastro")
     public ResponseEntity<UsuarioResponse> cadastro(@Valid @RequestBody CadastroRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.cadastro(request));

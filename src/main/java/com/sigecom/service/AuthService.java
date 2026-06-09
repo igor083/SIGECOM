@@ -8,7 +8,6 @@ import com.sigecom.model.response.UsuarioResponse;
 import com.sigecom.repository.UsuarioRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,18 +17,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Slf4j
 @Service
-
 @AllArgsConstructor
 public class AuthService {
 
-    @Autowired
     private final AuthenticationManager authenticationManager;
-
     private final UsuarioRepository usuarioRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
-
-
 
     public LoginResponse login(LoginRequest request) {
         authenticationManager.authenticate(
@@ -58,16 +52,16 @@ public class AuthService {
         usuario.setSenhaHash(passwordEncoder.encode(request.senha()));
         usuario.setPerfil(request.perfil());
 
-        usuarioRepository.save(usuario);
-        log.info("Novo usuário cadastrado: {}", usuario.getEmail());
+        Usuario salvo = usuarioRepository.save(usuario);
+        log.info("Novo usuário cadastrado: {}", salvo.getEmail());
 
         return UsuarioResponse.builder()
-                .id(usuario.getId())
-                .nome(usuario.getNome())
-                .email(usuario.getEmail())
-                .perfil(usuario.getPerfil())
-                .ativo(usuario.isAtivo())
-                .criadoEm(usuario.getCriadoEm())
+                .id(salvo.getId())
+                .nome(salvo.getNome())
+                .email(salvo.getEmail())
+                .perfil(salvo.getPerfil())
+                .ativo(salvo.isAtivo())
+                .criadoEm(salvo.getCriadoEm())
                 .build();
     }
 }

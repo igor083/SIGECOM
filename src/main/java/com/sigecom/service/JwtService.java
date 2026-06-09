@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
@@ -12,6 +13,7 @@ import javax.crypto.SecretKey;
 import java.util.Date;
 
 @Component
+@Getter
 public class JwtService {
 
     @Value("${jwt.secret}")
@@ -39,10 +41,6 @@ public class JwtService {
     public boolean isTokenValid(String token, UserDetails userDetails) {
         String email = extractEmail(token);
         return email.equals(userDetails.getUsername()) && !isExpired(token);
-    }
-
-    public long getExpirationMs() {
-        return expirationMs;
     }
 
     private boolean isExpired(String token) {
