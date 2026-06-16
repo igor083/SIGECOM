@@ -50,26 +50,8 @@ export default function LoginPage() {
   return (
     <div className={styles.wrapper}>
       <div className={styles.card}>
-        <div className={styles.brand}>
-          <svg
-            className={styles.brandIcon}
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-            <polyline points="9 22 9 12 15 12 15 22" />
-          </svg>
-          <span className={styles.brandName}>SIGECOM</span>
-        </div>
-
-        <h1 className={styles.title}>Entrar</h1>
-        <p className={styles.subtitle}>Acesse sua conta para continuar</p>
+        <h1 className={styles.title} style={{ color: '#2d3a8c', fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.02em' }}>SIGECOM</h1>
+        <p className={styles.subtitle}>Bem-vindo</p>
 
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           {erro && (
@@ -121,9 +103,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className={styles.footer}>
-          <Link href="/">Voltar para o início</Link>
-        </p>
+      
       </div>
     </div>
   );
