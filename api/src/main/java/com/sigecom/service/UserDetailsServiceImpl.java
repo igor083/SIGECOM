@@ -1,6 +1,7 @@
 package com.sigecom.service;
 
 import com.sigecom.domain.Usuario;
+import com.sigecom.model.response.auth.UsuarioResponse;
 import com.sigecom.repository.UsuarioRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -22,8 +23,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + email));
+        Usuario usuario = buscarUsuario(email);
 
         return new User(
                 usuario.getEmail(),
@@ -34,5 +34,22 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 true,
                 List.of(new SimpleGrantedAuthority("ROLE_" + usuario.getPerfil().name()))
         );
+    }
+
+    public UsuarioResponse buscarPorEmail(String email) {
+        Usuario usuario = buscarUsuario(email);
+        return UsuarioResponse.builder()
+                .id(usuario.getId())
+                .nome(usuario.getNome())
+                .email(usuario.getEmail())
+                .perfil(usuario.getPerfil())
+                .ativo(usuario.isAtivo())
+                .criadoEm(usuario.getCriadoEm())
+                .build();
+    }
+
+    private Usuario buscarUsuario(String email) {
+        return usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + email));
     }
 }
