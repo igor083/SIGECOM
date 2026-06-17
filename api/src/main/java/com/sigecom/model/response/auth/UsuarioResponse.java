@@ -13,7 +13,9 @@ public record UsuarioResponse(
         String email,
         TipoUsuario perfil,
         boolean ativo,
-        LocalDateTime criadoEm
+        LocalDateTime criadoEm,
+        boolean senhaTemporaria
+
 ) {
 
     public static UsuarioResponse toResponse(Usuario usuario) {
@@ -24,6 +26,8 @@ public record UsuarioResponse(
                 .perfil(usuario.getPerfil())
                 .ativo(usuario.isAtivo())
                 .criadoEm(usuario.getCriadoEm())
+                .senhaTemporaria(usuario.isSenhaTemporaria())
+
                 .build();
     }
 }

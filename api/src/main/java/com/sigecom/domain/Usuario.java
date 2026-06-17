@@ -37,7 +37,7 @@ public class Usuario {
     private boolean ativo = true;
 
     @Builder.Default
-    @Column(name = "senha_temporaria", nullable = false)
+    @Column(name = "senha_temporaria", nullable = false, columnDefinition = "BOOLEAN NOT NULL DEFAULT FALSE")
     private boolean senhaTemporaria = false;
 
     @Builder.Default
