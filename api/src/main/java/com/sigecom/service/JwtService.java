@@ -21,12 +21,13 @@ public class JwtService {
     @Value("${jwt.expiration-ms}")
     private long expirationMs;
 
-    public String generateToken(Long userId, String email, String role) {
+    public String generateToken(Long userId, String email, String role, boolean pwdResetRequired) {
         Date now = new Date();
         return Jwts.builder()
                 .subject(email)
                 .claim("user_id", userId)
                 .claim("role", role)
+                .claim("pwd_reset_required", pwdResetRequired)
                 .issuedAt(now)
                 .expiration(new Date(now.getTime() + expirationMs))
                 .signWith(signingKey())
@@ -39,6 +40,11 @@ public class JwtService {
 
     public String extractRole(String token) {
         return parseClaims(token).get("role", String.class);
+    }
+
+    public boolean extractPwdResetRequired(String token) {
+        Boolean value = parseClaims(token).get("pwd_reset_required", Boolean.class);
+        return value != null && value;
     }
 
     private Claims parseClaims(String token) {

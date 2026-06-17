@@ -5,5 +5,6 @@ import lombok.Builder;
 @Builder
 public record LoginResponse(
         String token,
-        long expiresIn
+        long expiresIn,
+        boolean senhaTemporaria
 ) {}

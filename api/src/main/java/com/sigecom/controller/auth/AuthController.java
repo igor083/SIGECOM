@@ -4,6 +4,8 @@ import com.sigecom.domain.enums.TipoUsuario;
 import com.sigecom.model.request.auth.CadastroRequest;
 import com.sigecom.model.request.auth.EditUserRequest;
 import com.sigecom.model.request.auth.LoginRequest;
+import com.sigecom.model.request.auth.ResetSenhaRequest;
+import com.sigecom.model.request.auth.TrocarSenhaRequest;
 import com.sigecom.model.response.auth.LoginResponse;
 import com.sigecom.model.response.auth.UsuarioResponse;
 import com.sigecom.service.AuthService;
@@ -15,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -69,6 +72,20 @@ public class AuthController {
     @DeleteMapping("/usuarios/{id}")
     public ResponseEntity<Void> remover(@PathVariable Long id) {
         authService.remover(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/me/senha")
+    public ResponseEntity<LoginResponse> trocarMinhaSenha(Authentication authentication,
+                                                         @Valid @RequestBody TrocarSenhaRequest request) {
+        return ResponseEntity.ok(authService.trocarMinhaSenha(authentication.getName(), request));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PatchMapping("/usuarios/{id}/senha")
+    public ResponseEntity<Void> resetarSenhaFuncionario(@PathVariable Long id,
+                                                       @Valid @RequestBody ResetSenhaRequest request) {
+        authService.resetarSenhaFuncionario(id, request);
         return ResponseEntity.noContent().build();
     }
 }
