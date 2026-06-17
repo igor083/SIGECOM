@@ -1,5 +1,6 @@
 package com.sigecom.controller.auth;
 
+import com.sigecom.domain.enums.TipoUsuario;
 import com.sigecom.model.request.auth.CadastroRequest;
 import com.sigecom.model.request.auth.EditUserRequest;
 import com.sigecom.model.request.auth.LoginRequest;
@@ -20,6 +21,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/auth")
@@ -47,6 +50,12 @@ public class AuthController {
     @PostMapping("/cadastro")
     public ResponseEntity<UsuarioResponse> cadastro(@Valid @RequestBody CadastroRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.cadastro(request));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/usuarios/funcionarios")
+    public ResponseEntity<List<UsuarioResponse>> listarFuncionarios() {
+        return ResponseEntity.ok(userDetailsService.listarPorPerfil(TipoUsuario.FUNCIONARIO));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

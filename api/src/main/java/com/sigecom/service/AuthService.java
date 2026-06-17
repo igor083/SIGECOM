@@ -17,6 +17,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import static com.sigecom.model.response.auth.UsuarioResponse.toResponse;
+
 @Slf4j
 @Service
 @AllArgsConstructor
@@ -105,16 +107,5 @@ public class AuthService {
 
         usuarioRepository.delete(usuario);
         log.info("Usuário removido: {}", usuario.getEmail());
-    }
-
-    private UsuarioResponse toResponse(Usuario usuario) {
-        return UsuarioResponse.builder()
-                .id(usuario.getId())
-                .nome(usuario.getNome())
-                .email(usuario.getEmail())
-                .perfil(usuario.getPerfil())
-                .ativo(usuario.isAtivo())
-                .criadoEm(usuario.getCriadoEm())
-                .build();
     }
 }
