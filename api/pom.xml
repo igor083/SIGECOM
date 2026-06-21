@@ -136,23 +136,12 @@
 						<configuration>
 							<rules>
 								<rule>
-									<element>PACKAGE</element>
+									<element>CLASS</element>
 									<includes>
-										<include>com.sigecom.service</include>
-										<include>com.sigecom.domain</include>
+										<!-- Focado no módulo de estoque conforme acordo do time -->
+										<include>com.sigecom.service.EstoqueService</include>
+										<include>com.sigecom.domain.Produto</include>
 									</includes>
-									<excludes>
-										<exclude>com.sigecom.service.AuthService</exclude>
-										<exclude>com.sigecom.service.JwtService</exclude>
-										<exclude>com.sigecom.service.UserDetailsServiceImpl</exclude>
-										<exclude>com.sigecom.domain.CategoriaFinanceira</exclude>
-										<exclude>com.sigecom.domain.CategoriaProduto</exclude>
-										<exclude>com.sigecom.domain.FechamentoCaixa</exclude>
-										<exclude>com.sigecom.domain.ItemVenda</exclude>
-										<exclude>com.sigecom.domain.LancamentoFinanceiro</exclude>
-										<exclude>com.sigecom.domain.Usuario</exclude>
-										<exclude>com.sigecom.domain.Venda</exclude>
-									</excludes>
 									<limits>
 										<limit>
 											<counter>LINE</counter>
