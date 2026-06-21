@@ -16,6 +16,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProdutos } from "@/hooks/useProdutos";
 import { mensagemDeErro } from "@/lib/apiError";
 import type { Produto } from "@/services/produtos";
+import { obterParametrosFinanceiros } from "@/services/parametrosFinanceiros";
+import { precoSugerido, calcularMarkup, type ParametrosFinanceiros } from "@/lib/markup";
 import styles from "./produtos.module.css";
 
 // Formata preço para o padrão brasileiro
@@ -67,6 +69,11 @@ export default function GestaoProdutosPage() {
   const [modalErro, setModalErro] = useState<string | null>(null);
   const [modalSucesso, setModalSucesso] = useState<string | null>(null);
 
+  // Estados locais para sugestão de preço baseada em Markup
+  const [formCmv, setFormCmv] = useState("");
+  const [financeParams, setFinanceParams] = useState<ParametrosFinanceiros | null>(null);
+  const [mostrarComposicao, setMostrarComposicao] = useState(false);
+
   // Guarda de rota (D-2): apenas ADMIN acessa.
   useEffect(() => {
     if (authLoading) return;
@@ -85,6 +92,12 @@ export default function GestaoProdutosPage() {
     setFormCategoriaId(prod.categoria.id.toString());
     setModalErro(null);
     setModalSucesso(null);
+    
+    // Configura markup e CMV
+    setFinanceParams(obterParametrosFinanceiros());
+    setFormCmv("");
+    setMostrarComposicao(false);
+
     setModalAberto("editar");
   };
 
@@ -114,6 +127,12 @@ export default function GestaoProdutosPage() {
     setFormCategoriaId(categorias[0]?.id.toString() || "");
     setModalErro(null);
     setModalSucesso(null);
+
+    // Configura markup e CMV
+    setFinanceParams(obterParametrosFinanceiros());
+    setFormCmv("");
+    setMostrarComposicao(false);
+
     setModalAberto("criar");
   };
 
@@ -541,7 +560,88 @@ export default function GestaoProdutosPage() {
 
                   <div className={styles.row}>
                     <div className={styles.formGroup}>
-                      <label htmlFor="create-preco">Preço (R$) *</label>
+                      <label htmlFor="create-cmv">Custo (CMV) (R$)</label>
+                      <input
+                        id="create-cmv"
+                        className={styles.formInput}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0,00"
+                        value={formCmv}
+                        onChange={(e) => setFormCmv(e.target.value)}
+                        disabled={mutating}
+                      />
+                    </div>
+
+                    <div className={styles.formGroup} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingBottom: '4px' }}>
+                      {financeParams && parseFloat(formCmv) > 0 && (
+                        <div style={{ fontSize: "0.8rem", color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <span>Sugerido: <strong>R$ {precoSugerido(parseFloat(formCmv), financeParams).toFixed(2)}</strong></span>
+                          <button
+                            type="button"
+                            style={{
+                              backgroundColor: "var(--color-primary-50)",
+                              color: "var(--color-primary)",
+                              border: "1px solid var(--color-primary-light)",
+                              borderRadius: "4px",
+                              padding: "2px 6px",
+                              cursor: "pointer",
+                              fontSize: "0.75rem",
+                              fontWeight: "bold"
+                            }}
+                            onClick={() => setFormPreco(precoSugerido(parseFloat(formCmv), financeParams).toFixed(2))}
+                          >
+                            Aplicar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {financeParams && parseFloat(formCmv) > 0 && (
+                    <div style={{ marginBottom: "1rem" }}>
+                      <button
+                        type="button"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "var(--color-primary)",
+                          textDecoration: "underline",
+                          cursor: "pointer",
+                          fontSize: "0.75rem",
+                          padding: 0
+                        }}
+                        onClick={() => setMostrarComposicao(!mostrarComposicao)}
+                      >
+                        {mostrarComposicao ? "Ocultar composição" : "Ver composição do preço"}
+                      </button>
+                      {mostrarComposicao && (
+                        <div style={{
+                          marginTop: "0.5rem",
+                          padding: "0.75rem",
+                          backgroundColor: "var(--color-bg)",
+                          border: "1px solid var(--color-border)",
+                          borderRadius: "var(--radius-sm)",
+                          fontSize: "0.75rem",
+                          color: "var(--color-text-secondary)",
+                          lineHeight: "1.4"
+                        }}>
+                          <div>• Custo (CMV): R$ {parseFloat(formCmv).toFixed(2)}</div>
+                          <div>• Markup aplicado: {calcularMarkup(financeParams).toFixed(3)}</div>
+                          <div>• Custos Fixos: {financeParams.custosFixosPercent}% (R$ {(precoSugerido(parseFloat(formCmv), financeParams) * financeParams.custosFixosPercent / 100).toFixed(2)})</div>
+                          <div>• Impostos: {financeParams.impostosPercent}% (R$ {(precoSugerido(parseFloat(formCmv), financeParams) * financeParams.impostosPercent / 100).toFixed(2)})</div>
+                          <div>• Comissão: {financeParams.comissaoPercent}% (R$ {(precoSugerido(parseFloat(formCmv), financeParams) * financeParams.comissaoPercent / 100).toFixed(2)})</div>
+                          <div>• Tx. Maquininha: {financeParams.taxaMaquininhaPercent}% (R$ {(precoSugerido(parseFloat(formCmv), financeParams) * financeParams.taxaMaquininhaPercent / 100).toFixed(2)})</div>
+                          <div>• Lucro Desejado: {financeParams.lucroDesejadoPercent}% (R$ {(precoSugerido(parseFloat(formCmv), financeParams) * financeParams.lucroDesejadoPercent / 100).toFixed(2)})</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className={styles.row}>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="create-preco">Preço de Venda (R$) *</label>
                       <input
                         id="create-preco"
                         className={styles.formInput}
@@ -660,7 +760,88 @@ export default function GestaoProdutosPage() {
 
                   <div className={styles.row}>
                     <div className={styles.formGroup}>
-                      <label htmlFor="edit-preco">Preço (R$) *</label>
+                      <label htmlFor="edit-cmv">Custo (CMV) (R$)</label>
+                      <input
+                        id="edit-cmv"
+                        className={styles.formInput}
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="0,00"
+                        value={formCmv}
+                        onChange={(e) => setFormCmv(e.target.value)}
+                        disabled={mutating}
+                      />
+                    </div>
+
+                    <div className={styles.formGroup} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingBottom: '4px' }}>
+                      {financeParams && parseFloat(formCmv) > 0 && (
+                        <div style={{ fontSize: "0.8rem", color: 'var(--color-text-secondary)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <span>Sugerido: <strong>R$ {precoSugerido(parseFloat(formCmv), financeParams).toFixed(2)}</strong></span>
+                          <button
+                            type="button"
+                            style={{
+                              backgroundColor: "var(--color-primary-50)",
+                              color: "var(--color-primary)",
+                              border: "1px solid var(--color-primary-light)",
+                              borderRadius: "4px",
+                              padding: "2px 6px",
+                              cursor: "pointer",
+                              fontSize: "0.75rem",
+                              fontWeight: "bold"
+                            }}
+                            onClick={() => setFormPreco(precoSugerido(parseFloat(formCmv), financeParams).toFixed(2))}
+                          >
+                            Aplicar
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {financeParams && parseFloat(formCmv) > 0 && (
+                    <div style={{ marginBottom: "1rem" }}>
+                      <button
+                        type="button"
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "var(--color-primary)",
+                          textDecoration: "underline",
+                          cursor: "pointer",
+                          fontSize: "0.75rem",
+                          padding: 0
+                        }}
+                        onClick={() => setMostrarComposicao(!mostrarComposicao)}
+                      >
+                        {mostrarComposicao ? "Ocultar composição" : "Ver composição do preço"}
+                      </button>
+                      {mostrarComposicao && (
+                        <div style={{
+                          marginTop: "0.5rem",
+                          padding: "0.75rem",
+                          backgroundColor: "var(--color-bg)",
+                          border: "1px solid var(--color-border)",
+                          borderRadius: "var(--radius-sm)",
+                          fontSize: "0.75rem",
+                          color: "var(--color-text-secondary)",
+                          lineHeight: "1.4"
+                        }}>
+                          <div>• Custo (CMV): R$ {parseFloat(formCmv).toFixed(2)}</div>
+                          <div>• Markup aplicado: {calcularMarkup(financeParams).toFixed(3)}</div>
+                          <div>• Custos Fixos: {financeParams.custosFixosPercent}% (R$ {(precoSugerido(parseFloat(formCmv), financeParams) * financeParams.custosFixosPercent / 100).toFixed(2)})</div>
+                          <div>• Impostos: {financeParams.impostosPercent}% (R$ {(precoSugerido(parseFloat(formCmv), financeParams) * financeParams.impostosPercent / 100).toFixed(2)})</div>
+                          <div>• Comissão: {financeParams.comissaoPercent}% (R$ {(precoSugerido(parseFloat(formCmv), financeParams) * financeParams.comissaoPercent / 100).toFixed(2)})</div>
+                          <div>• Tx. Maquininha: {financeParams.taxaMaquininhaPercent}% (R$ {(precoSugerido(parseFloat(formCmv), financeParams) * financeParams.taxaMaquininhaPercent / 100).toFixed(2)})</div>
+                          <div>• Lucro Desejado: {financeParams.lucroDesejadoPercent}% (R$ {(precoSugerido(parseFloat(formCmv), financeParams) * financeParams.lucroDesejadoPercent / 100).toFixed(2)})</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className={styles.row}>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="edit-preco">Preço de Venda (R$) *</label>
                       <input
                         id="edit-preco"
                         className={styles.formInput}
