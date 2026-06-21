@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Component
@@ -24,6 +25,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private static final String AUTH_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String ROLE_PREFIX = "ROLE_";
+    public static final String PWD_RESET_AUTHORITY = "PWD_RESET_REQUIRED";
 
     private final JwtService jwtService;
     private final GlobalExceptionHandler exceptionHandler;
@@ -68,8 +70,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private void autenticarComToken(String token, HttpServletRequest request) {
         String email = jwtService.extractEmail(token);
         String role = jwtService.extractRole(token);
+        boolean pwdResetRequired = jwtService.extractPwdResetRequired(token);
 
-        var authorities = List.of(new SimpleGrantedAuthority(ROLE_PREFIX + role));
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(ROLE_PREFIX + role));
+        if (pwdResetRequired) {
+            authorities.add(new SimpleGrantedAuthority(PWD_RESET_AUTHORITY));
+        }
+
         var auth = new UsernamePasswordAuthenticationToken(email, null, authorities);
         auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 

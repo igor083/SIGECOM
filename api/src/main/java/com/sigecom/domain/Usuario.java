@@ -37,6 +37,10 @@ public class Usuario {
     private boolean ativo = true;
 
     @Builder.Default
+    @Column(name = "senha_temporaria", nullable = false, columnDefinition = "BOOLEAN NOT NULL DEFAULT FALSE")
+    private boolean senhaTemporaria = false;
+
+    @Builder.Default
     @Column(name = "criado_em", nullable = false, updatable = false)
     private LocalDateTime criadoEm = LocalDateTime.now();
 

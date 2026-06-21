@@ -22,10 +22,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
+    private final PwdResetRequiredFilter pwdResetRequiredFilter;
     private final GlobalExceptionHandler exceptionHandler;
 
-    public SecurityConfig(JwtAuthFilter jwtAuthFilter, GlobalExceptionHandler exceptionHandler) {
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter,
+                          PwdResetRequiredFilter pwdResetRequiredFilter,
+                          GlobalExceptionHandler exceptionHandler) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.pwdResetRequiredFilter = pwdResetRequiredFilter;
         this.exceptionHandler = exceptionHandler;
     }
 
@@ -44,7 +48,8 @@ public class SecurityConfig {
                         .authenticationEntryPoint(exceptionHandler)
                         .accessDeniedHandler(exceptionHandler)
                 )
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(pwdResetRequiredFilter, JwtAuthFilter.class);
 
         return http.build();
     }
