@@ -138,8 +138,9 @@
 								<rule>
 									<element>CLASS</element>
 									<includes>
-										<!-- Focado no módulo de estoque conforme acordo do time -->
+										<!-- Focado no módulo de estoque e auth conforme acordo do time -->
 										<include>com.sigecom.service.EstoqueService</include>
+										<include>com.sigecom.service.AuthService</include>
 										<include>com.sigecom.domain.Produto</include>
 									</includes>
 									<limits>
