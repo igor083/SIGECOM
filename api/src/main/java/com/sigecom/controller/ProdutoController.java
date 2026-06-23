@@ -2,19 +2,37 @@ package com.sigecom.controller;
 
 import com.sigecom.domain.Produto;
 import com.sigecom.model.request.produto.AjustarEstoqueRequest;
+import com.sigecom.model.request.produto.CadastroProdutoRequest;
+import com.sigecom.model.response.produto.ProdutoResponse;
 import com.sigecom.service.EstoqueService;
+import com.sigecom.service.ProdutoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/produtos")
 @RequiredArgsConstructor
 public class ProdutoController {
 
+    private final ProdutoService produtoService;
     private final EstoqueService estoqueService;
+
+    @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ProdutoResponse> cadastrar(@Valid @RequestBody CadastroProdutoRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(produtoService.cadastrar(request));
+    }
+
+    @GetMapping
+    public ResponseEntity<List<ProdutoResponse>> listar() {
+        return ResponseEntity.ok(produtoService.listar());
+    }
 
     /**
      * Ajusta a quantidade em estoque de um produto específico.
