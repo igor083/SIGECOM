@@ -3,6 +3,7 @@ package com.sigecom.controller;
 import com.sigecom.domain.Produto;
 import com.sigecom.model.request.produto.AjustarEstoqueRequest;
 import com.sigecom.model.request.produto.CadastroProdutoRequest;
+import com.sigecom.model.request.produto.EditarProdutoRequest;
 import com.sigecom.model.response.produto.ProdutoResponse;
 import com.sigecom.service.EstoqueService;
 import com.sigecom.service.ProdutoService;
@@ -24,7 +25,7 @@ public class ProdutoController {
     private final EstoqueService estoqueService;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    //@PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProdutoResponse> cadastrar(@Valid @RequestBody CadastroProdutoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(produtoService.cadastrar(request));
     }
@@ -45,5 +46,26 @@ public class ProdutoController {
             @Valid @RequestBody AjustarEstoqueRequest request) {
         Produto produto = estoqueService.ajustarEstoque(id, request.quantidade());
         return ResponseEntity.ok(produto);
+    }
+    
+    
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')") // D-2
+    public ResponseEntity<ProdutoResponse> editar(
+            @PathVariable Long id,
+            @Valid @RequestBody EditarProdutoRequest request) {
+        return ResponseEntity.ok(produtoService.editar(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')") // D-2
+    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        produtoService.excluir(id);
+        return ResponseEntity.noContent().build();
+    }
+    
+    @GetMapping("/estoque-baixo")
+    public ResponseEntity<List<ProdutoResponse>> listarEstoqueBaixo() {
+        return ResponseEntity.ok(produtoService.listarEstoqueBaixo());
     }
 }
