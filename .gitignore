@@ -1,1 +1,5 @@
 .claude/
+/.metadata/
+
+api/src/main/resources/application-local.properties
+api/.settings/

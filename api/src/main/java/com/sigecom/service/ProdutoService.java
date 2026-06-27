@@ -3,6 +3,7 @@ package com.sigecom.service;
 import com.sigecom.domain.CategoriaProduto;
 import com.sigecom.domain.Produto;
 import com.sigecom.model.request.produto.CadastroProdutoRequest;
+import com.sigecom.model.request.produto.EditarProdutoRequest;
 import com.sigecom.model.response.produto.ProdutoResponse;
 import com.sigecom.repository.CategoriaProdutoRepository;
 import com.sigecom.repository.ProdutoRepository;
@@ -10,6 +11,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -50,4 +52,51 @@ public class ProdutoService {
                 .map(ProdutoResponse::toResponse)
                 .toList();
     }
+    
+    
+    @Transactional
+    public ProdutoResponse editar(Long id, EditarProdutoRequest request) {
+    		Produto produto = produtoRepository.findById(id)
+    				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado"));
+    		
+    		CategoriaProduto categoria = categoriaProdutoRepository.findById(request.categoriaId())
+    	            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada"));
+    		
+    		produto.setNome(request.nome().trim());
+    	    produto.setDescricao(request.descricao());
+    	    produto.setPreco(request.preco());
+    	    produto.setCategoria(categoria);
+    	    produto.setEstoqueMinimo(request.estoqueMinimo());
+
+    	    Produto salvo = produtoRepository.save(produto);
+    	    log.info("Produto editado: id={}, nome={}", salvo.getId(), salvo.getNome());
+
+    	    return toResponse(salvo);
+    	}
+    
+    @Transactional
+    public void excluir(Long id) {
+    		Produto produto = produtoRepository.findById(id)
+    				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Produto não encontrado"));
+
+    		// D-7: não excluir produto com movimentação de estoque ativa
+    		if (produto.getQtdEstoque() > 0) {
+    			throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+    					"Não é possível excluir produto com estoque ativo");
+    		}
+
+    		produto.setAtivo(false);
+    		produtoRepository.save(produto);
+    		log.info("Produto desativado (soft delete): id={}", id);
+    	}
+    
+
+	@Transactional	
+    public List<ProdutoResponse> listarEstoqueBaixo() {
+    		return produtoRepository.findProdutosComEstoqueBaixo().stream()
+    				.map(ProdutoResponse::toResponse)
+    				.toList();
+    	}
+    
+    
 }
