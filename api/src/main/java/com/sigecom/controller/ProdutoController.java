@@ -9,6 +9,8 @@ import com.sigecom.service.EstoqueService;
 import com.sigecom.service.ProdutoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,8 +33,17 @@ public class ProdutoController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProdutoResponse>> listar() {
-        return ResponseEntity.ok(produtoService.listar());
+    public ResponseEntity<Page<ProdutoResponse>> listar(
+            @RequestParam(required = false) String nome,
+            @RequestParam(required = false) Long categoriaId,
+            Pageable pageable) {
+        return ResponseEntity.ok(produtoService.listar(nome, categoriaId, pageable));
+    }
+
+    @GetMapping("/por-tipo/{categoriaId}")
+    public ResponseEntity<Page<ProdutoResponse>> listarPorTipo(
+            @PathVariable Long categoriaId, Pageable pageable) {
+        return ResponseEntity.ok(produtoService.listarPorTipo(categoriaId, pageable));
     }
 
     /**
@@ -65,7 +76,7 @@ public class ProdutoController {
     }
     
     @GetMapping("/estoque-baixo")
-    public ResponseEntity<List<ProdutoResponse>> listarEstoqueBaixo() {
-        return ResponseEntity.ok(produtoService.listarEstoqueBaixo());
+    public ResponseEntity<Page<ProdutoResponse>> listarEstoqueBaixo(Pageable pageable) {
+        return ResponseEntity.ok(produtoService.listarEstoqueBaixo(pageable));
     }
 }

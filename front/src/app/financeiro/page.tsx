@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
 import EmConstrucao from "@/components/EmConstrucao";
-import styles from "../dashboard.module.css";
 
-export default function DashboardAdminPage() {
+export default function FinanceiroPage() {
   const router = useRouter();
   const { user, loading, isAuthenticated } = useAuth();
 
@@ -17,19 +16,13 @@ export default function DashboardAdminPage() {
     }
   }, [loading, isAuthenticated, user, router]);
 
-  if (loading || !user || user.perfil !== "ADMIN") {
-    return (
-      <div className={styles.loadingWrapper}>
-        <p>Carregando...</p>
-      </div>
-    );
-  }
+  if (loading || !isAuthenticated) return null;
 
   return (
-    <AppShell title="Painel Administrativo">
+    <AppShell title="Financeiro">
       <EmConstrucao
-        titulo="Dashboard em desenvolvimento"
-        descricao="Os gráficos e indicadores serão exibidos aqui quando os módulos de PDV e financeiro estiverem integrados à API."
+        titulo="Módulo Financeiro em desenvolvimento"
+        descricao="Controle de receitas, despesas e fluxo de caixa estarão disponíveis aqui em breve."
       />
     </AppShell>
   );

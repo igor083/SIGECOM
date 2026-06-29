@@ -463,6 +463,20 @@ export async function listarCategorias(): Promise<CategoriaProduto[]> {
     return categorias;
   }
 
-  const response = await api.get<CategoriaProduto[]>("/categorias-produtos");
+  const response = await api.get<CategoriaProduto[]>("/categorias-produto");
+  return response.data;
+}
+
+/**
+ * Lista produtos de uma categoria específica.
+ */
+export async function listarProdutosPorTipo(categoriaId: number): Promise<Produto[]> {
+  if (IS_MOCK) {
+    await delay(200);
+    const { produtos } = getMockData();
+    return produtos.filter((p) => p.categoria.id === categoriaId && p.ativo);
+  }
+
+  const response = await api.get<Produto[]>(`/produtos/por-tipo/${categoriaId}`);
   return response.data;
 }

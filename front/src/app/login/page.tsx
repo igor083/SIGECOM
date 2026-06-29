@@ -1,20 +1,13 @@
-// =============================================================
-// app/login/page.tsx — Tela de Login (US-004 / SCRUM-7)
-// =============================================================
-// Formulário e-mail + senha que autentica via useAuth().login.
-// - Persiste o token (tratado no hook/serviço).
-// - Trata erros da API com mensagem amigável.
-// - Se já autenticado, redireciona para a home.
-// =============================================================
-
 "use client";
 
 import { useState, useEffect, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { mensagemDeErro } from "@/lib/apiError";
-import styles from "@/components/forms.module.css";
+import TextField from "@mui/material/TextField";
+import Button from "@mui/material/Button";
+import Alert from "@mui/material/Alert";
+import CircularProgress from "@mui/material/CircularProgress";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,7 +18,6 @@ export default function LoginPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
-  // Já logado? Não faz sentido ficar no login.
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       router.replace("/");
@@ -36,74 +28,119 @@ export default function LoginPage() {
     e.preventDefault();
     setErro(null);
     setEnviando(true);
-
     try {
       await login(email.trim(), senha);
       router.replace("/");
     } catch (err) {
-      setErro(mensagemDeErro(err, "Não foi possível entrar. Tente novamente."));
+      setErro(mensagemDeErro(err, "E-mail ou senha incorretos."));
     } finally {
       setEnviando(false);
     }
   }
 
   return (
-    <div className={styles.wrapper}>
-      <div className={styles.card}>
-        <h1 className={styles.title} style={{ color: '#2d3a8c', fontSize: '1.5rem', fontWeight: 800, letterSpacing: '-0.02em' }}>SIGECOM</h1>
-        <p className={styles.subtitle}>Bem-vindo</p>
-
-        <form className={styles.form} onSubmit={handleSubmit} noValidate>
-          {erro && (
-            <div className={`${styles.alert} ${styles.alertError}`} role="alert">
-              {erro}
-            </div>
-          )}
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="email">
-              E-mail
-            </label>
-            <input
-              id="email"
-              className={styles.input}
-              type="email"
-              autoComplete="email"
-              placeholder="voce@empresa.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={enviando}
-              required
-            />
-          </div>
-
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="senha">
-              Senha
-            </label>
-            <input
-              id="senha"
-              className={styles.input}
-              type="password"
-              autoComplete="current-password"
-              placeholder="Sua senha"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              disabled={enviando}
-              required
-            />
-          </div>
-
-          <button
-            className={styles.button}
-            type="submit"
-            disabled={enviando || !email || !senha}
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#f0f2f5",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      <div
+        style={{
+          background: "#e4e6ea",
+          borderRadius: "16px",
+          padding: "40px 36px",
+          width: "100%",
+          maxWidth: "360px",
+          boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+        }}
+      >
+        <div style={{ textAlign: "center", marginBottom: "28px" }}>
+          <h1
+            style={{
+              color: "#2563eb",
+              fontSize: "1.6rem",
+              fontWeight: 800,
+              margin: 0,
+              letterSpacing: "-0.02em",
+            }}
           >
-            {enviando ? "Entrando..." : "Entrar"}
-          </button>
-        </form>
+            SIGECOM
+          </h1>
+          <p style={{ color: "#94a3b8", fontSize: "0.875rem", margin: "6px 0 0" }}>
+            Bem-vindo
+          </p>
+        </div>
 
-      
+        {erro && (
+          <Alert severity="error" sx={{ mb: 2, fontSize: "0.8rem" }}>
+            {erro}
+          </Alert>
+        )}
+
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+        >
+          <TextField
+            label="Email"
+            type="email"
+            placeholder="exemplo@teste.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            disabled={enviando}
+            required
+            fullWidth
+            size="small"
+            sx={{
+              background: "white",
+              borderRadius: "8px",
+              "& .MuiOutlinedInput-root": { borderRadius: "8px" },
+            }}
+          />
+
+          <TextField
+            label="Senha"
+            type="password"
+            placeholder="••••••••"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            disabled={enviando}
+            required
+            fullWidth
+            size="small"
+            sx={{
+              background: "white",
+              borderRadius: "8px",
+              "& .MuiOutlinedInput-root": { borderRadius: "8px" },
+            }}
+          />
+
+          <Button
+            type="submit"
+            variant="contained"
+            fullWidth
+            disabled={enviando || !email || !senha}
+            sx={{
+              mt: 0.5,
+              py: 1.25,
+              fontSize: "0.9rem",
+              fontWeight: 700,
+              borderRadius: "8px",
+              boxShadow: "none",
+              "&:hover": { boxShadow: "none" },
+            }}
+          >
+            {enviando ? (
+              <CircularProgress size={20} color="inherit" />
+            ) : (
+              "Entrar"
+            )}
+          </Button>
+        </form>
       </div>
     </div>
   );
