@@ -11,11 +11,13 @@ public record ProdutoResponse(
         String nome,
         String descricao,
         BigDecimal preco,
-        Long categoriaId,
-        String categoriaNome,
+        CategoriaInfo categoria,
         Integer qtdEstoque,
+        Integer estoqueMinimo,
         boolean ativo
 ) {
+
+    public record CategoriaInfo(Long id, String nome) {}
 
     public static ProdutoResponse toResponse(Produto produto) {
         return ProdutoResponse.builder()
@@ -23,9 +25,9 @@ public record ProdutoResponse(
                 .nome(produto.getNome())
                 .descricao(produto.getDescricao())
                 .preco(produto.getPreco())
-                .categoriaId(produto.getCategoria().getId())
-                .categoriaNome(produto.getCategoria().getNome())
+                .categoria(new CategoriaInfo(produto.getCategoria().getId(), produto.getCategoria().getNome()))
                 .qtdEstoque(produto.getQtdEstoque())
+                .estoqueMinimo(produto.getEstoqueMinimo())
                 .ativo(produto.isAtivo())
                 .build();
     }

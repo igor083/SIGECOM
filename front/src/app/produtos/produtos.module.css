@@ -80,6 +80,61 @@
   border-color: #94a3b8;
 }
 
+/* ── Seção Header (título + tabs + botão) ────────────────────── */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  background: #f1f5f9;
+  border-radius: 0.5rem;
+  padding: 0.25rem;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  padding: 0.375rem 0.875rem;
+  border-radius: 0.375rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.tab:hover {
+  color: #334155;
+}
+
+.tabActive {
+  background: #fff;
+  color: #2563eb;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Código do produto (#P001) */
+.codigo {
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
 /* ── Ações e Filtros ────────────────────────────────────────── */
 .actionsBar {
   display: flex;
@@ -96,6 +151,7 @@
   gap: 0.75rem;
   flex: 1;
   max-width: 700px;
+  margin-bottom: 1.25rem;
 }
 
 .searchInputWrapper {

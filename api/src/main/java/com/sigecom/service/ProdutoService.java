@@ -7,11 +7,12 @@ import com.sigecom.model.request.produto.EditarProdutoRequest;
 import com.sigecom.model.response.produto.ProdutoResponse;
 import com.sigecom.repository.CategoriaProdutoRepository;
 import com.sigecom.repository.ProdutoRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -47,10 +48,16 @@ public class ProdutoService {
         return toResponse(salvo);
     }
 
-    public List<ProdutoResponse> listar() {
-        return produtoRepository.findAll().stream()
-                .map(ProdutoResponse::toResponse)
-                .toList();
+    @Transactional(readOnly = true)
+    public Page<ProdutoResponse> listar(String nome, Long categoriaId, Pageable pageable) {
+        return produtoRepository.findAllFiltrado(nome, categoriaId, pageable)
+                .map(ProdutoResponse::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProdutoResponse> listarPorTipo(Long categoriaId, Pageable pageable) {
+        return produtoRepository.findByAtivoTrueAndCategoriaId(categoriaId, pageable)
+                .map(ProdutoResponse::toResponse);
     }
     
     
@@ -91,12 +98,11 @@ public class ProdutoService {
     	}
     
 
-	@Transactional	
-    public List<ProdutoResponse> listarEstoqueBaixo() {
-    		return produtoRepository.findProdutosComEstoqueBaixo().stream()
-    				.map(ProdutoResponse::toResponse)
-    				.toList();
-    	}
+    @Transactional(readOnly = true)
+    public Page<ProdutoResponse> listarEstoqueBaixo(Pageable pageable) {
+        return produtoRepository.findProdutosComEstoqueBaixo(pageable)
+                .map(ProdutoResponse::toResponse);
+    }
     
     
 }

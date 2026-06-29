@@ -4,12 +4,15 @@ import com.sigecom.domain.Usuario;
 import com.sigecom.domain.enums.TipoUsuario;
 import com.sigecom.model.response.auth.UsuarioResponse;
 import com.sigecom.repository.UsuarioRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -38,13 +41,19 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
     public UsuarioResponse buscarPorEmail(String email) {
-        return toResponse(buscarUsuario(email));
+        return UsuarioResponse.toResponse(buscarUsuario(email));
     }
 
     public List<UsuarioResponse> listarPorPerfil(TipoUsuario perfil) {
         return usuarioRepository.findByPerfil(perfil).stream()
-                .map(this::toResponse)
+                .map(UsuarioResponse::toResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UsuarioResponse> listarTodos(String busca, TipoUsuario perfil, Pageable pageable) {
+        return usuarioRepository.findAllFiltrado(busca, perfil, pageable)
+                .map(UsuarioResponse::toResponse);
     }
 
     private Usuario buscarUsuario(String email) {
@@ -52,14 +61,4 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + email));
     }
 
-    private UsuarioResponse toResponse(Usuario usuario) {
-        return UsuarioResponse.builder()
-                .id(usuario.getId())
-                .nome(usuario.getNome())
-                .email(usuario.getEmail())
-                .perfil(usuario.getPerfil())
-                .ativo(usuario.isAtivo())
-                .criadoEm(usuario.getCriadoEm())
-                .build();
-    }
 }

@@ -1,6 +1,6 @@
 # sigecom-api
 
-API REST do sistema SIGECOM, desenvolvida com Spring Boot 4 e Java 21.
+API REST do sistema SIGECOM, desenvolvida com Spring Boot 4.0.6 e Java 21.
 
 ## Pré-requisitos
 
@@ -24,7 +24,23 @@ docker run -d \
 
 Aguarde alguns segundos até o container estar pronto.
 
-## 2. Executar a aplicação
+## 2. Configurar variáveis de ambiente
+
+Crie um arquivo `.env` na raiz da pasta `api/` baseado no `.env.local`:
+
+```bash
+cp .env.local .env
+```
+
+| Variável | Descrição | Padrão |
+|---|---|---|
+| `JWT_SECRET` | Chave Base64 (≥ 256 bits) para assinar tokens JWT | valor de exemplo (dev only) |
+| `JWT_EXPIRATION_MS` | Validade do token em milissegundos | `3600000` (1 hora) |
+| `REQUIRE_ADMIN_CADASTRO` | `true` exige perfil ADMIN para cadastrar usuários | `true` |
+
+> **Nunca** comite a chave JWT de produção no repositório.
+
+## 3. Executar a aplicação
 
 ```bash
 ./mvnw spring-boot:run
@@ -38,7 +54,7 @@ mvnw.cmd spring-boot:run
 
 A API estará disponível em `http://localhost:8080`.
 
-## 3. Documentação (Swagger)
+## 4. Documentação (Swagger)
 
 Com a aplicação rodando, acesse:
 
@@ -47,21 +63,46 @@ Com a aplicação rodando, acesse:
 | Swagger UI | `http://localhost:8080/swagger-ui/index.html` |
 | OpenAPI JSON | `http://localhost:8080/v3/api-docs` |
 
-Para testar endpoints protegidos no Swagger UI, clique em **Authorize** e informe o token JWT obtido via `POST /auth/login` no formato `Bearer <token>`.
+Para testar endpoints protegidos, clique em **Authorize** e informe o token JWT obtido via `POST /auth/login` no formato `Bearer <token>`.
 
-## Variáveis de configuração
+### Exemplos de payload
 
-As configurações do banco ficam em `src/main/resources/application.properties`:
+**Login:**
+```json
+{
+  "email": "usuario@email.com",
+  "senha": "senha123"
+}
+```
+
+**Cadastro de funcionário (requer ADMIN):**
+```json
+{
+  "nome": "Nome Completo",
+  "email": "funcionario@email.com",
+  "senha": "senha123",
+  "perfil": "FUNCIONARIO"
+}
+```
+
+## 5. Rodar os testes
+
+```bash
+./mvnw test
+```
+
+O projeto usa **JaCoCo** para cobertura. Um relatório HTML é gerado em `target/site/jacoco/` após `./mvnw verify`. A cobertura mínima exigida é **80 %** nas classes `EstoqueService`, `AuthService` e `Produto`.
+
+## Variáveis de configuração (application.properties)
 
 | Propriedade | Valor padrão |
 |---|---|
 | `spring.datasource.url` | `jdbc:postgresql://localhost:5432/sigecom` |
 | `spring.datasource.username` | `postgres` |
 | `spring.datasource.password` | `postgres` |
-| `jwt.secret` | chave Base64 (via `JWT_SECRET`) |
-| `jwt.expiration-ms` | `3600000` (1 hora) |
-
-As variáveis JWT podem ser sobrescritas criando um arquivo `.env.local` na raiz do projeto (veja `.env.local` de exemplo).
+| `spring.jpa.hibernate.ddl-auto` | `update` |
+| `jwt.secret` | resolvido via `JWT_SECRET` |
+| `jwt.expiration-ms` | resolvido via `JWT_EXPIRATION_MS` |
 
 ## Parar e remover o container
 

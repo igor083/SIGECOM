@@ -43,7 +43,8 @@ public class CategoriaProdutoService {
 
     public List<CategoriaProdutoResponse> listar() {
         return categoriaProdutoRepository.findAll().stream()
-                .map(CategoriaProdutoResponse::toResponse)
+                .map(cat -> CategoriaProdutoResponse.toResponse(
+                        cat, produtoRepository.countByCategoriaIdAndAtivoTrue(cat.getId())))
                 .toList();
     }
 

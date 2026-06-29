@@ -5,17 +5,19 @@ Projeto acadêmico — Gerência de Projetos, UEPB.
 
 ## Stack
 
-- [Next.js](https://nextjs.org/) (App Router) + TypeScript
+- [Next.js 16.2.9](https://nextjs.org/) (App Router) + TypeScript
+- [React 19.2.4](https://react.dev/)
 - [Axios](https://axios-http.com/) para chamadas à API
+- [Recharts](https://recharts.org/) para gráficos no dashboard
 - CSS Modules para estilos escopados
 
 ## Pré-requisitos
 
 - **Node.js** ≥ 18
 - **npm** ≥ 9
-- **API** rodando em `http://localhost:8080` (ver `../sigecom-api/`)
+- **API** rodando em `http://localhost:8080` (ver `../api/README.md`)
 
-## Instalação
+## Instalação e execução
 
 ```bash
 # 1. Instale as dependências
@@ -31,20 +33,41 @@ npm run dev
 
 Acesse [http://localhost:3000](http://localhost:3000).
 
+## Scripts disponíveis
+
+| Comando | Descrição |
+|---|---|
+| `npm run dev` | Servidor de desenvolvimento com hot-reload |
+| `npm run build` | Build de produção |
+| `npm run start` | Inicia o servidor de produção (requer build) |
+| `npm run lint` | Executa o ESLint |
+
 ## Estrutura de pastas
 
 ```
 src/
-├── app/            ← Páginas (App Router)
-│   ├── layout.tsx  ← Layout raiz com Providers
-│   ├── page.tsx    ← Home (placeholder)
-│   └── login/      ← Rota /login (placeholder para US-004)
-├── components/     ← Componentes reutilizáveis (a criar)
-├── hooks/          ← Hooks customizados
-│   └── useAuth.ts  ← Estado de autenticação, login/logout
-└── services/       ← Camada de serviços (API)
-    ├── api.ts      ← Instância Axios com interceptors
-    └── auth.ts     ← Funções de login e cadastro
+├── app/                         ← Páginas (App Router)
+│   ├── layout.tsx               ← Layout raiz com Providers
+│   ├── page.tsx                 ← Redireciona para /login
+│   ├── login/                   ← Rota /login
+│   ├── cadastro/                ← Rota /cadastro (registro de usuários)
+│   ├── produtos/                ← Rota /produtos (listagem, cadastro, edição)
+│   ├── dashboard/
+│   │   ├── admin/               ← Dashboard do administrador
+│   │   └── funcionario/         ← Dashboard do funcionário
+│   └── configuracoes/
+│       ├── page.tsx             ← Configurações gerais
+│       └── financeiro/          ← Parâmetros financeiros (markup)
+├── components/
+│   └── Sidebar.tsx              ← Menu lateral de navegação
+├── hooks/
+│   ├── useAuth.tsx              ← Estado de autenticação, login/logout
+│   └── useProdutos.ts           ← Listagem e operações de produtos
+└── services/                    ← Camada de acesso à API
+    ├── api.ts                   ← Instância Axios com interceptors JWT
+    ├── auth.ts                  ← Login e cadastro de usuários
+    ├── produtos.ts              ← CRUD de produtos
+    └── parametrosFinanceiros.ts ← Leitura e atualização de markup
 ```
 
 ## Variáveis de ambiente
