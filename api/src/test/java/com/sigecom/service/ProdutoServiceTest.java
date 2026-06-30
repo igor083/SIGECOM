@@ -3,6 +3,7 @@ package com.sigecom.service;
 import com.sigecom.domain.CategoriaProduto;
 import com.sigecom.domain.Produto;
 import com.sigecom.model.request.produto.CadastroProdutoRequest;
+import com.sigecom.model.request.produto.EditarProdutoRequest;
 import com.sigecom.model.response.produto.ProdutoResponse;
 import com.sigecom.repository.CategoriaProdutoRepository;
 import com.sigecom.repository.ProdutoRepository;
@@ -129,5 +130,143 @@ class ProdutoServiceTest {
         assertEquals(1, resultado.size());
         assertEquals("Produto A", resultado.get(0).nome());
         assertEquals(1L, resultado.get(0).categoriaId());
+    }
+
+    @Test
+    void editar_DeveEditarProduto_QuandoDadosValidos() {
+        EditarProdutoRequest request = new EditarProdutoRequest(
+                "Produto B",
+                "Descricao do Produto B",
+                BigDecimal.valueOf(11.90),
+                1L,
+                5
+        );
+        Produto produto = Produto.builder()
+                .id(1L)
+                .categoria(categoria)
+                .nome("Produto A")
+                .preco(BigDecimal.valueOf(9.90))
+                .qtdEstoque(10)
+                .ativo(true)
+                .build();
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
+        when(categoriaProdutoRepository.findById(1L)).thenReturn(Optional.of(categoria));
+        when(produtoRepository.save(any(Produto.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ProdutoResponse response = produtoService.editar(1L, request);
+
+        assertNotNull(response);
+        assertEquals("Produto B", response.nome());
+        assertEquals("Descricao do Produto B", response.descricao());
+        assertEquals(BigDecimal.valueOf(11.90), response.preco());
+        verify(produtoRepository).save(any(Produto.class));
+    }
+
+    @Test
+    void editar_DeveLancarNotFound_QuandoProdutoInexistente() {
+        EditarProdutoRequest request = new EditarProdutoRequest(
+                "Produto C", null, BigDecimal.ONE, 1L, 5
+        );
+        when(produtoRepository.findById(99L)).thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+                () -> produtoService.editar(99L, request));
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Produto não encontrado", exception.getReason());
+        verify(produtoRepository, never()).save(any(Produto.class));
+    }
+
+    @Test
+    void editar_DeveLancarNotFound_QuandoCategoriaInexistente() {
+        EditarProdutoRequest request = new EditarProdutoRequest(
+                "Produto D", null, BigDecimal.ONE, 99L, 5
+        );
+        Produto produto = Produto.builder().id(1L).categoria(categoria).build();
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
+        when(categoriaProdutoRepository.findById(99L)).thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+                () -> produtoService.editar(1L, request));
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Categoria não encontrada", exception.getReason());
+    }
+
+    @Test
+    void excluir_DeveDesativarProduto_QuandoEstoqueZero() {
+        Produto produto = Produto.builder()
+                .id(1L)
+                .categoria(categoria)
+                .nome("Produto A")
+                .qtdEstoque(0)
+                .ativo(true)
+                .build();
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
+        when(produtoRepository.save(any(Produto.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        produtoService.excluir(1L);
+
+        assertFalse(produto.isAtivo());
+        verify(produtoRepository).save(produto);
+    }
+
+    @Test
+    void excluir_DeveLancarBadRequest_QuandoEstoqueAtivo() {
+        Produto produto = Produto.builder()
+                .id(1L)
+                .categoria(categoria)
+                .nome("Produto A")
+                .qtdEstoque(5)
+                .ativo(true)
+                .build();
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+                () -> produtoService.excluir(1L));
+
+        assertEquals(HttpStatus.BAD_REQUEST, exception.getStatusCode());
+        assertEquals("Não é possível excluir produto com estoque ativo", exception.getReason());
+        verify(produtoRepository, never()).save(any(Produto.class));
+    }
+
+    @Test
+    void excluir_DeveLancarNotFound_QuandoProdutoInexistente() {
+        when(produtoRepository.findById(99L)).thenReturn(Optional.empty());
+
+        ResponseStatusException exception = assertThrows(ResponseStatusException.class,
+                () -> produtoService.excluir(99L));
+
+        assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
+        assertEquals("Produto não encontrado", exception.getReason());
+    }
+
+    @Test
+    void listarEstoqueBaixo_DeveRetornarProdutosAbaixoOuIgualAoMinimo() {
+        Produto produto = Produto.builder()
+                .id(1L)
+                .categoria(categoria)
+                .nome("Produto A")
+                .preco(BigDecimal.valueOf(59.99))
+                .qtdEstoque(2)
+                .estoqueMinimo(5)
+                .ativo(true)
+                .build();
+        when(produtoRepository.findProdutosComEstoqueBaixo()).thenReturn(List.of(produto));
+
+        List<ProdutoResponse> resultado = produtoService.listarEstoqueBaixo();
+
+        assertEquals(1, resultado.size());
+        assertEquals("Produto A", resultado.get(0).nome());
+        assertEquals(2, resultado.get(0).qtdEstoque());
+    }
+
+    @Test
+    void listarEstoqueBaixo_DeveRetornarListaVazia_QuandoNenhumProdutoAbaixoDoMinimo() {
+        when(produtoRepository.findProdutosComEstoqueBaixo()).thenReturn(List.of());
+
+        List<ProdutoResponse> resultado = produtoService.listarEstoqueBaixo();
+
+        assertTrue(resultado.isEmpty());
     }
 }
