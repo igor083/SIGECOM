@@ -12,6 +12,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -67,8 +71,8 @@ class ProdutoServiceTest {
         assertEquals("Refrigerante 2L", response.nome());
         assertEquals("Garrafa pet 2 litros", response.descricao());
         assertEquals(BigDecimal.valueOf(9.90), response.preco());
-        assertEquals(1L, response.categoriaId());
-        assertEquals("Bebidas", response.categoriaNome());
+        assertEquals(1L, response.categoria().id());
+        assertEquals("Bebidas", response.categoria().nome());
         assertEquals(15, response.qtdEstoque());
         assertTrue(response.ativo());
         verify(produtoRepository).save(any(Produto.class));
@@ -122,12 +126,14 @@ class ProdutoServiceTest {
                 .qtdEstoque(3)
                 .ativo(true)
                 .build();
-        when(produtoRepository.findAll()).thenReturn(List.of(produto));
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<Produto> pagina = new PageImpl<>(List.of(produto), pageable, 1);
+        when(produtoRepository.findAllFiltrado(null, null, pageable)).thenReturn(pagina);
 
-        List<ProdutoResponse> resultado = produtoService.listar();
+        Page<ProdutoResponse> resultado = produtoService.listar(null, null, pageable);
 
-        assertEquals(1, resultado.size());
-        assertEquals("Produto A", resultado.get(0).nome());
-        assertEquals(1L, resultado.get(0).categoriaId());
+        assertEquals(1, resultado.getContent().size());
+        assertEquals("Produto A", resultado.getContent().get(0).nome());
+        assertEquals(1L, resultado.getContent().get(0).categoria().id());
     }
 }
