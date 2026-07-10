@@ -118,6 +118,9 @@ export default function BuscaProduto({ onSelecionar }: BuscaProdutoProps) {
         {carregando && <span className={styles.spinner} aria-label="Buscando..." />}
       </div>
 
+      {/* Região dinâmica — aria-live para acessibilidade */}
+      <div aria-live="polite" aria-atomic="false">
+
       {/* Erro */}
       {erro && (
         <div className={styles.erro} role="alert">
@@ -158,6 +161,7 @@ export default function BuscaProduto({ onSelecionar }: BuscaProdutoProps) {
                 role="option"
                 aria-disabled={semEstoque}
                 aria-selected={false}
+                title={semEstoque ? "Produto sem estoque disponível" : produto.nome}
                 onClick={() => {
                   if (!semEstoque) {
                     onSelecionar(produto);
@@ -192,6 +196,7 @@ export default function BuscaProduto({ onSelecionar }: BuscaProdutoProps) {
           })}
         </ul>
       )}
+      </div>
     </div>
   );
 }
