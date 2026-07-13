@@ -1,0 +1,29 @@
+/* pdv.module.css — Layout do Ponto de Venda */
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.secaoTitulo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 12px;
+}
+
+.colunaBusca {
+  min-width: 0;
+}
+
+.colunaCarrinho {
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
