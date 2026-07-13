@@ -1,0 +1,308 @@
+/* =============================================================
+   Carrinho.module.css — Carrinho de compras (PDV)
+   =============================================================
+   Usa os mesmos tokens do design system (globals.css) que o
+   BuscaProduto — dark mode incluso automaticamente.
+   ============================================================= */
+
+/* ── Estado vazio (CA-6) ─────────────────────────────────── */
+
+.vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 48px 24px;
+  text-align: center;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+}
+
+.vazioIcone {
+  width: 40px;
+  height: 40px;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.vazioTexto {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.vazioSub {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* ── Container principal ─────────────────────────────────── */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+  overflow: hidden;
+}
+
+/* ── Cabeçalho ───────────────────────────────────────────── */
+
+.cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cabecalhoTitulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+}
+
+.btnLimpar {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-error);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.btnLimpar:hover {
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+}
+
+/* ── Lista de itens ──────────────────────────────────────── */
+
+.lista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.lista::-webkit-scrollbar {
+  width: 6px;
+}
+
+.lista::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lista::-webkit-scrollbar-thumb {
+  background: var(--color-border-hover);
+  border-radius: 3px;
+}
+
+/* ── Item ────────────────────────────────────────────────── */
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.item:last-child {
+  border-bottom: none;
+}
+
+.itemInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.itemNome {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemPrecoUnit {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* ── Controles de quantidade ─────────────────────────────── */
+
+.itemControles {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.btnQtd {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.btnQtd:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btnQtd:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.inputQtd {
+  width: 44px;
+  height: 28px;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  /* esconde as setas nativas do input type=number */
+  -moz-appearance: textfield;
+}
+
+.inputQtd::-webkit-outer-spin-button,
+.inputQtd::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+}
+
+.inputQtd:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-100);
+}
+
+/* ── Subtotal do item (CA-5) ─────────────────────────────── */
+
+.itemSubtotal {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-primary);
+  white-space: nowrap;
+  min-width: 72px;
+  text-align: right;
+}
+
+/* ── Botão remover ───────────────────────────────────────── */
+
+.btnRemover {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.btnRemover:hover {
+  color: var(--color-error);
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+}
+
+/* ── Rodapé ──────────────────────────────────────────────── */
+
+.rodape {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.totalLinha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.totalLabel {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.totalValor {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+/* ── Botão confirmar ─────────────────────────────────────── */
+
+.btnConfirmar {
+  width: 100%;
+  height: 44px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  color: white;
+  background: var(--color-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+.btnConfirmar:hover {
+  opacity: 0.9;
+}
+
+.btnConfirmar:active {
+  opacity: 0.8;
+}
