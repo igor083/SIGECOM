@@ -1,18 +1,19 @@
 // =============================================================
 // components/Carrinho.tsx — Carrinho de compras (PDV)
 // =============================================================
-// US-025: lista de itens, quantidade, remoção, estado vazio.
-// US-026: desconto por item (percentual ou valor fixo);
-//         exibe subtotal, desconto total e total em destaque.
-// US-027: confirmar venda → chama API, mostra comprovante,
-//         mostra erro quando algo falha (ex.: estoque insuficiente).
+// Fluxo em 2 etapas:
+//   PRODUTOS  → lista, quantidade, desconto por item
+//              → botão "Ir para pagamento"
+//   PAGAMENTO → seleção de forma de pagamento
+//              → botão "Confirmar venda" (aqui envia a request)
+// Após confirmação, exibe o comprovante com todos os detalhes.
 // =============================================================
 
 "use client";
 
 import { useState } from "react";
 import { type UseCarrinhoResult, type ItemCalculado } from "@/hooks/useCarrinho";
-import { type TipoDesconto } from "@/services/vendas";
+import { type TipoDesconto, type TipoPagamento } from "@/services/vendas";
 import styles from "./Carrinho.module.css";
 
 // ── Props ────────────────────────────────────────────────────
@@ -31,6 +32,20 @@ function formatarDataHora(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }
+
+const ROTULOS_PAGAMENTO: Record<TipoPagamento, string> = {
+  DINHEIRO: "Dinheiro",
+  PIX: "PIX",
+  DEBITO: "Débito",
+  CREDITO: "Crédito",
+};
+
+const OPCOES_PAGAMENTO: { tipo: TipoPagamento; icone: string; descricao: string }[] = [
+  { tipo: "DINHEIRO", icone: "💵", descricao: "Pagamento em espécie" },
+  { tipo: "PIX",      icone: "⚡", descricao: "Pagamento instantâneo" },
+  { tipo: "DEBITO",   icone: "💳", descricao: "Cartão de débito" },
+  { tipo: "CREDITO",  icone: "🏦", descricao: "Cartão de crédito" },
+];
 
 // ── Ícone ────────────────────────────────────────────────────
 
@@ -54,7 +69,7 @@ function IconeCarrinho() {
   );
 }
 
-// ── Comprovante (modal simples) ──────────────────────────────
+// ── Comprovante ──────────────────────────────────────────────
 
 function Comprovante({
   venda,
@@ -93,6 +108,12 @@ function Comprovante({
           <div className={styles.linhaSub}>
             <span>Desconto</span>
             <span>− {formatarPreco(venda.descontoTotal)}</span>
+          </div>
+          <div className={styles.linhaSub}>
+            <span>Pagamento</span>
+            <span className={styles.pagamentoLabel}>
+              {ROTULOS_PAGAMENTO[venda.tipoPagamento]}
+            </span>
           </div>
           <div className={styles.totalLinha}>
             <span className={styles.totalLabel}>Total pago</span>
@@ -178,9 +199,126 @@ function PainelDesconto({
   );
 }
 
-// ── Componente principal ─────────────────────────────────────
+// ── Etapa: PAGAMENTO ─────────────────────────────────────────
 
-export default function Carrinho({ carrinho }: CarrinhoProps) {
+function EtapaPagamento({ carrinho }: CarrinhoProps) {
+  const {
+    subtotal,
+    descontoTotal,
+    total,
+    totalItens,
+    tipoPagamento,
+    selecionarPagamento,
+    voltarParaProdutos,
+    confirmar,
+    confirmando,
+    erroConfirmacao,
+  } = carrinho;
+
+  async function handleConfirmar() {
+    try {
+      await confirmar();
+    } catch {
+      // Erro tratado no hook e exposto por erroConfirmacao
+    }
+  }
+
+  return (
+    <div className={styles.container}>
+      {/* Cabeçalho */}
+      <div className={styles.cabecalho}>
+        <button
+          className={styles.btnVoltar}
+          onClick={voltarParaProdutos}
+          disabled={confirmando}
+          aria-label="Voltar para produtos"
+        >
+          ← Voltar
+        </button>
+        <span className={styles.cabecalhoTitulo}>
+          Forma de pagamento
+          <span className={styles.badge}>{totalItens}</span>
+        </span>
+        <span /> {/* placeholder para grid */}
+      </div>
+
+      {/* Grid de opções */}
+      <div className={styles.opcoesPagamento}>
+        {OPCOES_PAGAMENTO.map((op) => {
+          const selecionada = tipoPagamento === op.tipo;
+          return (
+            <button
+              key={op.tipo}
+              type="button"
+              className={
+                selecionada ? styles.opcaoPagamentoAtiva : styles.opcaoPagamento
+              }
+              onClick={() => selecionarPagamento(op.tipo)}
+              disabled={confirmando}
+              aria-pressed={selecionada}
+            >
+              <span className={styles.opcaoIcone} aria-hidden>
+                {op.icone}
+              </span>
+              <span className={styles.opcaoTextos}>
+                <span className={styles.opcaoTitulo}>
+                  {ROTULOS_PAGAMENTO[op.tipo]}
+                </span>
+                <span className={styles.opcaoDescricao}>{op.descricao}</span>
+              </span>
+              {selecionada && (
+                <span className={styles.opcaoCheck} aria-hidden>
+                  ✓
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Rodapé: resumo + confirmação */}
+      <div className={styles.rodape}>
+        <div className={styles.linhaSub}>
+          <span>Subtotal</span>
+          <span>{formatarPreco(subtotal)}</span>
+        </div>
+        <div className={styles.linhaSub}>
+          <span>Desconto</span>
+          <span>− {formatarPreco(descontoTotal)}</span>
+        </div>
+        <div className={styles.totalLinha}>
+          <span className={styles.totalLabel}>Total</span>
+          <span className={styles.totalValor}>{formatarPreco(total)}</span>
+        </div>
+
+        {erroConfirmacao && (
+          <div className={styles.erroBox} role="alert">
+            {erroConfirmacao}
+          </div>
+        )}
+
+        <button
+          className={styles.btnConfirmar}
+          onClick={handleConfirmar}
+          disabled={confirmando || !tipoPagamento}
+          title={
+            !tipoPagamento ? "Selecione uma forma de pagamento" : undefined
+          }
+        >
+          {confirmando
+            ? "Registrando venda..."
+            : tipoPagamento
+              ? `Confirmar venda em ${ROTULOS_PAGAMENTO[tipoPagamento]}`
+              : "Selecione a forma de pagamento"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Etapa: PRODUTOS ──────────────────────────────────────────
+
+function EtapaProdutos({ carrinho }: CarrinhoProps) {
   const {
     itens,
     itensCalculados,
@@ -192,20 +330,10 @@ export default function Carrinho({ carrinho }: CarrinhoProps) {
     descontoTotal,
     total,
     totalItens,
-    confirmar,
-    confirmando,
-    erroConfirmacao,
-    comprovante,
-    fecharComprovante,
+    irParaPagamento,
   } = carrinho;
 
-  // Qual item está com o painel de desconto aberto (id do produto)
   const [descontoAbertoId, setDescontoAbertoId] = useState<number | null>(null);
-
-  // Comprovante tem prioridade — carrinho é esvaziado ao confirmar
-  if (comprovante) {
-    return <Comprovante venda={comprovante} onFechar={fecharComprovante} />;
-  }
 
   // CA-6: carrinho vazio
   if (itens.length === 0) {
@@ -227,14 +355,6 @@ export default function Carrinho({ carrinho }: CarrinhoProps) {
   function confirmarLimpar() {
     if (window.confirm("Limpar todos os itens do carrinho?")) {
       limpar();
-    }
-  }
-
-  async function handleConfirmar() {
-    try {
-      await confirmar();
-    } catch {
-      // Erro já capturado no hook e exposto em erroConfirmacao
     }
   }
 
@@ -261,7 +381,6 @@ export default function Carrinho({ carrinho }: CarrinhoProps) {
           return (
             <li key={produto.id} className={styles.item}>
               <div className={styles.itemLinhaPrincipal}>
-                {/* Nome + preço unitário */}
                 <div className={styles.itemInfo}>
                   <span className={styles.itemNome}>{produto.nome}</span>
                   <span className={styles.itemPrecoUnit}>
@@ -269,7 +388,6 @@ export default function Carrinho({ carrinho }: CarrinhoProps) {
                   </span>
                 </div>
 
-                {/* Controle de quantidade */}
                 <div className={styles.itemControles}>
                   <button
                     className={styles.btnQtd}
@@ -298,7 +416,6 @@ export default function Carrinho({ carrinho }: CarrinhoProps) {
                   </button>
                 </div>
 
-                {/* Subtotal do item */}
                 <div className={styles.itemValores}>
                   {temDesconto && (
                     <span className={styles.itemBrutoRiscado}>
@@ -310,7 +427,6 @@ export default function Carrinho({ carrinho }: CarrinhoProps) {
                   </span>
                 </div>
 
-                {/* Botão de desconto */}
                 <button
                   className={temDesconto ? styles.btnDescontoAtivo : styles.btnDesconto}
                   onClick={() =>
@@ -322,7 +438,6 @@ export default function Carrinho({ carrinho }: CarrinhoProps) {
                   %
                 </button>
 
-                {/* Remover */}
                 <button
                   className={styles.btnRemover}
                   onClick={() => confirmarRemocao(produto.id, produto.nome)}
@@ -332,7 +447,6 @@ export default function Carrinho({ carrinho }: CarrinhoProps) {
                 </button>
               </div>
 
-              {/* Linha de desconto ativo (informativa) */}
               {temDesconto && !abertoDesconto && (
                 <span className={styles.itemDescontoInfo}>
                   Desconto:{" "}
@@ -343,7 +457,6 @@ export default function Carrinho({ carrinho }: CarrinhoProps) {
                 </span>
               )}
 
-              {/* Painel de desconto */}
               {abertoDesconto && (
                 <PainelDesconto
                   calc={calc}
@@ -357,7 +470,7 @@ export default function Carrinho({ carrinho }: CarrinhoProps) {
         })}
       </ul>
 
-      {/* Rodapé com resumo e confirmação */}
+      {/* Rodapé */}
       <div className={styles.rodape}>
         <div className={styles.linhaSub}>
           <span>Subtotal</span>
@@ -372,20 +485,28 @@ export default function Carrinho({ carrinho }: CarrinhoProps) {
           <span className={styles.totalValor}>{formatarPreco(total)}</span>
         </div>
 
-        {erroConfirmacao && (
-          <div className={styles.erroBox} role="alert">
-            {erroConfirmacao}
-          </div>
-        )}
-
-        <button
-          className={styles.btnConfirmar}
-          onClick={handleConfirmar}
-          disabled={confirmando}
-        >
-          {confirmando ? "Registrando venda..." : "Confirmar venda"}
+        {/* Etapa 1: só encaminha para pagamento — não envia request ainda. */}
+        <button className={styles.btnConfirmar} onClick={irParaPagamento}>
+          Ir para pagamento →
         </button>
       </div>
     </div>
   );
+}
+
+// ── Componente principal (roteador de etapa) ─────────────────
+
+export default function Carrinho({ carrinho }: CarrinhoProps) {
+  const { comprovante, fecharComprovante, etapa } = carrinho;
+
+  // Prioridade máxima: comprovante da última venda
+  if (comprovante) {
+    return <Comprovante venda={comprovante} onFechar={fecharComprovante} />;
+  }
+
+  if (etapa === "PAGAMENTO") {
+    return <EtapaPagamento carrinho={carrinho} />;
+  }
+
+  return <EtapaProdutos carrinho={carrinho} />;
 }

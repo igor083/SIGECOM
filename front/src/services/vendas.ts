@@ -12,6 +12,8 @@ import api from "./api";
 
 export type TipoDesconto = "PERCENTUAL" | "VALOR_FIXO";
 
+export type TipoPagamento = "DINHEIRO" | "PIX" | "DEBITO" | "CREDITO";
+
 export interface ItemVendaRequest {
   produtoId: number;
   quantidade: number;
@@ -21,6 +23,8 @@ export interface ItemVendaRequest {
 
 export interface VendaRequest {
   itens: ItemVendaRequest[];
+  /** Obrigatório apenas em POST /vendas (confirmação). No preview vai null. */
+  tipoPagamento?: TipoPagamento | null;
 }
 
 export interface ItemVendaResponse {
@@ -45,10 +49,32 @@ export interface VendaResponse {
   id: number;
   dataHora: string;
   operador: string;
+  tipoPagamento: TipoPagamento;
   itens: ItemVendaResponse[];
   subtotal: number;
   descontoTotal: number;
   total: number;
+}
+
+/** Item da listagem de histórico (payload leve, sem itens). */
+export interface VendaResumoResponse {
+  id: number;
+  dataHora: string;
+  operador: string;
+  tipoPagamento: TipoPagamento;
+  qtdItens: number;
+  subtotal: number;
+  descontoTotal: number;
+  total: number;
+}
+
+/** Página de resumos de venda — compatível com Page do Spring. */
+export interface PageVendaResumo {
+  content: VendaResumoResponse[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
 }
 
 // ── Métodos ──────────────────────────────────────────────────
@@ -69,5 +95,19 @@ export async function calcularVenda(request: VendaRequest): Promise<CalculoVenda
  */
 export async function confirmarVenda(request: VendaRequest): Promise<VendaResponse> {
   const response = await api.post<VendaResponse>("/vendas", request);
+  return response.data;
+}
+
+/**
+ * Histórico de vendas paginado — usado pela tela /pdv/historico.
+ * As datas devem estar em ISO local (ex.: "2026-01-31T00:00:00").
+ */
+export async function listarVendas(params: {
+  page?: number;
+  size?: number;
+  dataInicio?: string;
+  dataFim?: string;
+}): Promise<PageVendaResumo> {
+  const response = await api.get<PageVendaResumo>("/vendas", { params });
   return response.data;
 }

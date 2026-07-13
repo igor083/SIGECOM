@@ -19,6 +19,7 @@ import { type Produto } from "@/services/produtos";
 import {
   confirmarVenda,
   type TipoDesconto,
+  type TipoPagamento,
   type VendaResponse,
   type ItemVendaRequest,
 } from "@/services/vendas";
@@ -41,6 +42,9 @@ export interface ItemCalculado {
   subtotal: number;
 }
 
+/** Etapas do checkout no carrinho. */
+export type EtapaCarrinho = "PRODUTOS" | "PAGAMENTO";
+
 export interface UseCarrinhoResult {
   itens: ItemCarrinho[];
   itensCalculados: ItemCalculado[];
@@ -57,6 +61,15 @@ export interface UseCarrinhoResult {
   descontoTotal: number;
   total: number;
   totalItens: number;
+
+  // ── Fluxo em etapas (produtos → pagamento → confirmação) ──
+  etapa: EtapaCarrinho;
+  irParaPagamento: () => void;
+  voltarParaProdutos: () => void;
+  tipoPagamento: TipoPagamento | null;
+  selecionarPagamento: (tipo: TipoPagamento) => void;
+
+  // ── Confirmação ──
   confirmar: () => Promise<VendaResponse>;
   confirmando: boolean;
   erroConfirmacao: string | null;
@@ -98,6 +111,8 @@ export function useCarrinho(): UseCarrinhoResult {
   const [confirmando, setConfirmando] = useState(false);
   const [erroConfirmacao, setErroConfirmacao] = useState<string | null>(null);
   const [comprovante, setComprovante] = useState<VendaResponse | null>(null);
+  const [etapa, setEtapa] = useState<EtapaCarrinho>("PRODUTOS");
+  const [tipoPagamento, setTipoPagamento] = useState<TipoPagamento | null>(null);
 
   // CA-1: adicionar produto; se já no carrinho, incrementa
   // CA-4: quantidade não pode exceder o estoque disponível
@@ -155,7 +170,29 @@ export function useCarrinho(): UseCarrinhoResult {
     []
   );
 
-  const limpar = useCallback(() => setItens([]), []);
+  const limpar = useCallback(() => {
+    setItens([]);
+    // Voltar do checkout se o carrinho for esvaziado no meio do fluxo
+    setEtapa("PRODUTOS");
+    setTipoPagamento(null);
+    setErroConfirmacao(null);
+  }, []);
+
+  // ── Etapas do fluxo ────────────────────────────────────────
+  const irParaPagamento = useCallback(() => {
+    setErroConfirmacao(null);
+    setEtapa("PAGAMENTO");
+  }, []);
+
+  const voltarParaProdutos = useCallback(() => {
+    setErroConfirmacao(null);
+    setEtapa("PRODUTOS");
+  }, []);
+
+  const selecionarPagamento = useCallback((tipo: TipoPagamento) => {
+    setTipoPagamento(tipo);
+    setErroConfirmacao(null);
+  }, []);
 
   // US-026: cálculo automático — recomputado a cada mudança do carrinho
   const itensCalculados = useMemo(() => itens.map(calcularItem), [itens]);
@@ -185,6 +222,11 @@ export function useCarrinho(): UseCarrinhoResult {
       setErroConfirmacao(msg);
       throw new Error(msg);
     }
+    if (!tipoPagamento) {
+      const msg = "Selecione uma forma de pagamento antes de confirmar.";
+      setErroConfirmacao(msg);
+      throw new Error(msg);
+    }
     setConfirmando(true);
     setErroConfirmacao(null);
     try {
@@ -194,9 +236,12 @@ export function useCarrinho(): UseCarrinhoResult {
         tipoDesconto: i.tipoDesconto,
         valorDesconto: i.valorDesconto > 0 ? i.valorDesconto : null,
       }));
-      const venda = await confirmarVenda({ itens: payload });
+      const venda = await confirmarVenda({ itens: payload, tipoPagamento });
       setComprovante(venda);
-      setItens([]); // CA US-027: carrinho é esvaziado após confirmação
+      // CA US-027: carrinho é esvaziado após confirmação
+      setItens([]);
+      setEtapa("PRODUTOS");
+      setTipoPagamento(null);
       return venda;
     } catch (err) {
       setErroConfirmacao(mensagemDeErro(err));
@@ -204,7 +249,7 @@ export function useCarrinho(): UseCarrinhoResult {
     } finally {
       setConfirmando(false);
     }
-  }, [itens]);
+  }, [itens, tipoPagamento]);
 
   const fecharComprovante = useCallback(() => setComprovante(null), []);
 
@@ -220,6 +265,11 @@ export function useCarrinho(): UseCarrinhoResult {
     descontoTotal,
     total,
     totalItens,
+    etapa,
+    irParaPagamento,
+    voltarParaProdutos,
+    tipoPagamento,
+    selecionarPagamento,
     confirmar,
     confirmando,
     erroConfirmacao,

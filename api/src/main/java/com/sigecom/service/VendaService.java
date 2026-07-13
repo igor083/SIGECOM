@@ -10,11 +10,14 @@ import com.sigecom.model.request.venda.VendaRequest;
 import com.sigecom.model.response.venda.CalculoVendaResponse;
 import com.sigecom.model.response.venda.ItemVendaResponse;
 import com.sigecom.model.response.venda.VendaResponse;
+import com.sigecom.model.response.venda.VendaResumoResponse;
 import com.sigecom.repository.ProdutoRepository;
 import com.sigecom.repository.UsuarioRepository;
 import com.sigecom.repository.VendaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -86,6 +90,20 @@ public class VendaService {
                 .build();
     }
 
+    // ── Histórico paginado ───────────────────────────────────────
+
+    /**
+     * Lista vendas paginadas com filtro opcional por intervalo de data.
+     * O default (via controller) é ordenar por dataHora desc.
+     */
+    @Transactional(readOnly = true)
+    public Page<VendaResumoResponse> listar(LocalDateTime dataInicio,
+                                            LocalDateTime dataFim,
+                                            Pageable pageable) {
+        return vendaRepository.findAllFiltrado(dataInicio, dataFim, pageable)
+                .map(VendaResumoResponse::toResponse);
+    }
+
     // ── Confirmação (US-027) ─────────────────────────────────────
 
     /**
@@ -95,12 +113,17 @@ public class VendaService {
      */
     @Transactional
     public VendaResponse confirmar(VendaRequest request) {
+        if (request.tipoPagamento() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "A forma de pagamento é obrigatória");
+        }
         Usuario operador = usuarioAutenticado();
         Map<Long, Produto> produtos = carregarProdutos(request);
 
         Venda venda = Venda.builder()
                 .usuario(operador)
                 .itens(new ArrayList<>())
+                .tipoPagamento(request.tipoPagamento())
                 .build();
 
         BigDecimal subtotal = BigDecimal.ZERO;

@@ -6,6 +6,7 @@ import com.sigecom.domain.Produto;
 import com.sigecom.domain.Usuario;
 import com.sigecom.domain.Venda;
 import com.sigecom.domain.enums.TipoDesconto;
+import com.sigecom.domain.enums.TipoPagamento;
 import com.sigecom.domain.enums.TipoUsuario;
 import com.sigecom.model.request.venda.ItemVendaRequest;
 import com.sigecom.model.request.venda.VendaRequest;
@@ -109,8 +110,14 @@ class VendaServiceTest {
         return new ItemVendaRequest(id, qtd, tipo, new BigDecimal(valor));
     }
 
+    /** Request para preview (sem forma de pagamento). */
     private VendaRequest req(ItemVendaRequest... itens) {
-        return new VendaRequest(List.of(itens));
+        return new VendaRequest(List.of(itens), null);
+    }
+
+    /** Request para confirmação (com forma de pagamento). */
+    private VendaRequest reqPago(TipoPagamento tipoPagamento, ItemVendaRequest... itens) {
+        return new VendaRequest(List.of(itens), tipoPagamento);
     }
 
     private BigDecimal reais(String v) {
@@ -374,7 +381,7 @@ class VendaServiceTest {
             stubOperadorAutenticado();
             stubSaveVenda();
 
-            VendaResponse resp = vendaService.confirmar(req(item(1L, 2)));
+            VendaResponse resp = vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO,item(1L, 2)));
 
             assertEquals(100L, resp.id());
             assertEquals(reais("20.00"), resp.subtotal());
@@ -398,7 +405,7 @@ class VendaServiceTest {
             stubOperadorAutenticado();
             stubSaveVenda();
 
-            VendaResponse resp = vendaService.confirmar(req(item(1L, 2), item(2L, 1)));
+            VendaResponse resp = vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO,item(1L, 2), item(2L, 1)));
 
             assertEquals(2, resp.itens().size());
             assertEquals("Arroz", resp.itens().get(0).nomeProduto());
@@ -417,7 +424,7 @@ class VendaServiceTest {
             stubSaveVenda();
 
             ArgumentCaptor<Venda> captor = ArgumentCaptor.forClass(Venda.class);
-            vendaService.confirmar(req(item(1L, 1)));
+            vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO,item(1L, 1)));
 
             verify(vendaRepository).save(captor.capture());
             Venda vendaSalva = captor.getValue();
@@ -434,7 +441,7 @@ class VendaServiceTest {
             stubSaveVenda();
 
             ArgumentCaptor<Venda> captor = ArgumentCaptor.forClass(Venda.class);
-            vendaService.confirmar(req(item(1L, 1, TipoDesconto.PERCENTUAL, "20")));
+            vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO,item(1L, 1, TipoDesconto.PERCENTUAL, "20")));
 
             verify(vendaRepository).save(captor.capture());
             Venda salva = captor.getValue();
@@ -451,7 +458,7 @@ class VendaServiceTest {
             stubSaveVenda();
 
             ArgumentCaptor<Venda> captor = ArgumentCaptor.forClass(Venda.class);
-            vendaService.confirmar(req(item(1L, 2)));
+            vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO,item(1L, 2)));
 
             verify(vendaRepository).save(captor.capture());
             Venda salva = captor.getValue();
@@ -472,7 +479,7 @@ class VendaServiceTest {
             stubOperadorAutenticado();
 
             ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                    () -> vendaService.confirmar(req(item(1L, 5))));
+                    () -> vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO,item(1L, 5))));
 
             assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
             assertTrue(ex.getReason() != null && ex.getReason().contains("Estoque insuficiente"));
@@ -489,7 +496,7 @@ class VendaServiceTest {
             stubOperadorAutenticado();
 
             ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                    () -> vendaService.confirmar(req(item(1L, 1), item(2L, 5))));
+                    () -> vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO,item(1L, 1), item(2L, 5))));
 
             assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
             // A venda em si nunca é salva — @Transactional cuida do rollback do
@@ -505,7 +512,7 @@ class VendaServiceTest {
             stubOperadorAutenticado();
             stubSaveVenda();
 
-            vendaService.confirmar(req(item(1L, 3)));
+            vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO,item(1L, 3)));
 
             assertEquals(0, p.getQtdEstoque());
             verify(produtoRepository).save(p);
@@ -521,7 +528,7 @@ class VendaServiceTest {
             stubOperadorAutenticado();
             stubSaveVenda();
 
-            vendaService.confirmar(req(item(1L, 2), item(2L, 3), item(3L, 4)));
+            vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO,item(1L, 2), item(2L, 3), item(3L, 4)));
 
             assertEquals(8, p1.getQtdEstoque());
             assertEquals(7, p2.getQtdEstoque());
@@ -538,7 +545,7 @@ class VendaServiceTest {
             when(produtoRepository.findById(99L)).thenReturn(Optional.empty());
 
             ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                    () -> vendaService.confirmar(req(item(99L, 1))));
+                    () -> vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO,item(99L, 1))));
 
             assertEquals(HttpStatus.NOT_FOUND, ex.getStatusCode());
             verify(vendaRepository, never()).save(any());
@@ -551,7 +558,7 @@ class VendaServiceTest {
             when(usuarioRepository.findByEmail(operador.getEmail())).thenReturn(Optional.empty());
 
             ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                    () -> vendaService.confirmar(req(item(1L, 1))));
+                    () -> vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO,item(1L, 1))));
 
             assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
             verify(vendaRepository, never()).save(any());
@@ -567,7 +574,7 @@ class VendaServiceTest {
             stubSaveVenda();
 
             ArgumentCaptor<Venda> captor = ArgumentCaptor.forClass(Venda.class);
-            vendaService.confirmar(req(item(1L, 2)));
+            vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO,item(1L, 2)));
             verify(vendaRepository).save(captor.capture());
 
             ItemVenda item = captor.getValue().getItens().get(0);
@@ -583,12 +590,62 @@ class VendaServiceTest {
             stubSaveVenda();
 
             ArgumentCaptor<Venda> captor = ArgumentCaptor.forClass(Venda.class);
-            vendaService.confirmar(req(item(1L, 1, TipoDesconto.VALOR_FIXO, "9999")));
+            vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO,item(1L, 1, TipoDesconto.VALOR_FIXO, "9999")));
             verify(vendaRepository).save(captor.capture());
 
             Venda salva = captor.getValue();
             assertEquals(0, salva.getTotal().compareTo(BigDecimal.ZERO));
             assertEquals(reais("10.00"), salva.getDesconto()); // desconto foi clampado no bruto
+        }
+
+        // ── tipoPagamento (novo campo obrigatório) ───────────────
+
+        @Test
+        @DisplayName("sem tipoPagamento: lança 400 BAD_REQUEST e NÃO persiste nada")
+        void confirmar_SemTipoPagamento_DeveLancarBadRequest() {
+            ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                    () -> vendaService.confirmar(new VendaRequest(
+                            List.of(item(1L, 1)), null)));
+
+            assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+            assertTrue(ex.getReason() != null && ex.getReason().contains("forma de pagamento"),
+                    "reason deve mencionar forma de pagamento: " + ex.getReason());
+            verify(vendaRepository, never()).save(any());
+            verify(produtoRepository, never()).save(any());
+            verify(usuarioRepository, never()).findByEmail(any());
+        }
+
+        @Test
+        @DisplayName("persiste corretamente cada TipoPagamento (DINHEIRO / PIX / DEBITO / CREDITO)")
+        void confirmar_DevePersistirCadaTipoPagamento() {
+            for (TipoPagamento tipo : TipoPagamento.values()) {
+                // reset mocks a cada iteração — cenário isolado
+                reset(vendaRepository, produtoRepository, usuarioRepository);
+                Produto p = produto(1L, "Item", "5.00", 10);
+                stubProdutos(p);
+                stubOperadorAutenticado();
+                stubSaveVenda();
+
+                ArgumentCaptor<Venda> captor = ArgumentCaptor.forClass(Venda.class);
+                vendaService.confirmar(reqPago(tipo, item(1L, 1)));
+                verify(vendaRepository).save(captor.capture());
+
+                assertEquals(tipo, captor.getValue().getTipoPagamento(),
+                        "TipoPagamento persistido incorreto para " + tipo);
+            }
+        }
+
+        @Test
+        @DisplayName("comprovante retorna o tipoPagamento escolhido")
+        void confirmar_ComprovanteDeveContarTipoPagamento() {
+            Produto p = produto(1L, "Item", "5.00", 10);
+            stubProdutos(p);
+            stubOperadorAutenticado();
+            stubSaveVenda();
+
+            VendaResponse resp = vendaService.confirmar(reqPago(TipoPagamento.PIX, item(1L, 1)));
+
+            assertEquals(TipoPagamento.PIX, resp.tipoPagamento());
         }
     }
 }
