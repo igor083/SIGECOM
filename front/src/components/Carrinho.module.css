@@ -98,6 +98,108 @@
   background: color-mix(in srgb, var(--color-error) 10%, transparent);
 }
 
+.btnVoltar {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.btnVoltar:hover:not(:disabled) {
+  background: var(--color-bg);
+  color: var(--color-primary);
+}
+
+.btnVoltar:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Etapa PAGAMENTO ──────────────────────────────────────── */
+
+.opcoesPagamento {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 16px;
+}
+
+.opcaoPagamento,
+.opcaoPagamentoAtiva {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.opcaoPagamento:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.opcaoPagamentoAtiva {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-bg-card));
+  box-shadow: 0 0 0 3px var(--color-primary-100);
+}
+
+.opcaoPagamento:disabled,
+.opcaoPagamentoAtiva:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.opcaoIcone {
+  font-size: 24px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.opcaoTextos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.opcaoTitulo {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.opcaoDescricao {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.opcaoCheck {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.pagamentoLabel {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
 /* ── Lista de itens ──────────────────────────────────────── */
 
 .lista {
@@ -125,10 +227,16 @@
 
 .item {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
   padding: 12px 16px;
   border-bottom: 1px solid var(--color-border);
+}
+
+.itemLinhaPrincipal {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .item:last-child {
@@ -219,15 +327,152 @@
   box-shadow: 0 0 0 3px var(--color-primary-100);
 }
 
-/* ── Subtotal do item (CA-5) ─────────────────────────────── */
+/* ── Valores do item (bruto riscado + subtotal) ──────────── */
+
+.itemValores {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 76px;
+}
+
+.itemBrutoRiscado {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
 
 .itemSubtotal {
   font-size: 14px;
   font-weight: 700;
   color: var(--color-primary);
   white-space: nowrap;
-  min-width: 72px;
   text-align: right;
+}
+
+.itemDescontoInfo {
+  font-size: 11px;
+  color: var(--color-success, #16a34a);
+  padding-left: 4px;
+}
+
+/* ── Botão / painel de desconto por item (US-026) ────────── */
+
+.btnDesconto,
+.btnDescontoAtivo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.btnDesconto:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btnDescontoAtivo {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.painelDesconto {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+}
+
+.tipoDesconto {
+  display: inline-flex;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.tipoAtivo,
+.tipoInativo {
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.tipoAtivo {
+  background: var(--color-primary);
+  color: white;
+}
+
+.tipoInativo {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.inputDesconto {
+  flex: 1;
+  min-width: 120px;
+  height: 30px;
+  padding: 0 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.inputDesconto:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-100);
+}
+
+.acoesDesconto {
+  display: flex;
+  gap: 6px;
+}
+
+.btnDescontoAplicar,
+.btnDescontoLimpar {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.btnDescontoAplicar {
+  background: var(--color-primary);
+  color: white;
+}
+
+.btnDescontoLimpar {
+  background: transparent;
+  color: var(--color-error);
+  border-color: var(--color-border);
 }
 
 /* ── Botão remover ───────────────────────────────────────── */
@@ -269,6 +514,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding-top: 6px;
+  border-top: 1px solid var(--color-border);
 }
 
 .totalLabel {
@@ -278,9 +525,29 @@
 }
 
 .totalValor {
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 800;
   color: var(--color-primary);
+  letter-spacing: -0.02em;
+}
+
+/* ── Linhas de subtotal / desconto (US-026) ──────────────── */
+
+.linhaSub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.erroBox {
+  padding: 10px 12px;
+  border: 1px solid var(--color-error);
+  background: color-mix(in srgb, var(--color-error) 8%, transparent);
+  color: var(--color-error);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
 }
 
 /* ── Botão confirmar ─────────────────────────────────────── */
@@ -305,4 +572,93 @@
 
 .btnConfirmar:active {
   opacity: 0.8;
+}
+
+.btnConfirmar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Comprovante (US-027) ────────────────────────────────── */
+
+.comprovanteOverlay {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+  overflow: hidden;
+}
+
+.comprovanteBox {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+}
+
+.comprovanteHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.comprovanteTitulo {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-success, #16a34a);
+}
+
+.comprovanteSub {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.comprovanteLista {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.comprovanteItem {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.comprovanteNome {
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.comprovanteQtd {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.comprovanteValor {
+  color: var(--color-text);
+  font-weight: 600;
+  min-width: 72px;
+  text-align: right;
+}
+
+.comprovanteResumo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--color-border);
 }

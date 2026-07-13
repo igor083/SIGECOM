@@ -1,18 +1,17 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
-import BuscaProduto from "@/components/BuscaProduto";
-import Carrinho from "@/components/Carrinho";
-import { useCarrinho } from "@/hooks/useCarrinho";
+import PointOfSaleOutlinedIcon from "@mui/icons-material/PointOfSaleOutlined";
+import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import styles from "./pdv.module.css";
 
-export default function PdvPage() {
+export default function PdvHubPage() {
   const router = useRouter();
   const { loading, isAuthenticated } = useAuth();
-  const carrinho = useCarrinho();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) router.replace("/login");
@@ -22,19 +21,43 @@ export default function PdvPage() {
 
   return (
     <AppShell title="PDV — Ponto de Venda">
-      <div className={styles.layout}>
-        {/* Coluna esquerda: busca de produtos (US-024) */}
-        <section className={styles.colunaBusca}>
-          <h2 className={styles.secaoTitulo}>Buscar produto</h2>
-          {/* onSelecionar conecta BuscaProduto ao carrinho (CA-1) */}
-          <BuscaProduto onSelecionar={carrinho.adicionarItem} />
-        </section>
+      <div className={styles.header}>
+        <h2 className={styles.titulo}>O que você quer fazer?</h2>
+        <p className={styles.subtitulo}>
+          Escolha entre iniciar uma nova venda ou consultar o histórico.
+        </p>
+      </div>
 
-        {/* Coluna direita: carrinho (US-025) */}
-        <section className={styles.colunaCarrinho}>
-          <h2 className={styles.secaoTitulo}>Carrinho</h2>
-          <Carrinho carrinho={carrinho} />
-        </section>
+      <div className={styles.cards}>
+        <Link href="/pdv/nova" className={`${styles.card} ${styles.cardPrimary}`}>
+          <div className={styles.iconeWrapper}>
+            <PointOfSaleOutlinedIcon sx={{ fontSize: 32 }} />
+          </div>
+          <div className={styles.textos}>
+            <span className={styles.cardTitulo}>Iniciar nova venda</span>
+            <span className={styles.cardDescricao}>
+              Buscar produtos, montar o carrinho e registrar a venda.
+            </span>
+          </div>
+          <span className={styles.seta} aria-hidden>
+            →
+          </span>
+        </Link>
+
+        <Link href="/pdv/historico" className={styles.card}>
+          <div className={styles.iconeWrapper}>
+            <ReceiptLongOutlinedIcon sx={{ fontSize: 32 }} />
+          </div>
+          <div className={styles.textos}>
+            <span className={styles.cardTitulo}>Ver histórico</span>
+            <span className={styles.cardDescricao}>
+              Consultar vendas registradas com filtros e paginação.
+            </span>
+          </div>
+          <span className={styles.seta} aria-hidden>
+            →
+          </span>
+        </Link>
       </div>
     </AppShell>
   );

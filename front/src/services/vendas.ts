@@ -1,0 +1,113 @@
+// =============================================================
+// services/vendas.ts — Serviço de vendas do PDV (SIGECOM)
+// =============================================================
+// Espelha os endpoints do VendaController:
+//   POST /vendas/calcular  → preview (US-026)
+//   POST /vendas           → confirma + baixa estoque (US-027)
+// =============================================================
+
+import api from "./api";
+
+// ── Tipos ────────────────────────────────────────────────────
+
+export type TipoDesconto = "PERCENTUAL" | "VALOR_FIXO";
+
+export type TipoPagamento = "DINHEIRO" | "PIX" | "DEBITO" | "CREDITO";
+
+export interface ItemVendaRequest {
+  produtoId: number;
+  quantidade: number;
+  tipoDesconto?: TipoDesconto | null;
+  valorDesconto?: number | null;
+}
+
+export interface VendaRequest {
+  itens: ItemVendaRequest[];
+  /** Obrigatório apenas em POST /vendas (confirmação). No preview vai null. */
+  tipoPagamento?: TipoPagamento | null;
+}
+
+export interface ItemVendaResponse {
+  produtoId: number;
+  nomeProduto: string;
+  quantidade: number;
+  precoUnitario: number;
+  tipoDesconto: TipoDesconto | null;
+  valorDesconto: number;
+  descontoAplicado: number;
+  subtotal: number;
+}
+
+export interface CalculoVendaResponse {
+  itens: ItemVendaResponse[];
+  subtotal: number;
+  descontoTotal: number;
+  total: number;
+}
+
+export interface VendaResponse {
+  id: number;
+  dataHora: string;
+  operador: string;
+  tipoPagamento: TipoPagamento;
+  itens: ItemVendaResponse[];
+  subtotal: number;
+  descontoTotal: number;
+  total: number;
+}
+
+/** Item da listagem de histórico (payload leve, sem itens). */
+export interface VendaResumoResponse {
+  id: number;
+  dataHora: string;
+  operador: string;
+  tipoPagamento: TipoPagamento;
+  qtdItens: number;
+  subtotal: number;
+  descontoTotal: number;
+  total: number;
+}
+
+/** Página de resumos de venda — compatível com Page do Spring. */
+export interface PageVendaResumo {
+  content: VendaResumoResponse[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+}
+
+// ── Métodos ──────────────────────────────────────────────────
+
+/**
+ * Recalcula subtotal, desconto total e total final no servidor
+ * a partir dos itens do carrinho. Chamado a cada mudança
+ * (CA US-026 — cálculo automático).
+ */
+export async function calcularVenda(request: VendaRequest): Promise<CalculoVendaResponse> {
+  const response = await api.post<CalculoVendaResponse>("/vendas/calcular", request);
+  return response.data;
+}
+
+/**
+ * Confirma a venda: persiste + baixa estoque em transação
+ * atômica e devolve o comprovante simplificado (US-027).
+ */
+export async function confirmarVenda(request: VendaRequest): Promise<VendaResponse> {
+  const response = await api.post<VendaResponse>("/vendas", request);
+  return response.data;
+}
+
+/**
+ * Histórico de vendas paginado — usado pela tela /pdv/historico.
+ * As datas devem estar em ISO local (ex.: "2026-01-31T00:00:00").
+ */
+export async function listarVendas(params: {
+  page?: number;
+  size?: number;
+  dataInicio?: string;
+  dataFim?: string;
+}): Promise<PageVendaResumo> {
+  const response = await api.get<PageVendaResumo>("/vendas", { params });
+  return response.data;
+}
