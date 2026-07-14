@@ -26,7 +26,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -97,10 +99,21 @@ public class VendaService {
      * O default (via controller) é ordenar por dataHora desc.
      */
     @Transactional(readOnly = true)
-    public Page<VendaResumoResponse> listar(LocalDateTime dataInicio,
-                                            LocalDateTime dataFim,
+    public Page<VendaResumoResponse> listar(LocalDate dataInicio,
+                                            LocalDate dataFim,
                                             Pageable pageable) {
-        return vendaRepository.findAllFiltrado(dataInicio, dataFim, pageable)
+        // O front manda a data como YYYY-MM-DD; converte para a faixa do dia.
+        // Nunca passar null ao repositorio: no Postgres um parametro nulo em
+        // "(:param IS NULL OR ...)" nao tem tipo e estoura "could not determine
+        // data type of parameter" (500). Por isso usa limites amplos quando nulo.
+        LocalDateTime inicio = (dataInicio != null)
+                ? dataInicio.atStartOfDay()
+                : LocalDate.of(1970, 1, 1).atStartOfDay();
+        LocalDateTime fim = (dataFim != null)
+                ? dataFim.atTime(LocalTime.MAX)
+                : LocalDateTime.now().plusYears(100);
+
+        return vendaRepository.findAllFiltrado(inicio, fim, pageable)
                 .map(VendaResumoResponse::toResponse);
     }
 
