@@ -181,7 +181,7 @@ function PainelDesconto({
         className={styles.inputDesconto}
         type="number"
         min={0}
-        step="0.01"
+        step="1"
         placeholder={tipo === "PERCENTUAL" ? "% de desconto" : "R$ de desconto"}
         value={valor}
         onChange={(e) => setValor(e.target.value)}
@@ -334,6 +334,8 @@ function EtapaProdutos({ carrinho }: CarrinhoProps) {
   } = carrinho;
 
   const [descontoAbertoId, setDescontoAbertoId] = useState<number | null>(null);
+  const [confirmandoLimpar, setConfirmandoLimpar] = useState(false);
+  const [confirmandoRemocaoId, setConfirmandoRemocaoId] = useState<number | null>(null);
 
   // CA-6: carrinho vazio
   if (itens.length === 0) {
@@ -346,16 +348,31 @@ function EtapaProdutos({ carrinho }: CarrinhoProps) {
     );
   }
 
-  function confirmarRemocao(produtoId: number, nome: string) {
-    if (window.confirm(`Remover "${nome}" do carrinho?`)) {
+  // Sem window.confirm (bloqueavel pelo navegador): 1o clique no X arma (fica
+  // vermelho), 2o clique remove. Reseta sozinho apos 3s.
+  function confirmarRemocao(produtoId: number) {
+    if (confirmandoRemocaoId === produtoId) {
       removerItem(produtoId);
+      setConfirmandoRemocaoId(null);
+      return;
     }
+    setConfirmandoRemocaoId(produtoId);
+    setTimeout(() => {
+      setConfirmandoRemocaoId((cur) => (cur === produtoId ? null : cur));
+    }, 3000);
   }
 
+  // Confirmacao em duas etapas, sem window.confirm (que o navegador pode bloquear
+  // e deixar o botao "sem funcionar"): 1o clique arma "Confirmar?", 2o clique limpa.
+  // Reseta sozinho apos 3s se o usuario nao confirmar.
   function confirmarLimpar() {
-    if (window.confirm("Limpar todos os itens do carrinho?")) {
+    if (confirmandoLimpar) {
       limpar();
+      setConfirmandoLimpar(false);
+      return;
     }
+    setConfirmandoLimpar(true);
+    setTimeout(() => setConfirmandoLimpar(false), 3000);
   }
 
   return (
@@ -367,7 +384,7 @@ function EtapaProdutos({ carrinho }: CarrinhoProps) {
           <span className={styles.badge}>{totalItens}</span>
         </span>
         <button className={styles.btnLimpar} onClick={confirmarLimpar}>
-          Limpar tudo
+          {confirmandoLimpar ? "Confirmar?" : "Limpar tudo"}
         </button>
       </div>
 
@@ -440,8 +457,10 @@ function EtapaProdutos({ carrinho }: CarrinhoProps) {
 
                 <button
                   className={styles.btnRemover}
-                  onClick={() => confirmarRemocao(produto.id, produto.nome)}
+                  onClick={() => confirmarRemocao(produto.id)}
                   aria-label={`Remover ${produto.nome}`}
+                  title={confirmandoRemocaoId === produto.id ? "Clique de novo para confirmar" : "Remover item"}
+                  style={confirmandoRemocaoId === produto.id ? { color: "#dc2626", background: "#fee2e2", fontWeight: 700 } : undefined}
                 >
                   ×
                 </button>

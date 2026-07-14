@@ -13,9 +13,13 @@ import java.time.LocalDateTime;
 @Repository
 public interface VendaRepository extends JpaRepository<Venda, Long> {
 
+    // Filtro por faixa de data. O service SEMPRE passa dataInicio/dataFim nao-nulos
+    // (usa limites amplos quando o filtro vem vazio), por isso a query nao usa
+    // "IS NULL": no Postgres, ":param IS NULL" impede a inferencia de tipo do
+    // parametro no PREPARE e estoura "could not determine data type of parameter".
     @Query("SELECT v FROM Venda v " +
-           "WHERE (:dataInicio IS NULL OR v.dataHora >= :dataInicio) " +
-           "  AND (:dataFim IS NULL OR v.dataHora <= :dataFim)")
+           "WHERE v.dataHora >= :dataInicio " +
+           "  AND v.dataHora <= :dataFim")
     Page<Venda> findAllFiltrado(@Param("dataInicio") LocalDateTime dataInicio,
                                 @Param("dataFim") LocalDateTime dataFim,
                                 Pageable pageable);

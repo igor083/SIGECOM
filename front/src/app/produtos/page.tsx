@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProdutos } from "@/hooks/useProdutos";
 import { mensagemDeErro } from "@/lib/apiError";
 import type { Produto } from "@/services/produtos";
+import { criarCategoria } from "@/services/categorias";
 import { obterParametrosFinanceiros } from "@/services/parametrosFinanceiros";
 import { precoSugerido, calcularMarkup, type ParametrosFinanceiros } from "@/lib/markup";
 import AppShell from "@/components/AppShell";
@@ -52,6 +53,12 @@ export default function GestaoProdutosPage() {
   const [formCmv, setFormCmv] = useState("");
   const [financeParams, setFinanceParams] = useState<ParametrosFinanceiros | null>(null);
   const [mostrarComposicao, setMostrarComposicao] = useState(false);
+  // Criar categoria nova direto no cadastro de produto
+  const [categoriasExtras, setCategoriasExtras] = useState<{ id: number; nome: string }[]>([]);
+  const [criandoCat, setCriandoCat] = useState(false);
+  const [novaCatNome, setNovaCatNome] = useState("");
+  const [catSalvando, setCatSalvando] = useState(false);
+  const [catErro, setCatErro] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -67,11 +74,35 @@ export default function GestaoProdutosPage() {
     return produtos;
   }, [tab, produtos]);
 
+  // Categorias do backend + as criadas nesta sessao (aparecem sem recarregar a pagina)
+  const categoriasTodas = useMemo(() => {
+    const mapa = new Map<number, { id: number; nome: string }>();
+    [...categorias, ...categoriasExtras].forEach((c) => mapa.set(c.id, c));
+    return Array.from(mapa.values());
+  }, [categorias, categoriasExtras]);
+
+  async function handleCriarCategoria() {
+    const nome = novaCatNome.trim();
+    if (!nome) { setCatErro("Informe o nome da categoria."); return; }
+    setCatSalvando(true); setCatErro(null);
+    try {
+      const nova = await criarCategoria(nome);
+      setCategoriasExtras((prev) => [...prev, nova]);
+      setFormCategoriaId(nova.id.toString());
+      setCriandoCat(false); setNovaCatNome("");
+    } catch (err) {
+      setCatErro(mensagemDeErro(err, "Não foi possível criar a categoria."));
+    } finally {
+      setCatSalvando(false);
+    }
+  }
+
   const abrirCriar = () => {
     setFormNome(""); setFormDescricao(""); setFormPreco("");
     setFormEstoqueMinimo("5"); setFormCategoriaId(categorias[0]?.id.toString() ?? "");
     setModalErro(null); setModalSucesso(null);
     setFinanceParams(obterParametrosFinanceiros()); setFormCmv(""); setMostrarComposicao(false);
+    setCriandoCat(false); setNovaCatNome(""); setCatErro(null);
     setModalAberto("criar");
   };
 
@@ -329,9 +360,23 @@ export default function GestaoProdutosPage() {
                   </div>
                   <div className={styles.formGroup}>
                     <label htmlFor="c-cat">Categoria *</label>
-                    <select id="c-cat" className={styles.formSelect} value={formCategoriaId} onChange={(e) => setFormCategoriaId(e.target.value)} disabled={mutating} required>
-                      {categorias.map((cat) => <option key={cat.id} value={cat.id}>{cat.nome}</option>)}
-                    </select>
+                    {!criandoCat ? (
+                      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                        <select id="c-cat" className={styles.formSelect} style={{ flex: 1 }} value={formCategoriaId} onChange={(e) => setFormCategoriaId(e.target.value)} disabled={mutating} required>
+                          {categoriasTodas.map((cat) => <option key={cat.id} value={cat.id}>{cat.nome}</option>)}
+                        </select>
+                        <button type="button" className={styles.secondaryBtn} style={{ whiteSpace: "nowrap", padding: "8px 12px" }} onClick={() => { setCriandoCat(true); setCatErro(null); setNovaCatNome(""); }} disabled={mutating}>+ Nova</button>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                          <input className={styles.formInput} style={{ flex: 1 }} type="text" placeholder="Nome da nova categoria" value={novaCatNome} onChange={(e) => setNovaCatNome(e.target.value)} disabled={catSalvando} autoFocus onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCriarCategoria(); } }} />
+                          <button type="button" className={styles.primaryBtn} style={{ padding: "8px 12px" }} onClick={handleCriarCategoria} disabled={catSalvando || !novaCatNome.trim()}>{catSalvando ? "..." : "Criar"}</button>
+                          <button type="button" className={styles.secondaryBtn} style={{ padding: "8px 12px" }} onClick={() => { setCriandoCat(false); setCatErro(null); }} disabled={catSalvando}>Cancelar</button>
+                        </div>
+                        {catErro && <span style={{ color: "#dc2626", fontSize: "0.78rem" }}>{catErro}</span>}
+                      </div>
+                    )}
                   </div>
                   <div className={styles.row}>
                     <div className={styles.formGroup}>
@@ -352,16 +397,26 @@ export default function GestaoProdutosPage() {
                       <button type="button" style={{ background: "none", border: "none", color: "#2563eb", textDecoration: "underline", cursor: "pointer", fontSize: "0.75rem", padding: 0 }} onClick={() => setMostrarComposicao(!mostrarComposicao)}>
                         {mostrarComposicao ? "Ocultar composição" : "Ver composição do preço"}
                       </button>
-                      {mostrarComposicao && (
-                        <div style={{ marginTop: "0.5rem", padding: "0.75rem", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", fontSize: "0.75rem", color: "#64748b", lineHeight: 1.6 }}>
-                          <div>• Markup: {calcularMarkup(financeParams).toFixed(3)}</div>
-                          <div>• Custos Fixos: {financeParams.custosFixosPercent}%</div>
-                          <div>• Impostos: {financeParams.impostosPercent}%</div>
-                          <div>• Comissão: {financeParams.comissaoPercent}%</div>
-                          <div>• Tx. Maquininha: {financeParams.taxaMaquininhaPercent}%</div>
-                          <div>• Lucro Desejado: {financeParams.lucroDesejadoPercent}%</div>
-                        </div>
-                      )}
+                      {mostrarComposicao && (() => {
+                        const params = financeParams!;
+                        const cmvNum = parseFloat(formCmv);
+                        const precoP = precoSugerido(cmvNum, params);
+                        const emReais = (pct: number) => formatarPreco((pct / 100) * precoP);
+                        return (
+                          <div style={{ marginTop: "0.5rem", padding: "0.75rem", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", fontSize: "0.75rem", color: "#64748b", lineHeight: 1.7 }}>
+                            <div style={{ marginBottom: 4, color: "#334155", fontWeight: 600 }}>Como o preço de {formatarPreco(precoP)} se forma:</div>
+                            <div>Custo do produto (CMV): <strong style={{ color: "#334155" }}>{formatarPreco(cmvNum)}</strong></div>
+                            <div>Impostos ({params.impostosPercent}%): {emReais(params.impostosPercent)}</div>
+                            <div>Custos fixos ({params.custosFixosPercent}%): {emReais(params.custosFixosPercent)}</div>
+                            <div>Comissão ({params.comissaoPercent}%): {emReais(params.comissaoPercent)}</div>
+                            <div>Maquininha ({params.taxaMaquininhaPercent}%): {emReais(params.taxaMaquininhaPercent)}</div>
+                            <div>Seu lucro ({params.lucroDesejadoPercent}%): <strong style={{ color: "#16a34a" }}>{emReais(params.lucroDesejadoPercent)}</strong></div>
+                            <div style={{ borderTop: "1px solid #cbd5e1", marginTop: 6, paddingTop: 4, color: "#334155", fontWeight: 600 }}>
+                              Preço de venda: {formatarPreco(precoP)} &nbsp;·&nbsp; markup {calcularMarkup(params).toFixed(3)}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                   <div className={styles.row}>
