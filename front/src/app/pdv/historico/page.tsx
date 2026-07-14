@@ -38,22 +38,15 @@ const ROTULOS_PAGAMENTO: Record<TipoPagamento, string> = {
   CREDITO: "Crédito",
 };
 
-/** Converte "2026-07-13" (input type=date) para ISO local usável no backend. */
-function inicioDoDia(data: string): string | undefined {
-  if (!data) return undefined;
-  return `${data}T00:00:00`;
-}
-
-function fimDoDia(data: string): string | undefined {
-  if (!data) return undefined;
-  return `${data}T23:59:59`;
-}
-
 export default function HistoricoVendasPage() {
   const router = useRouter();
   const { loading: authLoading, isAuthenticated } = useAuth();
 
   const [page, setPage] = useState(0);
+  // Valores em edição nos campos de data (não disparam busca sozinhos).
+  const [inputDataInicio, setInputDataInicio] = useState("");
+  const [inputDataFim, setInputDataFim] = useState("");
+  // Filtro efetivamente aplicado — só muda ao enviar o formulário ou limpar.
   const [dataInicio, setDataInicio] = useState("");
   const [dataFim, setDataFim] = useState("");
   const [pagina, setPagina] = useState<PageVendaResumo | null>(null);
@@ -72,8 +65,8 @@ export default function HistoricoVendasPage() {
       const resp = await listarVendas({
         page,
         size: PAGE_SIZE,
-        dataInicio: inicioDoDia(dataInicio),
-        dataFim: fimDoDia(dataFim),
+        dataInicio: dataInicio || undefined,
+        dataFim: dataFim || undefined,
       });
       setPagina(resp);
     } catch (err) {
@@ -84,6 +77,8 @@ export default function HistoricoVendasPage() {
     }
   }, [page, dataInicio, dataFim]);
 
+  // Busca ao entrar na tela e a cada troca de página ou de filtro aplicado
+  // (envio do formulário / limpar) — nunca a cada tecla digitada na data.
   useEffect(() => {
     if (!isAuthenticated) return;
     carregar();
@@ -95,12 +90,16 @@ export default function HistoricoVendasPage() {
   const totalPages = pagina?.totalPages ?? 1;
   const totalElements = pagina?.totalElements ?? 0;
 
-  function aplicarFiltro() {
+  function aplicarFiltro(e: React.FormEvent) {
+    e.preventDefault();
     setPage(0);
-    carregar();
+    setDataInicio(inputDataInicio);
+    setDataFim(inputDataFim);
   }
 
   function limparFiltro() {
+    setInputDataInicio("");
+    setInputDataFim("");
     setDataInicio("");
     setDataFim("");
     setPage(0);
@@ -127,8 +126,8 @@ export default function HistoricoVendasPage() {
         </span>
       </div>
 
-      {/* Filtros de data */}
-      <div className={styles.filters}>
+      {/* Filtros de data — a busca só é disparada ao enviar o formulário */}
+      <form className={styles.filters} onSubmit={aplicarFiltro}>
         <div className={styles.filterGroup}>
           <label htmlFor="dt-ini" className={styles.filterLabel}>
             De
@@ -137,8 +136,8 @@ export default function HistoricoVendasPage() {
             id="dt-ini"
             className={styles.filterInput}
             type="date"
-            value={dataInicio}
-            onChange={(e) => setDataInicio(e.target.value)}
+            value={inputDataInicio}
+            onChange={(e) => setInputDataInicio(e.target.value)}
           />
         </div>
         <div className={styles.filterGroup}>
@@ -149,23 +148,24 @@ export default function HistoricoVendasPage() {
             id="dt-fim"
             className={styles.filterInput}
             type="date"
-            value={dataFim}
-            onChange={(e) => setDataFim(e.target.value)}
+            value={inputDataFim}
+            onChange={(e) => setInputDataFim(e.target.value)}
           />
         </div>
         <div className={styles.filterAcoes}>
-          <button className={styles.primaryBtn} onClick={aplicarFiltro} disabled={loading}>
-            Aplicar
+          <button type="submit" className={styles.primaryBtn} disabled={loading}>
+            Buscar
           </button>
           <button
+            type="button"
             className={styles.secondaryBtn}
             onClick={limparFiltro}
-            disabled={loading || (!dataInicio && !dataFim)}
+            disabled={loading || (!inputDataInicio && !inputDataFim && !dataInicio && !dataFim)}
           >
             Limpar
           </button>
         </div>
-      </div>
+      </form>
 
       {/* Tabela */}
       {loading ? (

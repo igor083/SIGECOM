@@ -1,6 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useMetaVendaDiaria } from "@/hooks/useMetaVendaDiaria";
+import { useAuth } from "@/hooks/useAuth";
+import { atualizarMetaVendaDiaria } from "@/services/dashboard";
+import { mensagemDeErro } from "@/lib/apiError";
 import styles from "./MetaVendaDiaria.module.css";
 
 function formatarPreco(v: number) {
@@ -8,7 +12,14 @@ function formatarPreco(v: number) {
 }
 
 export default function MetaVendaDiaria() {
-  const { dados, carregando, erro } = useMetaVendaDiaria();
+  const { dados, carregando, erro, recarregar } = useMetaVendaDiaria();
+  const { user } = useAuth();
+  const podeEditar = user?.perfil === "ADMIN";
+
+  const [editando, setEditando] = useState(false);
+  const [valorInput, setValorInput] = useState("");
+  const [salvando, setSalvando] = useState(false);
+  const [erroSalvar, setErroSalvar] = useState<string | null>(null);
 
   if (carregando) {
     return <div className={styles.card}><span className={styles.skeleton} /></div>;
@@ -20,6 +31,38 @@ export default function MetaVendaDiaria() {
         <span className={styles.erroTexto}>{erro ?? "Sem dados."}</span>
       </div>
     );
+  }
+
+  function iniciarEdicao() {
+    setValorInput(dados!.metaDia.toFixed(2));
+    setErroSalvar(null);
+    setEditando(true);
+  }
+
+  function cancelarEdicao() {
+    setEditando(false);
+    setErroSalvar(null);
+  }
+
+  async function salvarMeta(e: React.FormEvent) {
+    e.preventDefault();
+    const valor = Number(valorInput.replace(",", "."));
+    if (!Number.isFinite(valor) || valor <= 0) {
+      setErroSalvar("Informe um valor de meta maior que zero.");
+      return;
+    }
+
+    setSalvando(true);
+    setErroSalvar(null);
+    try {
+      await atualizarMetaVendaDiaria(valor);
+      await recarregar();
+      setEditando(false);
+    } catch (err) {
+      setErroSalvar(mensagemDeErro(err, "Não foi possível salvar a meta."));
+    } finally {
+      setSalvando(false);
+    }
   }
 
   const noBazul = dados.noBazul;
@@ -42,7 +85,45 @@ export default function MetaVendaDiaria() {
         <div className={styles.separador} />
         <div className={styles.valorBloco}>
           <span className={styles.valorLabel}>Meta</span>
-          <span className={styles.valorSecundario}>{formatarPreco(dados.metaDia)}</span>
+          {!editando ? (
+            <span className={styles.valorSecundario}>
+              {formatarPreco(dados.metaDia)}
+              {podeEditar && (
+                <button
+                  type="button"
+                  className={styles.editarBtn}
+                  onClick={iniciarEdicao}
+                  aria-label="Editar meta do dia"
+                >
+                  Editar
+                </button>
+              )}
+            </span>
+          ) : (
+            <form className={styles.editForm} onSubmit={salvarMeta}>
+              <input
+                type="number"
+                min="0.01"
+                step="0.01"
+                className={styles.editInput}
+                value={valorInput}
+                onChange={(e) => setValorInput(e.target.value)}
+                autoFocus
+                disabled={salvando}
+              />
+              <button type="submit" className={styles.salvarBtn} disabled={salvando}>
+                {salvando ? "..." : "Salvar"}
+              </button>
+              <button
+                type="button"
+                className={styles.cancelarBtn}
+                onClick={cancelarEdicao}
+                disabled={salvando}
+              >
+                Cancelar
+              </button>
+            </form>
+          )}
         </div>
         <div className={styles.separador} />
         <div className={styles.valorBloco}>
@@ -52,6 +133,8 @@ export default function MetaVendaDiaria() {
           </span>
         </div>
       </div>
+
+      {erroSalvar && <span className={styles.erroTexto}>{erroSalvar}</span>}
 
       {/* Barra de progresso */}
       <div className={styles.barraFundo}>

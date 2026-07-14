@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
 import EmConstrucao from "@/components/EmConstrucao";
+import MetaVendaDiaria from "@/components/MetaVendaDiaria";
 import styles from "../dashboard.module.css";
 
 export default function DashboardFuncionarioPage() {
@@ -27,9 +28,10 @@ export default function DashboardFuncionarioPage() {
 
   return (
     <AppShell title="Painel do Funcionário">
+      <MetaVendaDiaria />
       <EmConstrucao
         titulo="Dashboard em desenvolvimento"
-        descricao="Os indicadores e resumos do dia serão exibidos aqui quando os módulos de PDV e caixa estiverem integrados à API."
+        descricao="Os demais indicadores e resumos do dia serão exibidos aqui quando os módulos de PDV e caixa estiverem integrados à API."
       />
     </AppShell>
   );
