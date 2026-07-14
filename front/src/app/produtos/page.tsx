@@ -397,16 +397,26 @@ export default function GestaoProdutosPage() {
                       <button type="button" style={{ background: "none", border: "none", color: "#2563eb", textDecoration: "underline", cursor: "pointer", fontSize: "0.75rem", padding: 0 }} onClick={() => setMostrarComposicao(!mostrarComposicao)}>
                         {mostrarComposicao ? "Ocultar composição" : "Ver composição do preço"}
                       </button>
-                      {mostrarComposicao && (
-                        <div style={{ marginTop: "0.5rem", padding: "0.75rem", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", fontSize: "0.75rem", color: "#64748b", lineHeight: 1.6 }}>
-                          <div>• Markup: {calcularMarkup(financeParams).toFixed(3)}</div>
-                          <div>• Custos Fixos: {financeParams.custosFixosPercent}%</div>
-                          <div>• Impostos: {financeParams.impostosPercent}%</div>
-                          <div>• Comissão: {financeParams.comissaoPercent}%</div>
-                          <div>• Tx. Maquininha: {financeParams.taxaMaquininhaPercent}%</div>
-                          <div>• Lucro Desejado: {financeParams.lucroDesejadoPercent}%</div>
-                        </div>
-                      )}
+                      {mostrarComposicao && (() => {
+                        const params = financeParams!;
+                        const cmvNum = parseFloat(formCmv);
+                        const precoP = precoSugerido(cmvNum, params);
+                        const emReais = (pct: number) => formatarPreco((pct / 100) * precoP);
+                        return (
+                          <div style={{ marginTop: "0.5rem", padding: "0.75rem", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", fontSize: "0.75rem", color: "#64748b", lineHeight: 1.7 }}>
+                            <div style={{ marginBottom: 4, color: "#334155", fontWeight: 600 }}>Como o preço de {formatarPreco(precoP)} se forma:</div>
+                            <div>Custo do produto (CMV): <strong style={{ color: "#334155" }}>{formatarPreco(cmvNum)}</strong></div>
+                            <div>Impostos ({params.impostosPercent}%): {emReais(params.impostosPercent)}</div>
+                            <div>Custos fixos ({params.custosFixosPercent}%): {emReais(params.custosFixosPercent)}</div>
+                            <div>Comissão ({params.comissaoPercent}%): {emReais(params.comissaoPercent)}</div>
+                            <div>Maquininha ({params.taxaMaquininhaPercent}%): {emReais(params.taxaMaquininhaPercent)}</div>
+                            <div>Seu lucro ({params.lucroDesejadoPercent}%): <strong style={{ color: "#16a34a" }}>{emReais(params.lucroDesejadoPercent)}</strong></div>
+                            <div style={{ borderTop: "1px solid #cbd5e1", marginTop: 6, paddingTop: 4, color: "#334155", fontWeight: 600 }}>
+                              Preço de venda: {formatarPreco(precoP)} &nbsp;·&nbsp; markup {calcularMarkup(params).toFixed(3)}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                   <div className={styles.row}>
