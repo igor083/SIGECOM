@@ -335,6 +335,7 @@ function EtapaProdutos({ carrinho }: CarrinhoProps) {
 
   const [descontoAbertoId, setDescontoAbertoId] = useState<number | null>(null);
   const [confirmandoLimpar, setConfirmandoLimpar] = useState(false);
+  const [confirmandoRemocaoId, setConfirmandoRemocaoId] = useState<number | null>(null);
 
   // CA-6: carrinho vazio
   if (itens.length === 0) {
@@ -347,10 +348,18 @@ function EtapaProdutos({ carrinho }: CarrinhoProps) {
     );
   }
 
-  function confirmarRemocao(produtoId: number, nome: string) {
-    if (window.confirm(`Remover "${nome}" do carrinho?`)) {
+  // Sem window.confirm (bloqueavel pelo navegador): 1o clique no X arma (fica
+  // vermelho), 2o clique remove. Reseta sozinho apos 3s.
+  function confirmarRemocao(produtoId: number) {
+    if (confirmandoRemocaoId === produtoId) {
       removerItem(produtoId);
+      setConfirmandoRemocaoId(null);
+      return;
     }
+    setConfirmandoRemocaoId(produtoId);
+    setTimeout(() => {
+      setConfirmandoRemocaoId((cur) => (cur === produtoId ? null : cur));
+    }, 3000);
   }
 
   // Confirmacao em duas etapas, sem window.confirm (que o navegador pode bloquear
@@ -448,8 +457,10 @@ function EtapaProdutos({ carrinho }: CarrinhoProps) {
 
                 <button
                   className={styles.btnRemover}
-                  onClick={() => confirmarRemocao(produto.id, produto.nome)}
+                  onClick={() => confirmarRemocao(produto.id)}
                   aria-label={`Remover ${produto.nome}`}
+                  title={confirmandoRemocaoId === produto.id ? "Clique de novo para confirmar" : "Remover item"}
+                  style={confirmandoRemocaoId === produto.id ? { color: "#dc2626", background: "#fee2e2", fontWeight: 700 } : undefined}
                 >
                   ×
                 </button>
