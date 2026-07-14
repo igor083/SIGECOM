@@ -1,0 +1,132 @@
+.card {
+  padding: 20px 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-card);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.titulo {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.badgeAzul {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  color: #0369a1;
+  background: #e0f2fe;
+}
+
+.badgeAbaixo {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  color: var(--color-error);
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+}
+
+.valores {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.valorBloco {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.separador {
+  width: 1px;
+  height: 36px;
+  background: var(--color-border);
+  flex-shrink: 0;
+}
+
+.valorLabel {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.valorPrincipal {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.valorSecundario {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.percentualAzul {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0369a1;
+}
+
+.percentualAbaixo {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-error);
+}
+
+/* Barra de progresso */
+.barraFundo {
+  height: 8px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.barraAzul {
+  height: 100%;
+  background: #0ea5e9;
+  border-radius: var(--radius-full);
+  transition: width 0.6s ease;
+}
+
+.barraAbaixo {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+  transition: width 0.6s ease;
+}
+
+/* Skeleton de carregamento */
+.skeleton {
+  display: block;
+  height: 80px;
+  background: linear-gradient(90deg, var(--color-border) 25%, var(--color-border-hover) 50%, var(--color-border) 75%);
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+  animation: shimmer 1.2s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.erroTexto {
+  font-size: 13px;
+  color: var(--color-error);
+}
