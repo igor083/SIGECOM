@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useProdutos } from "@/hooks/useProdutos";
 import { mensagemDeErro } from "@/lib/apiError";
 import type { Produto } from "@/services/produtos";
+import { criarCategoria } from "@/services/categorias";
 import { obterParametrosFinanceiros } from "@/services/parametrosFinanceiros";
 import { precoSugerido, calcularMarkup, type ParametrosFinanceiros } from "@/lib/markup";
 import AppShell from "@/components/AppShell";
@@ -52,6 +53,12 @@ export default function GestaoProdutosPage() {
   const [formCmv, setFormCmv] = useState("");
   const [financeParams, setFinanceParams] = useState<ParametrosFinanceiros | null>(null);
   const [mostrarComposicao, setMostrarComposicao] = useState(false);
+  // Criar categoria nova direto no cadastro de produto
+  const [categoriasExtras, setCategoriasExtras] = useState<{ id: number; nome: string }[]>([]);
+  const [criandoCat, setCriandoCat] = useState(false);
+  const [novaCatNome, setNovaCatNome] = useState("");
+  const [catSalvando, setCatSalvando] = useState(false);
+  const [catErro, setCatErro] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -67,11 +74,35 @@ export default function GestaoProdutosPage() {
     return produtos;
   }, [tab, produtos]);
 
+  // Categorias do backend + as criadas nesta sessao (aparecem sem recarregar a pagina)
+  const categoriasTodas = useMemo(() => {
+    const mapa = new Map<number, { id: number; nome: string }>();
+    [...categorias, ...categoriasExtras].forEach((c) => mapa.set(c.id, c));
+    return Array.from(mapa.values());
+  }, [categorias, categoriasExtras]);
+
+  async function handleCriarCategoria() {
+    const nome = novaCatNome.trim();
+    if (!nome) { setCatErro("Informe o nome da categoria."); return; }
+    setCatSalvando(true); setCatErro(null);
+    try {
+      const nova = await criarCategoria(nome);
+      setCategoriasExtras((prev) => [...prev, nova]);
+      setFormCategoriaId(nova.id.toString());
+      setCriandoCat(false); setNovaCatNome("");
+    } catch (err) {
+      setCatErro(mensagemDeErro(err, "Não foi possível criar a categoria."));
+    } finally {
+      setCatSalvando(false);
+    }
+  }
+
   const abrirCriar = () => {
     setFormNome(""); setFormDescricao(""); setFormPreco("");
     setFormEstoqueMinimo("5"); setFormCategoriaId(categorias[0]?.id.toString() ?? "");
     setModalErro(null); setModalSucesso(null);
     setFinanceParams(obterParametrosFinanceiros()); setFormCmv(""); setMostrarComposicao(false);
+    setCriandoCat(false); setNovaCatNome(""); setCatErro(null);
     setModalAberto("criar");
   };
 
@@ -329,9 +360,23 @@ export default function GestaoProdutosPage() {
                   </div>
                   <div className={styles.formGroup}>
                     <label htmlFor="c-cat">Categoria *</label>
-                    <select id="c-cat" className={styles.formSelect} value={formCategoriaId} onChange={(e) => setFormCategoriaId(e.target.value)} disabled={mutating} required>
-                      {categorias.map((cat) => <option key={cat.id} value={cat.id}>{cat.nome}</option>)}
-                    </select>
+                    {!criandoCat ? (
+                      <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                        <select id="c-cat" className={styles.formSelect} style={{ flex: 1 }} value={formCategoriaId} onChange={(e) => setFormCategoriaId(e.target.value)} disabled={mutating} required>
+                          {categoriasTodas.map((cat) => <option key={cat.id} value={cat.id}>{cat.nome}</option>)}
+                        </select>
+                        <button type="button" className={styles.secondaryBtn} style={{ whiteSpace: "nowrap", padding: "8px 12px" }} onClick={() => { setCriandoCat(true); setCatErro(null); setNovaCatNome(""); }} disabled={mutating}>+ Nova</button>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                          <input className={styles.formInput} style={{ flex: 1 }} type="text" placeholder="Nome da nova categoria" value={novaCatNome} onChange={(e) => setNovaCatNome(e.target.value)} disabled={catSalvando} autoFocus onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCriarCategoria(); } }} />
+                          <button type="button" className={styles.primaryBtn} style={{ padding: "8px 12px" }} onClick={handleCriarCategoria} disabled={catSalvando || !novaCatNome.trim()}>{catSalvando ? "..." : "Criar"}</button>
+                          <button type="button" className={styles.secondaryBtn} style={{ padding: "8px 12px" }} onClick={() => { setCriandoCat(false); setCatErro(null); }} disabled={catSalvando}>Cancelar</button>
+                        </div>
+                        {catErro && <span style={{ color: "#dc2626", fontSize: "0.78rem" }}>{catErro}</span>}
+                      </div>
+                    )}
                   </div>
                   <div className={styles.row}>
                     <div className={styles.formGroup}>
