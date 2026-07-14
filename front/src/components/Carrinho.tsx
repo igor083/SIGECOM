@@ -181,7 +181,7 @@ function PainelDesconto({
         className={styles.inputDesconto}
         type="number"
         min={0}
-        step="0.01"
+        step="1"
         placeholder={tipo === "PERCENTUAL" ? "% de desconto" : "R$ de desconto"}
         value={valor}
         onChange={(e) => setValor(e.target.value)}
@@ -334,6 +334,7 @@ function EtapaProdutos({ carrinho }: CarrinhoProps) {
   } = carrinho;
 
   const [descontoAbertoId, setDescontoAbertoId] = useState<number | null>(null);
+  const [confirmandoLimpar, setConfirmandoLimpar] = useState(false);
 
   // CA-6: carrinho vazio
   if (itens.length === 0) {
@@ -352,10 +353,17 @@ function EtapaProdutos({ carrinho }: CarrinhoProps) {
     }
   }
 
+  // Confirmacao em duas etapas, sem window.confirm (que o navegador pode bloquear
+  // e deixar o botao "sem funcionar"): 1o clique arma "Confirmar?", 2o clique limpa.
+  // Reseta sozinho apos 3s se o usuario nao confirmar.
   function confirmarLimpar() {
-    if (window.confirm("Limpar todos os itens do carrinho?")) {
+    if (confirmandoLimpar) {
       limpar();
+      setConfirmandoLimpar(false);
+      return;
     }
+    setConfirmandoLimpar(true);
+    setTimeout(() => setConfirmandoLimpar(false), 3000);
   }
 
   return (
@@ -367,7 +375,7 @@ function EtapaProdutos({ carrinho }: CarrinhoProps) {
           <span className={styles.badge}>{totalItens}</span>
         </span>
         <button className={styles.btnLimpar} onClick={confirmarLimpar}>
-          Limpar tudo
+          {confirmandoLimpar ? "Confirmar?" : "Limpar tudo"}
         </button>
       </div>
 
