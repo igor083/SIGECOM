@@ -11,4 +11,6 @@ import java.util.List;
 public interface CategoriaFinanceiraRepository extends JpaRepository<CategoriaFinanceira, Long> {
 
     List<CategoriaFinanceira> findByTipo(TipoLancamento tipo);
+
+    boolean existsByNomeIgnoreCaseAndTipo(String nome, TipoLancamento tipo);
 }

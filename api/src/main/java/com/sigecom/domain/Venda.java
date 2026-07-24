@@ -37,12 +37,7 @@ public class Venda {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal desconto = BigDecimal.ZERO;
 
-    /**
-     * Forma de pagamento escolhida no checkout. Persistida como string.
-     * Default DINHEIRO no schema para preservar registros legados e
-     * qualquer uso do @Builder que não informe explicitamente o valor.
-     * Obrigatório no fluxo de venda (validado no VendaRequest).
-     */
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(name = "tipo_pagamento", nullable = false, length = 20,
