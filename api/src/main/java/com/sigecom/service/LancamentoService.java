@@ -3,6 +3,7 @@ package com.sigecom.service;
 import com.sigecom.domain.CategoriaFinanceira;
 import com.sigecom.domain.LancamentoFinanceiro;
 import com.sigecom.domain.Usuario;
+import com.sigecom.domain.enums.TipoLancamento;
 import com.sigecom.model.request.lancamento.LancamentoRequest;
 import com.sigecom.model.response.lancamento.LancamentoResponse;
 import com.sigecom.repository.CategoriaFinanceiraRepository;
@@ -10,6 +11,8 @@ import com.sigecom.repository.LancamentoFinanceiroRepository;
 import com.sigecom.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -18,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Slf4j
 @Service
@@ -59,6 +63,31 @@ public class LancamentoService {
                 salvo.getId(), salvo.getTipo(), responsavel.getEmail(), salvo.getValor());
 
         return LancamentoResponse.toResponse(salvo);
+    }
+
+    // D-5: toda lógica de filtro e conversão de data fica no service,
+    //       nunca no controller nem no repository.
+    @Transactional(readOnly = true)
+    public Page<LancamentoResponse> listar(TipoLancamento tipo,
+                                           Long categoriaId,
+                                           LocalDate dataInicio,
+                                           LocalDate dataFim,
+                                           Pageable pageable) {
+        // Nunca passa null ao repository: parâmetro nulo em "(:param IS NULL OR ...)" para
+        // tipo LocalDateTime no Postgres não tem tipo definido e estoura 500.
+        // Usa limites amplos em vez de null — mesmo padrão do VendaService.listar().
+        LocalDateTime inicio = (dataInicio != null)
+                ? dataInicio.atStartOfDay()
+                : LocalDate.of(1970, 1, 1).atStartOfDay();
+        LocalDateTime fim = (dataFim != null)
+                ? dataFim.atTime(LocalTime.MAX)  // atStartOfDay() perderia os lançamentos do próprio dia
+                : LocalDateTime.now().plusYears(100);
+
+        // A conversão .map() acontece dentro da transação para evitar
+        // LazyInitializationException na relação LAZY da categoria.
+        return lancamentoFinanceiroRepository
+                .findAllFiltrado(inicio, fim, tipo, categoriaId, pageable)
+                .map(LancamentoResponse::toResponse);
     }
 
     private LocalDateTime resolverDataHora(LocalDate data) {
