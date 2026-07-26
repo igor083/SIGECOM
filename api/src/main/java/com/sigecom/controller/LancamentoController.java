@@ -3,6 +3,7 @@ package com.sigecom.controller;
 import com.sigecom.domain.enums.TipoLancamento;
 import com.sigecom.model.request.lancamento.LancamentoRequest;
 import com.sigecom.model.response.lancamento.LancamentoResponse;
+import com.sigecom.model.response.lancamento.SaldoResponse;
 import com.sigecom.service.LancamentoService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 
-// D-5: controller é camada fina — só traduz HTTP em chamada de service.
 @RestController
 @RequestMapping("/lancamentos")
 @RequiredArgsConstructor
@@ -41,5 +41,15 @@ public class LancamentoController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
             @PageableDefault(size = 10, sort = "dataHora", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(lancamentoService.listar(tipo, categoriaId, dataInicio, dataFim, pageable));
+    }
+
+    // D-2: so ADMIN ve o saldo
+    // fica dentro de /lancamentos porque o saldo e so a soma deles
+    @GetMapping("/saldo")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<SaldoResponse> calcularSaldo(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
+        return ResponseEntity.ok(lancamentoService.calcularSaldo(dataInicio, dataFim));
     }
 }

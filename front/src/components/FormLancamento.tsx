@@ -1,7 +1,7 @@
 "use client";
 
 // recebe o tipo por prop pra servir de despesa e de receita
-// nao chama a API, tudo vem do hook
+// D-5: nao chama a API, tudo vem do hook por props
 
 import { useState, useEffect, type FormEvent } from "react";
 import type {
