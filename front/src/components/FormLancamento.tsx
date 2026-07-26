@@ -18,32 +18,8 @@ import type {
   LancamentoResponse,
   DescricaoLancamento,
 } from "@/services/lancamentos";
+import { descrPorTipo } from "@/lib/descricoesLancamento";
 import styles from "./forms.module.css";
-
-// ── Mapa de descrições por tipo ────────────────────────────────
-// Cada entrada: [valor do enum Java, rótulo em português]
-const DESCRICOES_DESPESA: [DescricaoLancamento, string][] = [
-  ["COMPRA_MERCADORIA",  "Compra de mercadoria"],
-  ["SALARIO",           "Salário"],
-  ["ALUGUEL",           "Aluguel"],
-  ["CONTA_LUZ",         "Conta de luz"],
-  ["CONTA_AGUA",        "Conta de água"],
-  ["INTERNET_TELEFONE", "Internet / Telefone"],
-  ["MANUTENCAO",        "Manutenção"],
-  ["IMPOSTOS",          "Impostos"],
-  ["FORNECEDORES",      "Fornecedores"],
-  ["OUTRA_DESPESA",     "Outra despesa"],
-];
-
-const DESCRICOES_RECEITA: [DescricaoLancamento, string][] = [
-  ["VENDA",              "Venda"],
-  ["RECEBIMENTO_DIVIDA", "Recebimento de dívida"],
-  ["OUTRA_RECEITA",      "Outra receita"],
-];
-
-function descrPorTipo(tipo: TipoLancamento) {
-  return tipo === "DESPESA" ? DESCRICOES_DESPESA : DESCRICOES_RECEITA;
-}
 
 // Retorna a data de hoje em yyyy-MM-dd (formato do <input type="date">)
 function hoje(): string {

@@ -12,6 +12,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useLancamentos } from "@/hooks/useLancamentos";
+import { rotuloDescricao } from "@/lib/descricoesLancamento";
 import AppShell from "@/components/AppShell";
 import FormLancamento from "@/components/FormLancamento";
 
@@ -53,7 +54,8 @@ export default function FinanceiroPage() {
     registrar,
   } = useLancamentos("DESPESA");
 
-  if (authLoading || !isAuthenticated) return null;
+  // D-2: não renderiza nada enquanto carrega ou se não for ADMIN
+  if (authLoading || !isAuthenticated || user?.perfil !== "ADMIN") return null;
 
   const lancamentos    = lancamentosPage?.content ?? [];
   const totalPages     = lancamentosPage?.totalPages ?? 1;
@@ -177,7 +179,7 @@ export default function FinanceiroPage() {
             {/* Cabeçalho da tabela */}
             <div style={{
               display: "grid",
-              gridTemplateColumns: "1fr 160px 160px 110px",
+              gridTemplateColumns: "1fr 160px 160px",
               padding: "12px 20px",
               borderBottom: "1px solid #f1f5f9",
               fontSize: "12px",
@@ -189,7 +191,6 @@ export default function FinanceiroPage() {
               <span>Descrição / Categoria</span>
               <span style={{ textAlign: "right" }}>Valor</span>
               <span style={{ textAlign: "center" }}>Data</span>
-              <span style={{ textAlign: "center" }}>—</span>
             </div>
 
             {/* Estado: erro de lista */}
@@ -219,17 +220,17 @@ export default function FinanceiroPage() {
                 key={l.id}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr 160px 160px 110px",
+                  gridTemplateColumns: "1fr 160px 160px",
                   padding: "14px 20px",
                   borderBottom: idx < lancamentos.length - 1 ? "1px solid #f8fafc" : "none",
                   alignItems: "center",
                   fontSize: "14px",
                 }}
               >
-                {/* Descrição + categoria */}
+                {/* Descrição + categoria — rótulo vem do mapa em lib/descricoesLancamento.ts */}
                 <div>
                   <div style={{ fontWeight: 500, color: "#0f172a" }}>
-                    {l.descricao.replace(/_/g, " ").toLowerCase().replace(/^\w/, (c) => c.toUpperCase())}
+                    {rotuloDescricao(l.descricao)}
                   </div>
                   <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>
                     {l.categoria.nome}
@@ -245,9 +246,6 @@ export default function FinanceiroPage() {
                 <div style={{ textAlign: "center", color: "#64748b" }}>
                   {formatarDataHora(l.dataHora)}
                 </div>
-
-                {/* Coluna reservada (ações futuras) */}
-                <div />
               </div>
             ))}
           </div>

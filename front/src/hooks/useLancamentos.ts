@@ -97,9 +97,7 @@ export function useLancamentos(tipo: TipoLancamento): UseLancamentosResult {
   useEffect(() => {
     let active = true;
     async function fetchCategorias() {
-      /* eslint-disable react-hooks/set-state-in-effect */
       setErroCategorias(null);
-      /* eslint-enable react-hooks/set-state-in-effect */
       try {
         const data = await listarCategoriasFinanceiras(tipo);
         if (active) setCategorias(data);
@@ -144,17 +142,17 @@ export function useLancamentos(tipo: TipoLancamento): UseLancamentosResult {
   // ── Mutador: registrar lançamento ────────────────────────────
   // Após sucesso, recarrega a lista para o lançamento aparecer
   // imediatamente, sem recarregar a página. (critério 2 do card)
+  // Erro de registro não vai para setErro (que apagaria a listagem);
+  // o throw devolve a mensagem para o FormLancamento exibir no lugar certo.
   const registrar = useCallback(async (req: LancamentoRequest): Promise<LancamentoResponse> => {
     setMutando(true);
-    setErro(null);
     try {
       const novo = await registrarLancamento(req);
       await carregarLancamentos(); // D-5: atualiza a lista sem recarregar a página
       return novo;
     } catch (err) {
       const msg = mensagemDeErro(err, "Falha ao registrar o lançamento.");
-      setErro(msg);
-      throw new Error(msg);
+      throw new Error(msg); // FormLancamento captura e exibe dentro do formulário
     } finally {
       setMutando(false);
     }
