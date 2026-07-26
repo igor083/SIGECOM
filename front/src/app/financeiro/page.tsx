@@ -27,7 +27,7 @@ export default function FinanceiroPage() {
   const router = useRouter();
   const { user, loading: authLoading, isAuthenticated } = useAuth();
 
-  // quem nao for ADMIN vai pro login
+  // D-2: quem nao for ADMIN vai pro login
   useEffect(() => {
     if (!authLoading && (!isAuthenticated || user?.perfil !== "ADMIN")) {
       router.replace("/login");
