@@ -87,3 +87,22 @@ export async function listarCategoriasFinanceiras(
   );
   return response.data;
 }
+
+export interface Saldo {
+  totalReceitas: number;
+  totalDespesas: number;
+  saldo: number;
+  dataInicio: string; // yyyy-MM-dd
+  dataFim: string;
+}
+
+// D-2: so ADMIN, o backend barra os outros perfis
+export async function obterSaldo(
+  dataInicio?: string,
+  dataFim?: string
+): Promise<Saldo> {
+  const response = await api.get<Saldo>("/lancamentos/saldo", {
+    params: { dataInicio, dataFim },
+  });
+  return response.data;
+}
