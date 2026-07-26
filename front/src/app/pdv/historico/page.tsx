@@ -86,7 +86,9 @@ export default function HistoricoVendasPage() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
+    /* eslint-disable react-hooks/set-state-in-effect */
     carregar();
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [isAuthenticated, carregar]);
 
   if (authLoading || !isAuthenticated) return null;

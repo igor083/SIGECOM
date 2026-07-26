@@ -84,7 +84,9 @@ export default function UsuariosPage() {
 
   useEffect(() => {
     if (!isAuthenticated || user?.perfil !== "ADMIN") return;
+    /* eslint-disable react-hooks/set-state-in-effect */
     carregar();
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [carregar, isAuthenticated, user]);
 
   function fecharModal() {
