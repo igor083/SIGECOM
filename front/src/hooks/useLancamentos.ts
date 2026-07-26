@@ -61,7 +61,12 @@ export interface UseLancamentosResult {
  * @param tipo  "DESPESA" ou "RECEITA" — parametrizado para que o
  *              Igor reaproveite no SCRUM-21 passando "RECEITA".
  */
-export function useLancamentos(tipo: TipoLancamento): UseLancamentosResult {
+// aoRegistrar: chamado depois de gravar com sucesso. A pagina passa o recarregar
+// do useSaldo aqui, e o painel se atualiza sozinho (criterio 3 do card).
+export function useLancamentos(
+  tipo: TipoLancamento,
+  aoRegistrar?: () => void
+): UseLancamentosResult {
   // ── Estado de dados ──────────────────────────────────────────
   const [lancamentosPage, setLancamentosPage] = useState<PageLancamento | null>(null);
   const [categorias, setCategorias] = useState<CategoriaFinanceira[]>([]);
@@ -149,6 +154,7 @@ export function useLancamentos(tipo: TipoLancamento): UseLancamentosResult {
     try {
       const novo = await registrarLancamento(req);
       await carregarLancamentos(); // D-5: atualiza a lista sem recarregar a página
+      aoRegistrar?.();             // avisa quem quiser reagir, hoje so o saldo
       return novo;
     } catch (err) {
       const msg = mensagemDeErro(err, "Falha ao registrar o lançamento.");
@@ -156,7 +162,7 @@ export function useLancamentos(tipo: TipoLancamento): UseLancamentosResult {
     } finally {
       setMutando(false);
     }
-  }, [carregarLancamentos]);
+  }, [carregarLancamentos, aoRegistrar]);
 
   // ── Retorno público ──────────────────────────────────────────
   return {
