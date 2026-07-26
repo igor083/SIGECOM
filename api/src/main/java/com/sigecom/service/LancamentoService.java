@@ -6,6 +6,7 @@ import com.sigecom.domain.Usuario;
 import com.sigecom.domain.enums.TipoLancamento;
 import com.sigecom.model.request.lancamento.LancamentoRequest;
 import com.sigecom.model.response.lancamento.LancamentoResponse;
+import com.sigecom.model.response.lancamento.SaldoResponse;
 import com.sigecom.repository.CategoriaFinanceiraRepository;
 import com.sigecom.repository.LancamentoFinanceiroRepository;
 import com.sigecom.repository.UsuarioRepository;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -88,6 +90,57 @@ public class LancamentoService {
         return lancamentoFinanceiroRepository
                 .findAllFiltrado(inicio, fim, tipo, categoriaId, pageable)
                 .map(LancamentoResponse::toResponse);
+    }
+
+    /**
+     * Calcula o saldo operacional da loja no período informado.
+     *
+     * O saldo é derivado: receitas − despesas somados em SQL.
+     * Não existe coluna de saldo — duas fontes de verdade divergem (R-01).
+     *
+     * Regras de período:
+     *  - inicio nulo  → primeiro dia do mês corrente
+     *  - fim nulo     → hoje ao final do dia (atTime(LocalTime.MAX))
+     *  - inicio > fim → 400 com mensagem em português
+     *
+     * O COALESCE na query garante que período sem lançamentos devolve 0,
+     * nunca null (null.subtract() estouraria NullPointerException).
+     */
+    @Transactional(readOnly = true)
+    public SaldoResponse calcularSaldo(LocalDate inicio, LocalDate fim) {
+        LocalDate hoje = LocalDate.now();
+
+        // Período padrão: mês corrente quando não informado
+        LocalDate inicioEfetivo = (inicio != null) ? inicio : hoje.withDayOfMonth(1);
+        LocalDate fimEfetivo    = (fim    != null) ? fim    : hoje;
+
+        if (inicioEfetivo.isAfter(fimEfetivo)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "A data de início não pode ser posterior à data de fim");
+        }
+
+        // Converte para LocalDateTime — mesma regra do listar():
+        //   atTime(LocalTime.MAX) no fim para não perder lançamentos do próprio dia.
+        LocalDateTime dtInicio = inicioEfetivo.atStartOfDay();
+        LocalDateTime dtFim    = fimEfetivo.atTime(LocalTime.MAX); // não usar atStartOfDay() aqui
+
+        BigDecimal totalReceitas = lancamentoFinanceiroRepository
+                .somarPorTipo(TipoLancamento.RECEITA, dtInicio, dtFim);
+        BigDecimal totalDespesas = lancamentoFinanceiroRepository
+                .somarPorTipo(TipoLancamento.DESPESA, dtInicio, dtFim);
+
+        // COALESCE na query devolve 0 quando não há linhas, mas defendemos
+        // contra null aqui também caso a query seja alterada no futuro.
+        BigDecimal receitas = (totalReceitas != null) ? totalReceitas : BigDecimal.ZERO;
+        BigDecimal despesas = (totalDespesas != null) ? totalDespesas : BigDecimal.ZERO;
+
+        return new SaldoResponse(
+                receitas,
+                despesas,
+                receitas.subtract(despesas),
+                inicioEfetivo,
+                fimEfetivo
+        );
     }
 
     private LocalDateTime resolverDataHora(LocalDate data) {
