@@ -36,6 +36,16 @@ export default function FinanceiroPage() {
     }
   }, [authLoading, isAuthenticated, user, router]);
 
+  // o saldo vem primeiro porque o useLancamentos precisa do recarregar dele
+  const {
+    saldo,
+    periodo,
+    setPeriodo,
+    loading: loadingSaldo,
+    erro: erroSaldo,
+    recarregar: recarregarSaldo,
+  } = useSaldo("mes");
+
   const {
     lancamentosPage,
     categorias,
@@ -48,15 +58,7 @@ export default function FinanceiroPage() {
     page,
     setPage,
     registrar,
-  } = useLancamentos("DESPESA");
-
-  const {
-    saldo,
-    periodo,
-    setPeriodo,
-    loading: loadingSaldo,
-    erro: erroSaldo,
-  } = useSaldo("mes");
+  } = useLancamentos("DESPESA", recarregarSaldo);
 
   if (authLoading || !isAuthenticated || user?.perfil !== "ADMIN") return null;
 
