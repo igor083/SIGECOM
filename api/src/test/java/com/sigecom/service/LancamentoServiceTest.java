@@ -7,6 +7,7 @@ import com.sigecom.domain.enums.TipoLancamento;
 import com.sigecom.domain.enums.TipoUsuario;
 import com.sigecom.model.request.lancamento.LancamentoRequest;
 import com.sigecom.model.response.lancamento.LancamentoResponse;
+import com.sigecom.model.response.lancamento.SaldoResponse;
 import com.sigecom.repository.CategoriaFinanceiraRepository;
 import com.sigecom.repository.LancamentoFinanceiroRepository;
 import com.sigecom.repository.UsuarioRepository;
@@ -24,11 +25,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -187,5 +190,110 @@ class LancamentoServiceTest {
 
         assertEquals(HttpStatus.UNAUTHORIZED, ex.getStatusCode());
         verify(lancamentoFinanceiroRepository, never()).save(any());
+    }
+
+    // ── calcularSaldo (SCRUM-111) ────────────────────────────
+
+    // helper: o service chama somarPorTipo uma vez pra cada tipo
+    private void mockarSomas(String receitas, String despesas) {
+        when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.RECEITA), any(), any()))
+                .thenReturn(receitas == null ? null : new BigDecimal(receitas));
+        when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.DESPESA), any(), any()))
+                .thenReturn(despesas == null ? null : new BigDecimal(despesas));
+    }
+
+    @Test
+    void calcularSaldo_DeveSerPositivo_QuandoSoHouverReceitas() {
+        mockarSomas("1500.50", "0");
+
+        SaldoResponse saldo = lancamentoService.calcularSaldo(
+                LocalDate.of(2026, 7, 1), LocalDate.of(2026, 7, 31));
+
+        assertEquals(new BigDecimal("1500.50"), saldo.totalReceitas());
+        assertEquals(new BigDecimal("0"), saldo.totalDespesas());
+        assertEquals(new BigDecimal("1500.50"), saldo.saldo());
+    }
+
+    @Test
+    void calcularSaldo_DeveSerNegativo_QuandoSoHouverDespesas() {
+        mockarSomas("0", "320.75");
+
+        SaldoResponse saldo = lancamentoService.calcularSaldo(
+                LocalDate.of(2026, 7, 1), LocalDate.of(2026, 7, 31));
+
+        assertEquals(new BigDecimal("-320.75"), saldo.saldo());
+    }
+
+    @Test
+    void calcularSaldo_DeveSerADiferenca_QuandoHouverOsDoisTipos() {
+        mockarSomas("1500.50", "320.75");
+
+        SaldoResponse saldo = lancamentoService.calcularSaldo(
+                LocalDate.of(2026, 7, 1), LocalDate.of(2026, 7, 31));
+
+        // 1500.50 - 320.75 = 1179.75, com centavos de proposito pra pegar erro de BigDecimal
+        assertEquals(new BigDecimal("1179.75"), saldo.saldo());
+        assertEquals(new BigDecimal("1500.50"), saldo.totalReceitas());
+        assertEquals(new BigDecimal("320.75"), saldo.totalDespesas());
+    }
+
+    @Test
+    void calcularSaldo_DeveSerZero_QuandoPeriodoNaoTiverLancamento() {
+        // COALESCE na query devolve 0 quando nao ha linha
+        mockarSomas("0", "0");
+
+        SaldoResponse saldo = lancamentoService.calcularSaldo(
+                LocalDate.of(2025, 3, 1), LocalDate.of(2025, 3, 31));
+
+        assertEquals(0, saldo.saldo().compareTo(BigDecimal.ZERO));
+    }
+
+    @Test
+    void calcularSaldo_NaoDeveEstourar_QuandoRepositoryDevolverNull() {
+        // se alguem tirar o COALESCE da query, SUM sobre zero linha volta null.
+        // este e o teste que prova a defesa do service, o de cima nao prova.
+        mockarSomas(null, null);
+
+        SaldoResponse saldo = lancamentoService.calcularSaldo(
+                LocalDate.of(2025, 3, 1), LocalDate.of(2025, 3, 31));
+
+        assertEquals(0, saldo.saldo().compareTo(BigDecimal.ZERO));
+        assertEquals(0, saldo.totalReceitas().compareTo(BigDecimal.ZERO));
+    }
+
+    @Test
+    void calcularSaldo_DeveLancarBadRequest_QuandoInicioForDepoisDoFim() {
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> lancamentoService.calcularSaldo(
+                        LocalDate.of(2026, 7, 31), LocalDate.of(2026, 7, 1)));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
+        verify(lancamentoFinanceiroRepository, never()).somarPorTipo(any(), any(), any());
+    }
+
+    @Test
+    void calcularSaldo_DeveUsarMesCorrente_QuandoDatasForemNulas() {
+        mockarSomas("100.00", "40.00");
+
+        SaldoResponse saldo = lancamentoService.calcularSaldo(null, null);
+
+        LocalDate hoje = LocalDate.now();
+        assertEquals(hoje.withDayOfMonth(1), saldo.dataInicio());
+        assertEquals(hoje, saldo.dataFim());
+        assertEquals(new BigDecimal("60.00"), saldo.saldo());
+    }
+
+    @Test
+    void calcularSaldo_DeveIncluirOFimDoDia_QuandoConverterOPeriodo() {
+        // com atStartOfDay no fim, lancamento da tarde ficaria de fora do proprio dia
+        mockarSomas("10.00", "0");
+        LocalDate dia = LocalDate.of(2026, 7, 26);
+
+        lancamentoService.calcularSaldo(dia, dia);
+
+        verify(lancamentoFinanceiroRepository).somarPorTipo(
+                eq(TipoLancamento.RECEITA),
+                eq(dia.atStartOfDay()),
+                eq(dia.atTime(LocalTime.MAX)));
     }
 }
