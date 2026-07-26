@@ -3,7 +3,6 @@ package com.sigecom.service;
 import com.sigecom.domain.CategoriaFinanceira;
 import com.sigecom.domain.LancamentoFinanceiro;
 import com.sigecom.domain.Usuario;
-import com.sigecom.domain.enums.DescricaoLancamento;
 import com.sigecom.domain.enums.TipoLancamento;
 import com.sigecom.domain.enums.TipoUsuario;
 import com.sigecom.model.request.lancamento.LancamentoRequest;
@@ -80,7 +79,7 @@ class LancamentoServiceTest {
                 new BigDecimal("150.00"),
                 LocalDate.now(),
                 categoriaReceita.getId(),
-                DescricaoLancamento.VENDA,
+                "Venda de mercadoria",
                 TipoLancamento.RECEITA
         );
     }
@@ -100,7 +99,7 @@ class LancamentoServiceTest {
         assertEquals(99L, response.id());
         assertEquals(new BigDecimal("150.00"), response.valor());
         assertEquals(TipoLancamento.RECEITA, response.tipo());
-        assertEquals(DescricaoLancamento.VENDA, response.descricao());
+        assertEquals("Venda de mercadoria", response.descricao());
         assertEquals(10L, response.categoria().id());
         assertNotNull(response.dataHora());
         verify(lancamentoFinanceiroRepository).save(any(LancamentoFinanceiro.class));
@@ -144,24 +143,23 @@ class LancamentoServiceTest {
     }
 
     @Test
-    void registrar_DeveLancarBadRequest_QuandoDescricaoForDeOutroTipo() {
+    void registrar_DeveRemoverEspacosDaDescricao() {
         when(usuarioRepository.findByEmail("admin@sigecom.com")).thenReturn(Optional.of(admin));
         when(categoriaFinanceiraRepository.findById(10L)).thenReturn(Optional.of(categoriaReceita));
+        when(lancamentoFinanceiroRepository.save(any(LancamentoFinanceiro.class))).thenAnswer(inv -> inv.getArgument(0));
 
         LancamentoRequest request = new LancamentoRequest(
                 new BigDecimal("150.00"),
                 LocalDate.now(),
                 categoriaReceita.getId(),
-                DescricaoLancamento.ALUGUEL,
+                "   Venda do balcão   ",
                 TipoLancamento.RECEITA
         );
 
-        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> lancamentoService.registrar(request));
+        lancamentoService.registrar(request);
 
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatusCode());
-        assertEquals("A descrição informada não pertence ao tipo do lançamento", ex.getReason());
-        verify(lancamentoFinanceiroRepository, never()).save(any());
+        verify(lancamentoFinanceiroRepository).save(argThat(
+                l -> l.getDescricao().equals("Venda do balcão")));
     }
 
     @Test
@@ -172,7 +170,7 @@ class LancamentoServiceTest {
         when(lancamentoFinanceiroRepository.save(any(LancamentoFinanceiro.class))).thenAnswer(inv -> inv.getArgument(0));
 
         LancamentoRequest request = new LancamentoRequest(
-                new BigDecimal("150.00"), ontem, 10L, DescricaoLancamento.VENDA, TipoLancamento.RECEITA);
+                new BigDecimal("150.00"), ontem, 10L, "Venda de mercadoria", TipoLancamento.RECEITA);
 
         lancamentoService.registrar(request);
 

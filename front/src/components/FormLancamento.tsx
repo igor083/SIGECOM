@@ -1,14 +1,7 @@
 "use client";
 
-// =============================================================
-// components/FormLancamento.tsx — Formulário de Lançamento Financeiro
-// =============================================================
-// Parametrizado por "tipo" para que o SCRUM-21 (receita, Igor)
-// reaproveite sem reescrever. Nenhum acoplamento a DESPESA.
-//
-// D-5: este componente NÃO importa nada de services/lancamentos.ts.
-//      Todos os dados (categorias, registrar) chegam via props do hook.
-// =============================================================
+// recebe o tipo por prop pra servir de despesa e de receita
+// nao chama a API, tudo vem do hook
 
 import { useState, useEffect, type FormEvent } from "react";
 import type {
@@ -16,12 +9,10 @@ import type {
   CategoriaFinanceira,
   LancamentoRequest,
   LancamentoResponse,
-  DescricaoLancamento,
 } from "@/services/lancamentos";
-import { descrPorTipo } from "@/lib/descricoesLancamento";
 import styles from "./forms.module.css";
 
-// Retorna a data de hoje em yyyy-MM-dd (formato do <input type="date">)
+// o input date so aceita yyyy-MM-dd
 function hoje(): string {
   const d = new Date();
   const yyyy = d.getFullYear();
@@ -30,18 +21,13 @@ function hoje(): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-// ── Props ──────────────────────────────────────────────────────
-
 interface FormLancamentoProps {
-  // D-5: dados e ações chegam do hook, componente não acessa o service
   tipo: TipoLancamento;
   categorias: CategoriaFinanceira[];
   erroCategorias: string | null;
   mutando: boolean;
   onRegistrar: (req: LancamentoRequest) => Promise<LancamentoResponse>;
 }
-
-// ── Componente ─────────────────────────────────────────────────
 
 export default function FormLancamento({
   tipo,
@@ -50,29 +36,14 @@ export default function FormLancamento({
   mutando,
   onRegistrar,
 }: FormLancamentoProps) {
-  const descricoes = descrPorTipo(tipo);
-
-  // Estado do formulário
   const [valor,    setValor]    = useState("");
   const [data,     setData]     = useState(hoje);
   const [catId,    setCatId]    = useState("");
-  const [descricao, setDescricao] = useState<DescricaoLancamento | "">(
-    () => descricoes[0][0] // primeiro do tipo ao montar
-  );
+  const [descricao, setDescricao] = useState("");
 
-  // Feedback de UI
   const [erroLocal,  setErroLocal]  = useState<string | null>(null);
   const [sucesso,    setSucesso]    = useState(false);
 
-  // Quando o tipo muda (DESPESA ↔ RECEITA), reseta a descrição
-  // para que nunca fique um valor inválido pré-selecionado.
-  useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect */
-    setDescricao(descrPorTipo(tipo)[0][0]);
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, [tipo]);
-
-  // Limpa o feedback de sucesso após 3 s
   useEffect(() => {
     if (!sucesso) return;
     const t = setTimeout(() => setSucesso(false), 3000);
@@ -83,7 +54,7 @@ export default function FormLancamento({
     e.preventDefault();
     setErroLocal(null);
 
-    // Validação no cliente — critério 3 do card
+    // criterio 3 do card, nao pode zero nem negativo
     const valorNum = parseFloat(valor);
     if (!valor || isNaN(valorNum) || valorNum <= 0) {
       setErroLocal("O valor deve ser maior que zero.");
@@ -93,8 +64,8 @@ export default function FormLancamento({
       setErroLocal("Selecione uma categoria.");
       return;
     }
-    if (!descricao) {
-      setErroLocal("Selecione uma descrição.");
+    if (!descricao.trim()) {
+      setErroLocal("Informe uma descrição.");
       return;
     }
 
@@ -102,20 +73,18 @@ export default function FormLancamento({
       valor: valorNum,
       data,
       categoriaId: Number(catId),
-      descricao: descricao as DescricaoLancamento,
+      descricao: descricao.trim(),
       tipo,
     };
 
     try {
       await onRegistrar(req);
-      // Limpa o formulário após sucesso
       setValor("");
       setData(hoje());
       setCatId("");
-      setDescricao(descricoes[0][0]);
+      setDescricao("");
       setSucesso(true);
     } catch (err) {
-      // Erro de rede/backend: a mensagem já vem formatada pelo hook
       setErroLocal(err instanceof Error ? err.message : "Falha ao registrar o lançamento.");
     }
   }
@@ -129,7 +98,6 @@ export default function FormLancamento({
         {tituloTipo}
       </h2>
 
-      {/* Valor */}
       <div className={styles.field}>
         <label className={styles.label} htmlFor="lanc-valor">Valor (R$)</label>
         <input
@@ -146,7 +114,6 @@ export default function FormLancamento({
         />
       </div>
 
-      {/* Data */}
       <div className={styles.field}>
         <label className={styles.label} htmlFor="lanc-data">Data</label>
         <input
@@ -160,7 +127,7 @@ export default function FormLancamento({
         />
       </div>
 
-      {/* Categoria — substitui o select se houver erro de carregamento */}
+      {/* se as categorias nao carregarem mostra o erro no lugar do select */}
       <div className={styles.field}>
         <label className={styles.label} htmlFor="lanc-categoria">Categoria</label>
         {erroCategorias ? (
@@ -184,31 +151,27 @@ export default function FormLancamento({
         )}
       </div>
 
-      {/* Descrição */}
       <div className={styles.field}>
         <label className={styles.label} htmlFor="lanc-descricao">Descrição</label>
-        <select
+        <input
           id="lanc-descricao"
-          className={styles.select}
+          className={styles.input}
+          type="text"
+          maxLength={255}
+          placeholder={tipo === "DESPESA" ? "Ex.: conta de luz de julho" : "Ex.: venda do balcão"}
           value={descricao}
-          onChange={(e) => setDescricao(e.target.value as DescricaoLancamento)}
+          onChange={(e) => setDescricao(e.target.value)}
           disabled={desabilitado}
           required
-        >
-          {descricoes.map(([val, label]) => (
-            <option key={val} value={val}>{label}</option>
-          ))}
-        </select>
+        />
       </div>
 
-      {/* Feedback de erro local (validação + backend) */}
       {erroLocal && (
         <p className={`${styles.alert} ${styles.alertError}`} role="alert">
           {erroLocal}
         </p>
       )}
 
-      {/* Feedback de sucesso */}
       {sucesso && (
         <p className={`${styles.alert} ${styles.alertSuccess}`} role="status">
           Lançamento registrado com sucesso.

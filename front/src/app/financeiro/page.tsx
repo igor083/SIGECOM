@@ -1,18 +1,12 @@
 "use client";
 
-// =============================================================
-// app/financeiro/page.tsx — Tela de Despesas (SCRUM-22)
-// =============================================================
-// Acessível apenas para ADMIN. (driver D-2)
-// Consome o useLancamentos com tipo="DESPESA".
-// Igor monta a tela de receita no SCRUM-21 com tipo="RECEITA".
-// =============================================================
+// tela de despesas, so ADMIN entra
+// o Igor faz a de receita usando o mesmo hook com tipo=RECEITA
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useLancamentos } from "@/hooks/useLancamentos";
-import { rotuloDescricao } from "@/lib/descricoesLancamento";
 import AppShell from "@/components/AppShell";
 import FormLancamento from "@/components/FormLancamento";
 
@@ -33,7 +27,7 @@ export default function FinanceiroPage() {
   const router = useRouter();
   const { user, loading: authLoading, isAuthenticated } = useAuth();
 
-  // D-2: apenas ADMIN acessa esta tela; redireciona no 401/403
+  // quem nao for ADMIN vai pro login
   useEffect(() => {
     if (!authLoading && (!isAuthenticated || user?.perfil !== "ADMIN")) {
       router.replace("/login");
@@ -54,7 +48,6 @@ export default function FinanceiroPage() {
     registrar,
   } = useLancamentos("DESPESA");
 
-  // D-2: não renderiza nada enquanto carrega ou se não for ADMIN
   if (authLoading || !isAuthenticated || user?.perfil !== "ADMIN") return null;
 
   const lancamentos    = lancamentosPage?.content ?? [];
@@ -65,7 +58,6 @@ export default function FinanceiroPage() {
     <AppShell title="Financeiro — Despesas">
       <div style={{ display: "flex", gap: "24px", alignItems: "flex-start" }}>
 
-        {/* ── Formulário lateral ─────────────────────────────── */}
         <div style={{
           width: "320px",
           flexShrink: 0,
@@ -75,7 +67,6 @@ export default function FinanceiroPage() {
           padding: "24px",
           boxShadow: "0 1px 4px rgba(0,0,0,.06)",
         }}>
-          {/* D-5: FormLancamento recebe dados do hook, nunca chama o service direto */}
           <FormLancamento
             tipo="DESPESA"
             categorias={categorias}
@@ -85,10 +76,8 @@ export default function FinanceiroPage() {
           />
         </div>
 
-        {/* ── Listagem ────────────────────────────────────────── */}
         <div style={{ flex: 1, minWidth: 0 }}>
 
-          {/* Filtros */}
           <div style={{
             background: "#fff",
             border: "1px solid #e2e8f0",
@@ -168,7 +157,6 @@ export default function FinanceiroPage() {
             </button>
           </div>
 
-          {/* Tabela de lançamentos */}
           <div style={{
             background: "#fff",
             border: "1px solid #e2e8f0",
@@ -176,7 +164,6 @@ export default function FinanceiroPage() {
             boxShadow: "0 1px 4px rgba(0,0,0,.06)",
             overflow: "hidden",
           }}>
-            {/* Cabeçalho da tabela */}
             <div style={{
               display: "grid",
               gridTemplateColumns: "1fr 160px 160px",
@@ -193,28 +180,24 @@ export default function FinanceiroPage() {
               <span style={{ textAlign: "center" }}>Data</span>
             </div>
 
-            {/* Estado: erro de lista */}
             {erro && (
               <div style={{ padding: "24px 20px", color: "#dc2626", fontSize: "14px" }}>
                 {erro}
               </div>
             )}
 
-            {/* Estado: carregando */}
             {!erro && loading && (
               <div style={{ padding: "40px 20px", textAlign: "center", color: "#94a3b8", fontSize: "14px" }}>
                 Carregando...
               </div>
             )}
 
-            {/* Estado: vazio */}
             {!erro && !loading && lancamentos.length === 0 && (
               <div style={{ padding: "40px 20px", textAlign: "center", color: "#94a3b8", fontSize: "14px" }}>
                 Nenhuma despesa encontrada para os filtros selecionados.
               </div>
             )}
 
-            {/* Linhas */}
             {!erro && !loading && lancamentos.map((l, idx) => (
               <div
                 key={l.id}
@@ -227,22 +210,19 @@ export default function FinanceiroPage() {
                   fontSize: "14px",
                 }}
               >
-                {/* Descrição + categoria — rótulo vem do mapa em lib/descricoesLancamento.ts */}
                 <div>
                   <div style={{ fontWeight: 500, color: "#0f172a" }}>
-                    {rotuloDescricao(l.descricao)}
+                    {l.descricao}
                   </div>
                   <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>
                     {l.categoria.nome}
                   </div>
                 </div>
 
-                {/* Valor — despesas em vermelho */}
                 <div style={{ textAlign: "right", fontWeight: 600, color: "#dc2626" }}>
                   {formatarReal(l.valor)}
                 </div>
 
-                {/* Data */}
                 <div style={{ textAlign: "center", color: "#64748b" }}>
                   {formatarDataHora(l.dataHora)}
                 </div>
@@ -250,7 +230,6 @@ export default function FinanceiroPage() {
             ))}
           </div>
 
-          {/* Rodapé: total + paginação */}
           {!erro && !loading && totalElements > 0 && (
             <div style={{
               marginTop: "12px",

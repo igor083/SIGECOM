@@ -46,16 +46,11 @@ public class LancamentoService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "A categoria informada não pertence ao tipo do lançamento");
         }
-        if (request.descricao().getTipo() != request.tipo()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "A descrição informada não pertence ao tipo do lançamento");
-        }
-
         LancamentoFinanceiro lancamento = LancamentoFinanceiro.builder()
                 .usuario(responsavel)
                 .categoria(categoria)
                 .tipo(request.tipo())
-                .descricao(request.descricao())
+                .descricao(request.descricao().trim())
                 .valor(request.valor())
                 .dataHora(resolverDataHora(request.data()))
                 .build();

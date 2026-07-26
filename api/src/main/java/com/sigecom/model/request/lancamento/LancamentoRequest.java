@@ -1,19 +1,16 @@
 package com.sigecom.model.request.lancamento;
 
-import com.sigecom.domain.enums.DescricaoLancamento;
 import com.sigecom.domain.enums.TipoLancamento;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-/**
- * Payload de criação de lançamento financeiro.
- * Usado tanto para DESPESA quanto para RECEITA — o campo tipo diferencia.
- * O campo data é a data escolhida pelo usuário (pode ser retroativa);
- * o dataHora da entidade é preenchido a partir dele no service.
- */
+// serve pra despesa e receita, o campo tipo diferencia
+// a data pode ser de tras, quem monta a hora e o service
 public record LancamentoRequest(
 
         @NotNull(message = "O valor é obrigatório")
@@ -26,8 +23,9 @@ public record LancamentoRequest(
         @NotNull(message = "A categoria é obrigatória")
         Long categoriaId,
 
-        @NotNull(message = "A descrição é obrigatória")
-        DescricaoLancamento descricao,
+        @NotBlank(message = "A descrição é obrigatória")
+        @Size(max = 255, message = "A descrição deve ter no máximo 255 caracteres")
+        String descricao,
 
         @NotNull(message = "O tipo é obrigatório")
         TipoLancamento tipo

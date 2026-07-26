@@ -12,24 +12,6 @@ import api from "./api"; // D-5: instância centralizada com interceptor de auth
 
 export type TipoLancamento = "RECEITA" | "DESPESA";
 
-/** Subconjunto de descrições do enum DescricaoLancamento do backend */
-export type DescricaoLancamento =
-  // Receitas
-  | "VENDA"
-  | "RECEBIMENTO_DIVIDA"
-  | "OUTRA_RECEITA"
-  // Despesas
-  | "COMPRA_MERCADORIA"
-  | "SALARIO"
-  | "ALUGUEL"
-  | "CONTA_LUZ"
-  | "CONTA_AGUA"
-  | "INTERNET_TELEFONE"
-  | "MANUTENCAO"
-  | "IMPOSTOS"
-  | "FORNECEDORES"
-  | "OUTRA_DESPESA";
-
 export interface CategoriaFinanceira {
   id: number;
   nome: string;
@@ -41,7 +23,7 @@ export interface LancamentoResponse {
   valor: number;
   dataHora: string; // ISO-8601 string (LocalDateTime → string no JSON)
   tipo: TipoLancamento;
-  descricao: DescricaoLancamento;
+  descricao: string;
   categoria: CategoriaFinanceira;
 }
 
@@ -50,7 +32,7 @@ export interface LancamentoRequest {
   valor: number;
   data: string;        // yyyy-MM-dd  (LocalDate no backend)
   categoriaId: number;
-  descricao: DescricaoLancamento;
+  descricao: string;
   tipo: TipoLancamento;
 }
 
