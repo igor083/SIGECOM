@@ -7,8 +7,10 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useLancamentos } from "@/hooks/useLancamentos";
+import { useSaldo } from "@/hooks/useSaldo";
 import AppShell from "@/components/AppShell";
 import FormLancamento from "@/components/FormLancamento";
+import PainelSaldo from "@/components/PainelSaldo";
 
 function formatarReal(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -48,6 +50,14 @@ export default function FinanceiroPage() {
     registrar,
   } = useLancamentos("DESPESA");
 
+  const {
+    saldo,
+    periodo,
+    setPeriodo,
+    loading: loadingSaldo,
+    erro: erroSaldo,
+  } = useSaldo("mes");
+
   if (authLoading || !isAuthenticated || user?.perfil !== "ADMIN") return null;
 
   const lancamentos    = lancamentosPage?.content ?? [];
@@ -56,6 +66,14 @@ export default function FinanceiroPage() {
 
   return (
     <AppShell title="Financeiro — Despesas">
+      <PainelSaldo
+        saldo={saldo}
+        periodo={periodo}
+        loading={loadingSaldo}
+        erro={erroSaldo}
+        onPeriodoChange={setPeriodo}
+      />
+
       <div style={{ display: "flex", gap: "24px", alignItems: "flex-start" }}>
 
         <div style={{
