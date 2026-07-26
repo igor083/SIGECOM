@@ -1,6 +1,5 @@
 package com.sigecom.domain;
 
-import com.sigecom.domain.enums.DescricaoLancamento;
 import com.sigecom.domain.enums.TipoLancamento;
 import jakarta.persistence.*;
 import lombok.*;
@@ -33,9 +32,9 @@ public class LancamentoFinanceiro {
     @Column(nullable = false)
     private TipoLancamento tipo;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private DescricaoLancamento descricao;
+    // texto livre, quem classifica e a categoria
+    @Column(nullable = false, length = 255)
+    private String descricao;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal valor;

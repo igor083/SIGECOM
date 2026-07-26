@@ -44,4 +44,6 @@ public interface LancamentoFinanceiroRepository extends JpaRepository<Lancamento
     BigDecimal somarPorTipo(@Param("tipo") TipoLancamento tipo,
                             @Param("dataInicio") LocalDateTime dataInicio,
                             @Param("dataFim") LocalDateTime dataFim);
+
+    boolean existsByCategoriaId(Long categoriaId);
 }

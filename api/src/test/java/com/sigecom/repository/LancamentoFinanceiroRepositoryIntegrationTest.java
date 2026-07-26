@@ -3,7 +3,6 @@ package com.sigecom.repository;
 import com.sigecom.domain.CategoriaFinanceira;
 import com.sigecom.domain.LancamentoFinanceiro;
 import com.sigecom.domain.Usuario;
-import com.sigecom.domain.enums.DescricaoLancamento;
 import com.sigecom.domain.enums.TipoLancamento;
 import com.sigecom.domain.enums.TipoUsuario;
 import jakarta.persistence.EntityManager;
@@ -108,7 +107,7 @@ class LancamentoFinanceiroRepositoryIntegrationTest {
                 .usuario(usuario)
                 .categoria(categoriaDespesaAluguel)
                 .tipo(TipoLancamento.DESPESA)
-                .descricao(DescricaoLancamento.ALUGUEL)
+                .descricao("Aluguel de julho")
                 .valor(new BigDecimal("1500.00"))
                 .dataHora(LocalDate.now().atTime(10, 0))
                 .build());
@@ -118,7 +117,7 @@ class LancamentoFinanceiroRepositoryIntegrationTest {
                 .usuario(usuario)
                 .categoria(categoriaDespesaLuz)
                 .tipo(TipoLancamento.DESPESA)
-                .descricao(DescricaoLancamento.CONTA_LUZ)
+                .descricao("Conta de luz de julho")
                 .valor(new BigDecimal("350.00"))
                 .dataHora(LocalDate.now().atTime(11, 0))
                 .build());
@@ -128,7 +127,7 @@ class LancamentoFinanceiroRepositoryIntegrationTest {
                 .usuario(usuario)
                 .categoria(categoriaReceita)
                 .tipo(TipoLancamento.RECEITA)
-                .descricao(DescricaoLancamento.VENDA)
+                .descricao("Venda de mercadoria")
                 .valor(new BigDecimal("3000.00"))
                 .dataHora(LocalDate.now().atTime(14, 0))
                 .build());
