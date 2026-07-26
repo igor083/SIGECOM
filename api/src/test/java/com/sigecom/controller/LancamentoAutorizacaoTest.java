@@ -41,7 +41,7 @@ class LancamentoAutorizacaoTest {
              "descricao":"Conta de luz","tipo":"DESPESA"}
             """;
 
-    // ── registrar despesa (SCRUM-133) ────────────────────────
+    // registrar despesa, SCRUM-133
 
     @Test
     @WithMockUser(roles = "FUNCIONARIO")
@@ -72,7 +72,7 @@ class LancamentoAutorizacaoTest {
                 .andExpect(status().isForbidden());
     }
 
-    // ── saldo operacional (SCRUM-135) ────────────────────────
+    // saldo operacional, SCRUM-135
 
     @Test
     @WithMockUser(roles = "FUNCIONARIO")

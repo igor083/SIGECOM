@@ -192,7 +192,7 @@ class LancamentoServiceTest {
         verify(lancamentoFinanceiroRepository, never()).save(any());
     }
 
-    // ── calcularSaldo (SCRUM-111) ────────────────────────────
+    // calcularSaldo, SCRUM-111
 
     // helper: o service chama somarPorTipo uma vez pra cada tipo
     private void mockarSomas(String receitas, String despesas) {
