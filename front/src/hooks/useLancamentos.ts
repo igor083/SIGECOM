@@ -40,6 +40,7 @@ export interface UseLancamentosResult {
   loading: boolean;
   mutando: boolean;
   erro: string | null;
+  erroCategorias: string | null; // falha no carregamento do select de categoria — visível na tela
 
   // Filtros e paginação
   filtros: FiltrosLancamento;
@@ -69,6 +70,7 @@ export function useLancamentos(tipo: TipoLancamento): UseLancamentosResult {
   const [loading, setLoading] = useState(true);
   const [mutando, setMutando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [erroCategorias, setErroCategorias] = useState<string | null>(null);
 
   // ── Filtros e paginação ──────────────────────────────────────
   const [filtros, setFiltrosState] = useState<FiltrosLancamento>({
@@ -90,15 +92,20 @@ export function useLancamentos(tipo: TipoLancamento): UseLancamentosResult {
 
   // ── Carregamento de categorias ───────────────────────────────
   // Roda quando o tipo muda (RECEITA ↔ DESPESA).
-  // Erro aqui é silencioso no console para não sujar o erro da lista.
+  // Erro exposto em erroCategorias para que a tela desabilite o formulário
+  // e mostre a causa — select vazio sem mensagem é a pior falha silenciosa.
   useEffect(() => {
     let active = true;
     async function fetchCategorias() {
+      /* eslint-disable react-hooks/set-state-in-effect */
+      setErroCategorias(null);
+      /* eslint-enable react-hooks/set-state-in-effect */
       try {
         const data = await listarCategoriasFinanceiras(tipo);
         if (active) setCategorias(data);
       } catch (err) {
         console.error("Erro ao carregar categorias financeiras", err);
+        if (active) setErroCategorias(mensagemDeErro(err, "Não foi possível carregar as categorias."));
       }
     }
     fetchCategorias();
@@ -160,6 +167,7 @@ export function useLancamentos(tipo: TipoLancamento): UseLancamentosResult {
     loading,
     mutando,
     erro,
+    erroCategorias,
     filtros,
     setFiltros,
     page,
