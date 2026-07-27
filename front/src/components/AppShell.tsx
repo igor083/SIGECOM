@@ -8,6 +8,9 @@ import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import PointOfSaleOutlinedIcon from "@mui/icons-material/PointOfSaleOutlined";
 import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
+import TrendingUpOutlinedIcon from "@mui/icons-material/TrendingUpOutlined";
+import TrendingDownOutlinedIcon from "@mui/icons-material/TrendingDownOutlined";
+import ExpandMoreOutlinedIcon from "@mui/icons-material/ExpandMoreOutlined";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
@@ -19,9 +22,14 @@ import styles from "./AppShell.module.css";
 
 interface NavItem {
   label: string;
-  href: string;
+  href?: string;            // ausente quando o item e um grupo (so abre o submenu)
   Icon: SvgIconComponent;
   activePaths?: string[];
+  // exact: so fica ativo na rota exata. Necessario para /financeiro (Despesas)
+  // nao acender junto com a rota filha /financeiro/receitas.
+  exact?: boolean;
+  // children: submenu recolhivel. Ex.: Financeiro > Receitas / Despesas.
+  children?: NavItem[];
 }
 
 const ADMIN_NAV: NavItem[] = [
@@ -33,7 +41,14 @@ const ADMIN_NAV: NavItem[] = [
     activePaths: ["/estoque", "/produtos"],
   },
   { label: "PDV", href: "/pdv", Icon: PointOfSaleOutlinedIcon },
-  { label: "Financeiro", href: "/financeiro", Icon: BarChartOutlinedIcon },
+  {
+    label: "Financeiro",
+    Icon: BarChartOutlinedIcon,
+    children: [
+      { label: "Receitas", href: "/financeiro/receitas", Icon: TrendingUpOutlinedIcon },
+      { label: "Despesas", href: "/financeiro", Icon: TrendingDownOutlinedIcon, exact: true },
+    ],
+  },
   { label: "Caixa", href: "/caixa", Icon: ReceiptLongOutlinedIcon },
   { label: "Relatórios", href: "/relatorios", Icon: AssessmentOutlinedIcon },
   { label: "Usuários", href: "/usuarios", Icon: PeopleOutlinedIcon },
@@ -60,10 +75,18 @@ export default function AppShell({ title, children }: AppShellProps) {
 
   const navItems = user?.perfil === "ADMIN" ? ADMIN_NAV : FUNC_NAV;
 
+  // grupos recolhidos/expandidos do menu (ex.: Financeiro)
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const toggleGroup = (label: string) =>
+    setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
+
   const isActive = (item: NavItem) => {
-    const paths = item.activePaths ?? [item.href];
+    const paths = item.activePaths ?? (item.href ? [item.href] : []);
+    if (item.exact) return paths.some((p) => pathname === p);
     return paths.some((p) => pathname === p || pathname.startsWith(p + "/") || pathname.startsWith(p));
   };
+
+  const isGroupActive = (item: NavItem) => item.children?.some(isActive) ?? false;
 
   const initials = user?.email?.charAt(0).toUpperCase() ?? "U";
 
@@ -88,11 +111,49 @@ export default function AppShell({ title, children }: AppShellProps) {
         <div className={styles.brand}>SIGECOM</div>
         <nav className={styles.nav}>
           {navItems.map((item) => {
+            // grupo com submenu (ex.: Financeiro > Receitas / Despesas)
+            if (item.children) {
+              const grupoAtivo = isGroupActive(item);
+              const aberto = openGroups[item.label] ?? grupoAtivo;
+              return (
+                <div key={item.label}>
+                  <button
+                    type="button"
+                    className={`${styles.navItem} ${styles.navGroupToggle} ${grupoAtivo ? styles.active : ""}`}
+                    onClick={() => toggleGroup(item.label)}
+                    aria-expanded={aberto}
+                  >
+                    <item.Icon className={styles.navIcon} fontSize="small" />
+                    <span>{item.label}</span>
+                    <ExpandMoreOutlinedIcon
+                      className={styles.navChevron}
+                      style={{ transform: aberto ? "rotate(180deg)" : "none" }}
+                    />
+                  </button>
+
+                  {aberto && (
+                    <div className={styles.subNav}>
+                      {item.children.map((child) => (
+                        <Link
+                          key={child.href}
+                          href={child.href!}
+                          className={`${styles.navItem} ${styles.subNavItem} ${isActive(child) ? styles.active : ""}`}
+                        >
+                          <child.Icon className={styles.navIcon} fontSize="small" />
+                          <span>{child.label}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
             const active = isActive(item);
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={item.href!}
                 className={`${styles.navItem} ${active ? styles.active : ""}`}
               >
                 <item.Icon className={styles.navIcon} fontSize="small" />
