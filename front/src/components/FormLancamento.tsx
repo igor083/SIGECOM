@@ -152,7 +152,6 @@ export default function FormLancamento({
         />
       </div>
 
-      {/* se as categorias nao carregarem mostra o erro no lugar do select */}
       <div className={styles.field}>
         <label className={styles.label} htmlFor="lanc-categoria">Categoria</label>
         {erroCategorias ? (

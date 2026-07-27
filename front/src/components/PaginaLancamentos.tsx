@@ -27,7 +27,6 @@ function formatarDataHora(iso: string): string {
   });
 }
 
-// receita = verde, despesa = vermelho — usado no valor e na etiqueta de tipo
 function corDoTipo(tipo: TipoLancamento): string {
   return tipo === "RECEITA" ? "#16a34a" : "#dc2626";
 }
@@ -75,7 +74,6 @@ export default function PaginaLancamentos() {
   const totalPages     = lancamentosPage?.totalPages ?? 1;
   const totalElements  = lancamentosPage?.totalElements ?? 0;
 
-  // o filtro de categoria mostra as categorias do tipo filtrado (ou todas)
   const categoriasFiltro = filtros.tipo
     ? categorias.filter((c) => c.tipo === filtros.tipo)
     : categorias;
@@ -130,7 +128,7 @@ export default function PaginaLancamentos() {
                 id="filtro-tipo"
                 value={filtros.tipo ?? ""}
                 onChange={(e) =>
-                  // trocar o tipo limpa a categoria (pode nao existir no novo tipo)
+                  // limpa a categoria: pode nao existir no novo tipo
                   setFiltros({
                     tipo: e.target.value ? (e.target.value as TipoLancamento) : undefined,
                     categoriaId: undefined,
