@@ -26,6 +26,7 @@ import { mensagemDeErro } from "@/lib/apiError";
 // ── Tipos públicos ─────────────────────────────────────────────
 
 export interface FiltrosLancamento {
+  tipo: TipoLancamento | undefined; // undefined = receitas e despesas juntas
   categoriaId: number | undefined;
   dataInicio: string; // yyyy-MM-dd ou ""
   dataFim: string;    // yyyy-MM-dd ou ""
@@ -58,13 +59,13 @@ export interface UseLancamentosResult {
 /**
  * Hook principal do módulo Financeiro.
  *
- * @param tipo  "DESPESA" ou "RECEITA" — parametrizado para que o
- *              Igor reaproveite no SCRUM-21 passando "RECEITA".
+ * Tela unificada: lista receitas e despesas juntas. O tipo é filtro
+ * (em `filtros.tipo`), não parâmetro fixo — quem escolhe o tipo de um
+ * novo lançamento é o FormLancamento.
  */
 // aoRegistrar: chamado depois de gravar com sucesso. A pagina passa o recarregar
 // do useSaldo aqui, e o painel se atualiza sozinho (criterio 3 do card).
 export function useLancamentos(
-  tipo: TipoLancamento,
   aoRegistrar?: () => void
 ): UseLancamentosResult {
   // ── Estado de dados ──────────────────────────────────────────
@@ -79,6 +80,7 @@ export function useLancamentos(
 
   // ── Filtros e paginação ──────────────────────────────────────
   const [filtros, setFiltrosState] = useState<FiltrosLancamento>({
+    tipo: undefined,
     categoriaId: undefined,
     dataInicio: "",
     dataFim: "",
@@ -96,7 +98,8 @@ export function useLancamentos(
   }, []);
 
   // ── Carregamento de categorias ───────────────────────────────
-  // Roda quando o tipo muda (RECEITA ↔ DESPESA).
+  // Carrega TODAS as categorias (receita e despesa) uma vez. O FormLancamento
+  // filtra pelo tipo escolhido no cliente — evita recarregar a cada troca de tipo.
   // Erro exposto em erroCategorias para que a tela desabilite o formulário
   // e mostre a causa — select vazio sem mensagem é a pior falha silenciosa.
   useEffect(() => {
@@ -104,7 +107,7 @@ export function useLancamentos(
     async function fetchCategorias() {
       setErroCategorias(null);
       try {
-        const data = await listarCategoriasFinanceiras(tipo);
+        const data = await listarCategoriasFinanceiras();
         if (active) setCategorias(data);
       } catch (err) {
         console.error("Erro ao carregar categorias financeiras", err);
@@ -113,7 +116,7 @@ export function useLancamentos(
     }
     fetchCategorias();
     return () => { active = false; };
-  }, [tipo]);
+  }, []);
 
   // ── Carregamento de lançamentos ──────────────────────────────
   const carregarLancamentos = useCallback(async () => {
@@ -121,7 +124,7 @@ export function useLancamentos(
     setErro(null);
     try {
       const data = await listarLancamentos({
-        tipo,
+        tipo: filtros.tipo,                            // undefined → receitas e despesas
         categoriaId: filtros.categoriaId,
         dataInicio: filtros.dataInicio || undefined,  // string vazia → não filtra
         dataFim: filtros.dataFim || undefined,
@@ -135,9 +138,9 @@ export function useLancamentos(
     } finally {
       setLoading(false);
     }
-  }, [tipo, filtros, page]);
+  }, [filtros, page]);
 
-  // Recarrega sempre que filtros, paginação ou tipo mudam
+  // Recarrega sempre que filtros ou paginação mudam
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
     carregarLancamentos();

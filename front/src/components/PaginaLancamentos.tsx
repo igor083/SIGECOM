@@ -1,9 +1,8 @@
 "use client";
 
-// Corpo compartilhado das telas de Financeiro (SCRUM-21/SCRUM-22).
-// Uma unica implementacao serve Receitas e Despesas: o que muda vem do `tipo`
-// (titulo, cor do valor e textos). Assim a tela de receita reaproveita tudo —
-// FormLancamento, useLancamentos, useSaldo e PainelSaldo — sem duplicar layout.
+// Tela unica do Financeiro (SCRUM-21/SCRUM-22): receitas e despesas juntas.
+// Reaproveita FormLancamento (que escolhe o tipo), useLancamentos, useSaldo
+// e PainelSaldo. O tipo aqui e filtro da lista e coluna da tabela.
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -28,19 +27,16 @@ function formatarDataHora(iso: string): string {
   });
 }
 
-interface PaginaLancamentosProps {
-  tipo: TipoLancamento;
+// receita = verde, despesa = vermelho — usado no valor e na etiqueta de tipo
+function corDoTipo(tipo: TipoLancamento): string {
+  return tipo === "RECEITA" ? "#16a34a" : "#dc2626";
 }
 
-export default function PaginaLancamentos({ tipo }: PaginaLancamentosProps) {
+const COLUNAS = "1fr 110px 150px 150px"; // Descrição/Categoria | Tipo | Valor | Data
+
+export default function PaginaLancamentos() {
   const router = useRouter();
   const { user, loading: authLoading, isAuthenticated } = useAuth();
-
-  // Textos e cores que dependem do tipo — o resto do layout e identico.
-  const isReceita = tipo === "RECEITA";
-  const nounSingular = isReceita ? "receita" : "despesa";
-  const titulo       = `Financeiro — ${isReceita ? "Receitas" : "Despesas"}`;
-  const valorColor   = isReceita ? "#16a34a" : "#dc2626"; // receita verde, despesa vermelho
 
   // D-2: quem nao for ADMIN vai pro login
   useEffect(() => {
@@ -71,7 +67,7 @@ export default function PaginaLancamentos({ tipo }: PaginaLancamentosProps) {
     page,
     setPage,
     registrar,
-  } = useLancamentos(tipo, recarregarSaldo);
+  } = useLancamentos(recarregarSaldo);
 
   if (authLoading || !isAuthenticated || user?.perfil !== "ADMIN") return null;
 
@@ -79,8 +75,13 @@ export default function PaginaLancamentos({ tipo }: PaginaLancamentosProps) {
   const totalPages     = lancamentosPage?.totalPages ?? 1;
   const totalElements  = lancamentosPage?.totalElements ?? 0;
 
+  // o filtro de categoria mostra as categorias do tipo filtrado (ou todas)
+  const categoriasFiltro = filtros.tipo
+    ? categorias.filter((c) => c.tipo === filtros.tipo)
+    : categorias;
+
   return (
-    <AppShell title={titulo}>
+    <AppShell title="Financeiro">
       <PainelSaldo
         saldo={saldo}
         periodo={periodo}
@@ -101,7 +102,6 @@ export default function PaginaLancamentos({ tipo }: PaginaLancamentosProps) {
           boxShadow: "0 1px 4px rgba(0,0,0,.06)",
         }}>
           <FormLancamento
-            tipo={tipo}
             categorias={categorias}
             erroCategorias={erroCategorias}
             mutando={mutando}
@@ -125,6 +125,31 @@ export default function PaginaLancamentos({ tipo }: PaginaLancamentosProps) {
           }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
               <label style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}
+                     htmlFor="filtro-tipo">Tipo</label>
+              <select
+                id="filtro-tipo"
+                value={filtros.tipo ?? ""}
+                onChange={(e) =>
+                  // trocar o tipo limpa a categoria (pode nao existir no novo tipo)
+                  setFiltros({
+                    tipo: e.target.value ? (e.target.value as TipoLancamento) : undefined,
+                    categoriaId: undefined,
+                  })
+                }
+                style={{
+                  height: "36px", padding: "0 10px", fontSize: "14px",
+                  border: "1px solid #e2e8f0", borderRadius: "6px",
+                  background: "#fff", color: "#0f172a", cursor: "pointer",
+                }}
+              >
+                <option value="">Todos</option>
+                <option value="RECEITA">Receitas</option>
+                <option value="DESPESA">Despesas</option>
+              </select>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <label style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}
                      htmlFor="filtro-cat">Categoria</label>
               <select
                 id="filtro-cat"
@@ -139,7 +164,7 @@ export default function PaginaLancamentos({ tipo }: PaginaLancamentosProps) {
                 }}
               >
                 <option value="">Todas as categorias</option>
-                {categorias.map((c) => (
+                {categoriasFiltro.map((c) => (
                   <option key={c.id} value={c.id}>{c.nome}</option>
                 ))}
               </select>
@@ -178,7 +203,9 @@ export default function PaginaLancamentos({ tipo }: PaginaLancamentosProps) {
             </div>
 
             <button
-              onClick={() => setFiltros({ categoriaId: undefined, dataInicio: "", dataFim: "" })}
+              onClick={() =>
+                setFiltros({ tipo: undefined, categoriaId: undefined, dataInicio: "", dataFim: "" })
+              }
               style={{
                 height: "36px", padding: "0 14px", fontSize: "13px",
                 border: "1px solid #e2e8f0", borderRadius: "6px",
@@ -199,7 +226,7 @@ export default function PaginaLancamentos({ tipo }: PaginaLancamentosProps) {
           }}>
             <div style={{
               display: "grid",
-              gridTemplateColumns: "1fr 160px 160px",
+              gridTemplateColumns: COLUNAS,
               padding: "12px 20px",
               borderBottom: "1px solid #f1f5f9",
               fontSize: "12px",
@@ -209,6 +236,7 @@ export default function PaginaLancamentos({ tipo }: PaginaLancamentosProps) {
               letterSpacing: "0.04em",
             }}>
               <span>Descrição / Categoria</span>
+              <span style={{ textAlign: "center" }}>Tipo</span>
               <span style={{ textAlign: "right" }}>Valor</span>
               <span style={{ textAlign: "center" }}>Data</span>
             </div>
@@ -227,7 +255,7 @@ export default function PaginaLancamentos({ tipo }: PaginaLancamentosProps) {
 
             {!erro && !loading && lancamentos.length === 0 && (
               <div style={{ padding: "40px 20px", textAlign: "center", color: "#94a3b8", fontSize: "14px" }}>
-                Nenhuma {nounSingular} encontrada para os filtros selecionados.
+                Nenhum lançamento encontrado para os filtros selecionados.
               </div>
             )}
 
@@ -236,7 +264,7 @@ export default function PaginaLancamentos({ tipo }: PaginaLancamentosProps) {
                 key={l.id}
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr 160px 160px",
+                  gridTemplateColumns: COLUNAS,
                   padding: "14px 20px",
                   borderBottom: idx < lancamentos.length - 1 ? "1px solid #f8fafc" : "none",
                   alignItems: "center",
@@ -252,7 +280,20 @@ export default function PaginaLancamentos({ tipo }: PaginaLancamentosProps) {
                   </div>
                 </div>
 
-                <div style={{ textAlign: "right", fontWeight: 600, color: valorColor }}>
+                <div style={{ textAlign: "center" }}>
+                  <span style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    color: corDoTipo(l.tipo),
+                    background: l.tipo === "RECEITA" ? "#f0fdf4" : "#fef2f2",
+                    borderRadius: "999px",
+                    padding: "3px 10px",
+                  }}>
+                    {l.tipo === "RECEITA" ? "Receita" : "Despesa"}
+                  </span>
+                </div>
+
+                <div style={{ textAlign: "right", fontWeight: 600, color: corDoTipo(l.tipo) }}>
                   {formatarReal(l.valor)}
                 </div>
 
