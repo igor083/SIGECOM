@@ -26,6 +26,8 @@ public class CategoriaFinanceiraSeeder implements CommandLineRunner {
         CategoriaFinanceira cat = new CategoriaFinanceira();
         cat.setNome(nome);
         cat.setTipo(tipo);
+        // Categorias do sistema: protegidas contra edição/remoção pelo admin.
+        cat.setProtegida(true);
         return cat;
     }
 

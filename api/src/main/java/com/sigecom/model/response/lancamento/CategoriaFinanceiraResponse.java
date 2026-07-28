@@ -12,14 +12,16 @@ import com.sigecom.domain.enums.TipoLancamento;
 public record CategoriaFinanceiraResponse(
         Long id,
         String nome,
-        TipoLancamento tipo
+        TipoLancamento tipo,
+        boolean protegida
 ) {
 
     public static CategoriaFinanceiraResponse toResponse(CategoriaFinanceira entidade) {
         return new CategoriaFinanceiraResponse(
                 entidade.getId(),
                 entidade.getNome(),
-                entidade.getTipo()
+                entidade.getTipo(),
+                entidade.isProtegida()
         );
     }
 }

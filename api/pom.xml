@@ -142,6 +142,10 @@
 										<include>com.sigecom.service.EstoqueService</include>
 										<include>com.sigecom.service.AuthService</include>
 										<include>com.sigecom.domain.Produto</include>
+										<!-- Modulo financeiro (categorizacao e venda->financeiro) -->
+										<include>com.sigecom.service.CategoriaFinanceiraService</include>
+										<include>com.sigecom.service.LancamentoService</include>
+										<include>com.sigecom.service.VendaService</include>
 									</includes>
 									<limits>
 										<limit>

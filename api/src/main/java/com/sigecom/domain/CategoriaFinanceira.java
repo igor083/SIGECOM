@@ -23,4 +23,10 @@ public class CategoriaFinanceira {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TipoLancamento tipo;
+
+    // Categorias criadas pelo seeder (sistema) não podem ser editadas nem
+    // removidas — protege integrações que dependem delas por nome, como o
+    // lançamento automático de receita da venda (categoria "Venda").
+    @Column(nullable = false, columnDefinition = "boolean NOT NULL DEFAULT false")
+    private boolean protegida = false;
 }
