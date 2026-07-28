@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 
 @Repository
 public interface VendaRepository extends JpaRepository<Venda, Long> {
@@ -23,4 +24,14 @@ public interface VendaRepository extends JpaRepository<Venda, Long> {
     Page<Venda> findAllFiltrado(@Param("dataInicio") LocalDateTime dataInicio,
                                 @Param("dataFim") LocalDateTime dataFim,
                                 Pageable pageable);
+
+
+
+       // Soma total de vendas em um intervalo - Fechamento de caixa (scrum-25)
+       @Query("SELECT COALESCE(SUM(v.total), 0) FROM Venda v " +
+           "WHERE v.dataHora >= :dataInicio " +
+           "  AND v.dataHora <= :dataFim")
+       BigDecimal somarTotalPorPeriodo(@Param("dataInicio") LocalDateTime dataInicio,
+                                         @Param("dataFim") LocalDateTime dataFim);
 }
+
