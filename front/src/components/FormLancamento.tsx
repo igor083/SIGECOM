@@ -1,9 +1,10 @@
 "use client";
 
-// recebe o tipo por prop pra servir de despesa e de receita
+// Formulario unico de lancamento (receita ou despesa).
+// O tipo e escolhido aqui e filtra a lista de categorias.
 // D-5: nao chama a API, tudo vem do hook por props
 
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useMemo, type FormEvent } from "react";
 import type {
   TipoLancamento,
   CategoriaFinanceira,
@@ -22,33 +23,44 @@ function hoje(): string {
 }
 
 interface FormLancamentoProps {
-  tipo: TipoLancamento;
-  categorias: CategoriaFinanceira[];
+  categorias: CategoriaFinanceira[]; // todas (receita e despesa); filtramos pelo tipo aqui
   erroCategorias: string | null;
   mutando: boolean;
   onRegistrar: (req: LancamentoRequest) => Promise<LancamentoResponse>;
 }
 
 export default function FormLancamento({
-  tipo,
   categorias,
   erroCategorias,
   mutando,
   onRegistrar,
 }: FormLancamentoProps) {
-  const [valor,    setValor]    = useState("");
-  const [data,     setData]     = useState(hoje);
-  const [catId,    setCatId]    = useState("");
+  const [tipo,      setTipo]      = useState<TipoLancamento>("RECEITA");
+  const [valor,     setValor]     = useState("");
+  const [data,      setData]      = useState(hoje);
+  const [catId,     setCatId]     = useState("");
   const [descricao, setDescricao] = useState("");
 
-  const [erroLocal,  setErroLocal]  = useState<string | null>(null);
-  const [sucesso,    setSucesso]    = useState(false);
+  const [erroLocal, setErroLocal] = useState<string | null>(null);
+  const [sucesso,   setSucesso]   = useState(false);
+
+  // categorias do tipo selecionado — cada categoria ja carrega o proprio tipo
+  const categoriasDoTipo = useMemo(
+    () => categorias.filter((c) => c.tipo === tipo),
+    [categorias, tipo]
+  );
 
   useEffect(() => {
     if (!sucesso) return;
     const t = setTimeout(() => setSucesso(false), 3000);
     return () => clearTimeout(t);
   }, [sucesso]);
+
+  // ao trocar o tipo a categoria escolhida pode nao existir mais no novo tipo
+  function handleTipoChange(novo: TipoLancamento) {
+    setTipo(novo);
+    setCatId("");
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -89,14 +101,27 @@ export default function FormLancamento({
     }
   }
 
-  const tituloTipo = tipo === "DESPESA" ? "Registrar despesa" : "Registrar receita";
   const desabilitado = mutando || !!erroCategorias;
 
   return (
     <form className={styles.form} onSubmit={handleSubmit} noValidate>
       <h2 style={{ fontSize: "15px", fontWeight: 600, color: "var(--color-text)", margin: 0 }}>
-        {tituloTipo}
+        Novo lançamento
       </h2>
+
+      <div className={styles.field}>
+        <label className={styles.label} htmlFor="lanc-tipo">Tipo</label>
+        <select
+          id="lanc-tipo"
+          className={styles.select}
+          value={tipo}
+          onChange={(e) => handleTipoChange(e.target.value as TipoLancamento)}
+          disabled={desabilitado}
+        >
+          <option value="RECEITA">Receita</option>
+          <option value="DESPESA">Despesa</option>
+        </select>
+      </div>
 
       <div className={styles.field}>
         <label className={styles.label} htmlFor="lanc-valor">Valor (R$)</label>
@@ -127,7 +152,6 @@ export default function FormLancamento({
         />
       </div>
 
-      {/* se as categorias nao carregarem mostra o erro no lugar do select */}
       <div className={styles.field}>
         <label className={styles.label} htmlFor="lanc-categoria">Categoria</label>
         {erroCategorias ? (
@@ -144,7 +168,7 @@ export default function FormLancamento({
             required
           >
             <option value="">Selecione...</option>
-            {categorias.map((c) => (
+            {categoriasDoTipo.map((c) => (
               <option key={c.id} value={c.id}>{c.nome}</option>
             ))}
           </select>
