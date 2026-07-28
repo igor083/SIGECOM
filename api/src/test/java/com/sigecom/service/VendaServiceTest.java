@@ -715,5 +715,112 @@ class VendaServiceTest {
             assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getStatusCode());
             verify(lancamentoFinanceiroRepository, never()).save(any());
         }
+
+        @Test
+        @DisplayName("venda sem desconto: receita lançada é igual ao total (= subtotal)")
+        void confirmar_VendaSemDesconto_ReceitaIgualAoTotal() {
+            Produto p = produto(1L, "Item", "10.00", 10);
+            stubProdutos(p);
+            stubOperadorAutenticado();
+            stubSaveVenda();
+
+            ArgumentCaptor<LancamentoFinanceiro> captor =
+                    ArgumentCaptor.forClass(LancamentoFinanceiro.class);
+            vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO, item(1L, 3)));
+
+            verify(lancamentoFinanceiroRepository).save(captor.capture());
+            assertEquals(reais("30.00"), captor.getValue().getValor());
+        }
+
+        @Test
+        @DisplayName("lançamento herda o operador e a dataHora da venda")
+        void confirmar_LancamentoHerdaOperadorEDataHoraDaVenda() {
+            Produto p = produto(1L, "Item", "10.00", 10);
+            stubProdutos(p);
+            stubOperadorAutenticado();
+
+            // Captura a venda salva para comparar a dataHora com a do lançamento
+            ArgumentCaptor<Venda> vendaCaptor = ArgumentCaptor.forClass(Venda.class);
+            when(vendaRepository.save(any(Venda.class))).thenAnswer(inv -> {
+                Venda v = inv.getArgument(0);
+                v.setId(100L);
+                return v;
+            });
+            stubCategoriaVenda();
+
+            ArgumentCaptor<LancamentoFinanceiro> lancCaptor =
+                    ArgumentCaptor.forClass(LancamentoFinanceiro.class);
+            vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO, item(1L, 1)));
+
+            verify(vendaRepository).save(vendaCaptor.capture());
+            verify(lancamentoFinanceiroRepository).save(lancCaptor.capture());
+
+            LancamentoFinanceiro lancamento = lancCaptor.getValue();
+            assertSame(operador, lancamento.getUsuario());
+            assertEquals(vendaCaptor.getValue().getDataHora(), lancamento.getDataHora());
+        }
+
+        @Test
+        @DisplayName("a categoria buscada é do tipo RECEITA (nunca despesa)")
+        void confirmar_CategoriaBuscadaEhDoTipoReceita() {
+            Produto p = produto(1L, "Item", "10.00", 10);
+            stubProdutos(p);
+            stubOperadorAutenticado();
+            stubSaveVenda();
+
+            vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO, item(1L, 1)));
+
+            verify(categoriaFinanceiraRepository)
+                    .findFirstByNomeIgnoreCaseAndTipo("Venda", TipoLancamento.RECEITA);
+        }
+
+        @Test
+        @DisplayName("estoque insuficiente: NÃO lança receita no financeiro")
+        void confirmar_EstoqueInsuficiente_NaoDeveLancarReceita() {
+            Produto p = produto(1L, "Item", "10.00", 1);
+            stubProdutos(p);
+            stubOperadorAutenticado();
+
+            assertThrows(ResponseStatusException.class,
+                    () -> vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO, item(1L, 5))));
+
+            verify(lancamentoFinanceiroRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("cada venda gera exatamente um lançamento de receita")
+        void confirmar_DeveGerarExatamenteUmLancamentoPorVenda() {
+            Produto p1 = produto(1L, "A", "10.00", 10);
+            Produto p2 = produto(2L, "B", "20.00", 10);
+            stubProdutos(p1, p2);
+            stubOperadorAutenticado();
+            stubSaveVenda();
+
+            vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO, item(1L, 2), item(2L, 1)));
+
+            verify(lancamentoFinanceiroRepository, times(1)).save(any(LancamentoFinanceiro.class));
+        }
+    }
+
+    // =============================================================
+    // Preview (US-026) — não deve tocar no financeiro
+    // =============================================================
+
+    @Nested
+    @DisplayName("calcular() — preview não reporta no financeiro")
+    class CalcularNaoReportaFinanceiro {
+
+        @Test
+        @DisplayName("calcular() NÃO gera lançamento nem consulta categoria de receita")
+        void calcular_NaoDeveTocarNoFinanceiro() {
+            Produto p = produto(1L, "Item", "10.00", 100);
+            stubProdutos(p);
+
+            vendaService.calcular(req(item(1L, 1)));
+
+            verify(lancamentoFinanceiroRepository, never()).save(any());
+            verify(categoriaFinanceiraRepository, never())
+                    .findFirstByNomeIgnoreCaseAndTipo(any(), any());
+        }
     }
 }
