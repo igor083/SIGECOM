@@ -114,7 +114,7 @@ class CategoriaFinanceiraServiceTest {
 
     @Test
     void editar_DeveAtualizarNome_QuandoDisponivel() {
-        EditCategoriaFinanceiraRequest request = new EditCategoriaFinanceiraRequest("Recebimentos");
+        EditCategoriaFinanceiraRequest request = new EditCategoriaFinanceiraRequest("Recebimentos", null);
         when(categoriaFinanceiraRepository.findById(1L)).thenReturn(Optional.of(categoria));
         when(categoriaFinanceiraRepository.existsByNomeIgnoreCaseAndTipo("Recebimentos", TipoLancamento.RECEITA))
                 .thenReturn(false);
@@ -127,13 +127,88 @@ class CategoriaFinanceiraServiceTest {
 
     @Test
     void editar_NaoDeveValidarDuplicidade_QuandoNomeNaoMudou() {
-        EditCategoriaFinanceiraRequest request = new EditCategoriaFinanceiraRequest("vendas");
+        EditCategoriaFinanceiraRequest request = new EditCategoriaFinanceiraRequest("vendas", null);
         when(categoriaFinanceiraRepository.findById(1L)).thenReturn(Optional.of(categoria));
         when(categoriaFinanceiraRepository.save(any(CategoriaFinanceira.class))).thenAnswer(inv -> inv.getArgument(0));
 
         categoriaFinanceiraService.editar(1L, request);
 
         verify(categoriaFinanceiraRepository, never()).existsByNomeIgnoreCaseAndTipo(any(), any());
+    }
+
+    // ── Categorias protegidas (US categorização — CA1) ───────────
+
+    @Test
+    void editar_DeveLancarConflito_QuandoCategoriaProtegida() {
+        categoria.setProtegida(true);
+        when(categoriaFinanceiraRepository.findById(1L)).thenReturn(Optional.of(categoria));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> categoriaFinanceiraService.editar(1L,
+                        new EditCategoriaFinanceiraRequest("Outro Nome", null)));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        verify(categoriaFinanceiraRepository, never()).save(any());
+    }
+
+    @Test
+    void remover_DeveLancarConflito_QuandoCategoriaProtegida() {
+        categoria.setProtegida(true);
+        when(categoriaFinanceiraRepository.findById(1L)).thenReturn(Optional.of(categoria));
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> categoriaFinanceiraService.remover(1L));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        verify(categoriaFinanceiraRepository, never()).delete(any(CategoriaFinanceira.class));
+        // Nem chega a consultar lançamentos: a proteção vem antes.
+        verify(lancamentoFinanceiroRepository, never()).existsByCategoriaId(any());
+    }
+
+    // ── Edição de tipo (US categorização — CA1) ──────────────────
+
+    @Test
+    void editar_DeveAtualizarTipo_QuandoSemLancamentos() {
+        EditCategoriaFinanceiraRequest request =
+                new EditCategoriaFinanceiraRequest("Vendas", TipoLancamento.DESPESA);
+        when(categoriaFinanceiraRepository.findById(1L)).thenReturn(Optional.of(categoria));
+        when(lancamentoFinanceiroRepository.existsByCategoriaId(1L)).thenReturn(false);
+        when(categoriaFinanceiraRepository.existsByNomeIgnoreCaseAndTipo("Vendas", TipoLancamento.DESPESA))
+                .thenReturn(false);
+        when(categoriaFinanceiraRepository.save(any(CategoriaFinanceira.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        CategoriaFinanceiraResponse response = categoriaFinanceiraService.editar(1L, request);
+
+        assertEquals(TipoLancamento.DESPESA, response.tipo());
+    }
+
+    @Test
+    void editar_DeveLancarConflito_QuandoMudaTipoComLancamentosVinculados() {
+        EditCategoriaFinanceiraRequest request =
+                new EditCategoriaFinanceiraRequest("Vendas", TipoLancamento.DESPESA);
+        when(categoriaFinanceiraRepository.findById(1L)).thenReturn(Optional.of(categoria));
+        when(lancamentoFinanceiroRepository.existsByCategoriaId(1L)).thenReturn(true);
+
+        ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                () -> categoriaFinanceiraService.editar(1L, request));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
+        verify(categoriaFinanceiraRepository, never()).save(any());
+    }
+
+    @Test
+    void editar_TipoNulo_DeveManterTipoAtual() {
+        EditCategoriaFinanceiraRequest request = new EditCategoriaFinanceiraRequest("Recebimentos", null);
+        when(categoriaFinanceiraRepository.findById(1L)).thenReturn(Optional.of(categoria));
+        when(categoriaFinanceiraRepository.existsByNomeIgnoreCaseAndTipo("Recebimentos", TipoLancamento.RECEITA))
+                .thenReturn(false);
+        when(categoriaFinanceiraRepository.save(any(CategoriaFinanceira.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        CategoriaFinanceiraResponse response = categoriaFinanceiraService.editar(1L, request);
+
+        assertEquals(TipoLancamento.RECEITA, response.tipo());
+        // Sem mudança de tipo, não consulta lançamentos vinculados.
+        verify(lancamentoFinanceiroRepository, never()).existsByCategoriaId(any());
     }
 
     @Test
