@@ -10,6 +10,7 @@ export interface Fechamento {
   saldoCalculado: number;
   valorFisicoInformado: number | null;
   fechadoEm: string | null;
+  responsavel: string | null;
 }
 
 // Preview automatico do dia

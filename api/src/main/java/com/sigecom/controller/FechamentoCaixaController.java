@@ -19,10 +19,10 @@ public class FechamentoCaixaController {
     
     private final FechamentoCaixaService fechamentoCaixaService;
 
-    // automatico do dia, critério 1 da us
+    // devolve o do dia, senao automatico critério 1 da us
     @GetMapping("/hoje")
-    public ResponseEntity<FechamentoResponse> preview() {
-        return ResponseEntity.ok(fechamentoCaixaService.calcularPreview(LocalDate.now()));
+    public ResponseEntity<FechamentoResponse> doDia() {
+        return ResponseEntity.ok(fechamentoCaixaService.obterDoDia(LocalDate.now()));
     }
 
 

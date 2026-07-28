@@ -46,9 +46,16 @@ public class FechamentoCaixaService {
         BigDecimal saldoCalculado = totalReceitas.subtract(totalDespesas);
 
         return new FechamentoResponse(null, data, totalVendas, totalReceitas, totalDespesas,
-                saldoCalculado, null, null);
+                saldoCalculado, null, null, null);
     }
 
+    // permite saber qual estado tá, pra mostrar o fechamento feito
+    @Transactional(readOnly = true)
+    public FechamentoResponse obterDoDia(LocalDate data) {
+        return fechamentoCaixaRepository.findByDataFechamento(data)
+                .map(FechamentoResponse::toResponse)
+                .orElseGet(() -> calcularPreview(data));
+    }
     
     // confere se já tem algum fechamento, se não calcula os totais e salva (R-02)
     @Transactional

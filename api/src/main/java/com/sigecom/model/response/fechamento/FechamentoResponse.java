@@ -15,7 +15,8 @@ public record FechamentoResponse(
         BigDecimal totalDespesas,
         BigDecimal saldoCalculado,
         BigDecimal valorFisicoInformado,
-        LocalDateTime fechadoEm
+        LocalDateTime fechadoEm,
+        String responsavel
 ) {
 
     public static FechamentoResponse toResponse(FechamentoCaixa f){
@@ -27,7 +28,8 @@ public record FechamentoResponse(
                 f.getTotalDespesas(),
                 f.getSaldoCalculado(),
                 f.getValorFisicoInformado(),
-                f.getFechadoEm()  
+                f.getFechadoEm(),
+                f.getUsuario().getNome()
         );
     }
 }
