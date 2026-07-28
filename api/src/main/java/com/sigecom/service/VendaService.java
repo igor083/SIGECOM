@@ -1,16 +1,21 @@
 package com.sigecom.service;
 
+import com.sigecom.domain.CategoriaFinanceira;
 import com.sigecom.domain.ItemVenda;
+import com.sigecom.domain.LancamentoFinanceiro;
 import com.sigecom.domain.Produto;
 import com.sigecom.domain.Usuario;
 import com.sigecom.domain.Venda;
 import com.sigecom.domain.enums.TipoDesconto;
+import com.sigecom.domain.enums.TipoLancamento;
 import com.sigecom.model.request.venda.ItemVendaRequest;
 import com.sigecom.model.request.venda.VendaRequest;
 import com.sigecom.model.response.venda.CalculoVendaResponse;
 import com.sigecom.model.response.venda.ItemVendaResponse;
 import com.sigecom.model.response.venda.VendaResponse;
 import com.sigecom.model.response.venda.VendaResumoResponse;
+import com.sigecom.repository.CategoriaFinanceiraRepository;
+import com.sigecom.repository.LancamentoFinanceiroRepository;
 import com.sigecom.repository.ProdutoRepository;
 import com.sigecom.repository.UsuarioRepository;
 import com.sigecom.repository.VendaRepository;
@@ -45,6 +50,8 @@ import java.util.Map;
  * US-027 — Confirmar e registrar venda:
  *   - persistência + baixa de estoque numa única transação (@Transactional)
  *   - rollback total em caso de falha (estoque insuficiente, etc.)
+ *   - toda venda é reportada no financeiro como uma receita (categoria "Venda"),
+ *     dentro da mesma transação: se o lançamento falhar, a venda também sofre rollback
  */
 @Slf4j
 @Service
@@ -54,10 +61,16 @@ public class VendaService {
     private final VendaRepository vendaRepository;
     private final ProdutoRepository produtoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final LancamentoFinanceiroRepository lancamentoFinanceiroRepository;
+    private final CategoriaFinanceiraRepository categoriaFinanceiraRepository;
 
     private static final int ESCALA = 2;
     private static final RoundingMode ARREDONDAMENTO = RoundingMode.HALF_UP;
     private static final BigDecimal CEM = new BigDecimal("100");
+
+    // Categoria de receita usada para lançar toda venda no financeiro.
+    // Criada pelo CategoriaFinanceiraSeeder — sempre presente em produção.
+    private static final String CATEGORIA_VENDA = "Venda";
 
     // ── Preview (US-026) ─────────────────────────────────────────
 
@@ -161,7 +174,35 @@ public class VendaService {
         Venda salva = vendaRepository.save(venda);
         log.info("Venda {} registrada por {} — total={}", salva.getId(), operador.getEmail(), salva.getTotal());
 
+        registrarReceitaNoFinanceiro(salva, operador);
+
         return VendaResponse.toResponse(salva, escala(subtotal));
+    }
+
+    /**
+     * Reporta a venda no financeiro como um lançamento de receita.
+     *
+     * Roda na mesma transação de confirmar(): se o save do lançamento falhar,
+     * a venda inteira (e a baixa de estoque) sofre rollback — mantendo o
+     * financeiro e o histórico de vendas sempre consistentes entre si.
+     */
+    private void registrarReceitaNoFinanceiro(Venda venda, Usuario operador) {
+        CategoriaFinanceira categoria = categoriaFinanceiraRepository
+                .findFirstByNomeIgnoreCaseAndTipo(CATEGORIA_VENDA, TipoLancamento.RECEITA)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Categoria financeira '" + CATEGORIA_VENDA + "' não encontrada"));
+
+        LancamentoFinanceiro lancamento = LancamentoFinanceiro.builder()
+                .usuario(operador)
+                .categoria(categoria)
+                .tipo(TipoLancamento.RECEITA)
+                .descricao("Venda #" + venda.getId())
+                .valor(venda.getTotal())
+                .dataHora(venda.getDataHora())
+                .build();
+
+        lancamentoFinanceiroRepository.save(lancamento);
+        log.info("Receita da venda {} lançada no financeiro — valor={}", venda.getId(), venda.getTotal());
     }
 
     // ── Helpers ──────────────────────────────────────────────────

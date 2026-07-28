@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface CategoriaFinanceiraRepository extends JpaRepository<CategoriaFinanceira, Long> {
@@ -13,4 +14,6 @@ public interface CategoriaFinanceiraRepository extends JpaRepository<CategoriaFi
     List<CategoriaFinanceira> findByTipo(TipoLancamento tipo);
 
     boolean existsByNomeIgnoreCaseAndTipo(String nome, TipoLancamento tipo);
+
+    Optional<CategoriaFinanceira> findFirstByNomeIgnoreCaseAndTipo(String nome, TipoLancamento tipo);
 }
