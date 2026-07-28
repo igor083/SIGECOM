@@ -1,17 +1,22 @@
 package com.sigecom.service;
 
+import com.sigecom.domain.CategoriaFinanceira;
 import com.sigecom.domain.CategoriaProduto;
 import com.sigecom.domain.ItemVenda;
+import com.sigecom.domain.LancamentoFinanceiro;
 import com.sigecom.domain.Produto;
 import com.sigecom.domain.Usuario;
 import com.sigecom.domain.Venda;
 import com.sigecom.domain.enums.TipoDesconto;
+import com.sigecom.domain.enums.TipoLancamento;
 import com.sigecom.domain.enums.TipoPagamento;
 import com.sigecom.domain.enums.TipoUsuario;
 import com.sigecom.model.request.venda.ItemVendaRequest;
 import com.sigecom.model.request.venda.VendaRequest;
 import com.sigecom.model.response.venda.CalculoVendaResponse;
 import com.sigecom.model.response.venda.VendaResponse;
+import com.sigecom.repository.CategoriaFinanceiraRepository;
+import com.sigecom.repository.LancamentoFinanceiroRepository;
 import com.sigecom.repository.ProdutoRepository;
 import com.sigecom.repository.UsuarioRepository;
 import com.sigecom.repository.VendaRepository;
@@ -53,6 +58,8 @@ class VendaServiceTest {
     @Mock private VendaRepository vendaRepository;
     @Mock private ProdutoRepository produtoRepository;
     @Mock private UsuarioRepository usuarioRepository;
+    @Mock private LancamentoFinanceiroRepository lancamentoFinanceiroRepository;
+    @Mock private CategoriaFinanceiraRepository categoriaFinanceiraRepository;
 
     @InjectMocks private VendaService vendaService;
 
@@ -140,6 +147,19 @@ class VendaServiceTest {
             v.setId(100L);
             return v;
         });
+        // Todo caminho de sucesso reporta a venda no financeiro logo após
+        // salvá-la, exigindo a categoria de receita "Venda" (US-18).
+        stubCategoriaVenda();
+    }
+
+    private void stubCategoriaVenda() {
+        CategoriaFinanceira catVenda = new CategoriaFinanceira();
+        catVenda.setId(1L);
+        catVenda.setNome("Venda");
+        catVenda.setTipo(TipoLancamento.RECEITA);
+        when(categoriaFinanceiraRepository
+                .findFirstByNomeIgnoreCaseAndTipo("Venda", TipoLancamento.RECEITA))
+                .thenReturn(Optional.of(catVenda));
     }
 
     // =============================================================
@@ -646,6 +666,161 @@ class VendaServiceTest {
             VendaResponse resp = vendaService.confirmar(reqPago(TipoPagamento.PIX, item(1L, 1)));
 
             assertEquals(TipoPagamento.PIX, resp.tipoPagamento());
+        }
+
+        // ── Reporte no financeiro (US-18) ────────────────────────
+
+        @Test
+        @DisplayName("toda venda gera uma receita no financeiro com o total, categoria Venda e operador")
+        void confirmar_DeveReportarVendaComoReceitaNoFinanceiro() {
+            Produto p = produto(1L, "Item", "100.00", 10);
+            stubProdutos(p);
+            stubOperadorAutenticado();
+            stubSaveVenda();
+
+            // 20% de desconto → total 80.00; a receita deve refletir o total líquido
+            ArgumentCaptor<LancamentoFinanceiro> captor =
+                    ArgumentCaptor.forClass(LancamentoFinanceiro.class);
+            vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO,
+                    item(1L, 1, TipoDesconto.PERCENTUAL, "20")));
+
+            verify(lancamentoFinanceiroRepository).save(captor.capture());
+            LancamentoFinanceiro lancamento = captor.getValue();
+
+            assertEquals(TipoLancamento.RECEITA, lancamento.getTipo());
+            assertEquals("Venda", lancamento.getCategoria().getNome());
+            assertEquals(reais("80.00"), lancamento.getValor());
+            assertEquals(operador.getId(), lancamento.getUsuario().getId());
+            assertEquals("Venda #100", lancamento.getDescricao());
+        }
+
+        @Test
+        @DisplayName("categoria de receita 'Venda' ausente: lança 500 e NÃO persiste a venda (rollback)")
+        void confirmar_CategoriaVendaAusente_DeveLancarErroSemPersistir() {
+            Produto p = produto(1L, "Item", "10.00", 10);
+            stubProdutos(p);
+            stubOperadorAutenticado();
+            when(vendaRepository.save(any(Venda.class))).thenAnswer(inv -> {
+                Venda v = inv.getArgument(0);
+                v.setId(100L);
+                return v;
+            });
+            when(categoriaFinanceiraRepository
+                    .findFirstByNomeIgnoreCaseAndTipo("Venda", TipoLancamento.RECEITA))
+                    .thenReturn(Optional.empty());
+
+            ResponseStatusException ex = assertThrows(ResponseStatusException.class,
+                    () -> vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO, item(1L, 1))));
+
+            assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getStatusCode());
+            verify(lancamentoFinanceiroRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("venda sem desconto: receita lançada é igual ao total (= subtotal)")
+        void confirmar_VendaSemDesconto_ReceitaIgualAoTotal() {
+            Produto p = produto(1L, "Item", "10.00", 10);
+            stubProdutos(p);
+            stubOperadorAutenticado();
+            stubSaveVenda();
+
+            ArgumentCaptor<LancamentoFinanceiro> captor =
+                    ArgumentCaptor.forClass(LancamentoFinanceiro.class);
+            vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO, item(1L, 3)));
+
+            verify(lancamentoFinanceiroRepository).save(captor.capture());
+            assertEquals(reais("30.00"), captor.getValue().getValor());
+        }
+
+        @Test
+        @DisplayName("lançamento herda o operador e a dataHora da venda")
+        void confirmar_LancamentoHerdaOperadorEDataHoraDaVenda() {
+            Produto p = produto(1L, "Item", "10.00", 10);
+            stubProdutos(p);
+            stubOperadorAutenticado();
+
+            // Captura a venda salva para comparar a dataHora com a do lançamento
+            ArgumentCaptor<Venda> vendaCaptor = ArgumentCaptor.forClass(Venda.class);
+            when(vendaRepository.save(any(Venda.class))).thenAnswer(inv -> {
+                Venda v = inv.getArgument(0);
+                v.setId(100L);
+                return v;
+            });
+            stubCategoriaVenda();
+
+            ArgumentCaptor<LancamentoFinanceiro> lancCaptor =
+                    ArgumentCaptor.forClass(LancamentoFinanceiro.class);
+            vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO, item(1L, 1)));
+
+            verify(vendaRepository).save(vendaCaptor.capture());
+            verify(lancamentoFinanceiroRepository).save(lancCaptor.capture());
+
+            LancamentoFinanceiro lancamento = lancCaptor.getValue();
+            assertSame(operador, lancamento.getUsuario());
+            assertEquals(vendaCaptor.getValue().getDataHora(), lancamento.getDataHora());
+        }
+
+        @Test
+        @DisplayName("a categoria buscada é do tipo RECEITA (nunca despesa)")
+        void confirmar_CategoriaBuscadaEhDoTipoReceita() {
+            Produto p = produto(1L, "Item", "10.00", 10);
+            stubProdutos(p);
+            stubOperadorAutenticado();
+            stubSaveVenda();
+
+            vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO, item(1L, 1)));
+
+            verify(categoriaFinanceiraRepository)
+                    .findFirstByNomeIgnoreCaseAndTipo("Venda", TipoLancamento.RECEITA);
+        }
+
+        @Test
+        @DisplayName("estoque insuficiente: NÃO lança receita no financeiro")
+        void confirmar_EstoqueInsuficiente_NaoDeveLancarReceita() {
+            Produto p = produto(1L, "Item", "10.00", 1);
+            stubProdutos(p);
+            stubOperadorAutenticado();
+
+            assertThrows(ResponseStatusException.class,
+                    () -> vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO, item(1L, 5))));
+
+            verify(lancamentoFinanceiroRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("cada venda gera exatamente um lançamento de receita")
+        void confirmar_DeveGerarExatamenteUmLancamentoPorVenda() {
+            Produto p1 = produto(1L, "A", "10.00", 10);
+            Produto p2 = produto(2L, "B", "20.00", 10);
+            stubProdutos(p1, p2);
+            stubOperadorAutenticado();
+            stubSaveVenda();
+
+            vendaService.confirmar(reqPago(TipoPagamento.DINHEIRO, item(1L, 2), item(2L, 1)));
+
+            verify(lancamentoFinanceiroRepository, times(1)).save(any(LancamentoFinanceiro.class));
+        }
+    }
+
+    // =============================================================
+    // Preview (US-026) — não deve tocar no financeiro
+    // =============================================================
+
+    @Nested
+    @DisplayName("calcular() — preview não reporta no financeiro")
+    class CalcularNaoReportaFinanceiro {
+
+        @Test
+        @DisplayName("calcular() NÃO gera lançamento nem consulta categoria de receita")
+        void calcular_NaoDeveTocarNoFinanceiro() {
+            Produto p = produto(1L, "Item", "10.00", 100);
+            stubProdutos(p);
+
+            vendaService.calcular(req(item(1L, 1)));
+
+            verify(lancamentoFinanceiroRepository, never()).save(any());
+            verify(categoriaFinanceiraRepository, never())
+                    .findFirstByNomeIgnoreCaseAndTipo(any(), any());
         }
     }
 }
