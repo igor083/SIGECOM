@@ -1,0 +1,237 @@
+/* Tela de Fechamento de Caixa (US-022 / US-023) */
+
+.pagina {
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 28px 32px 32px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Cabeçalho: título + selo de estado ───────────────────── */
+
+.cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.titulo {
+  margin: 0 0 2px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.subtitulo {
+  margin: 0;
+  font-size: 13px;
+  color: #475569;
+}
+
+.selo,
+.seloAberto {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.selo {
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #cbd5e1;
+}
+
+.seloAberto {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+/* ── Resumo do dia ────────────────────────────────────────── */
+
+.resumo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.linha,
+.linhaDestaque {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 14px;
+}
+
+/* O saldo calculado é o número que importa: separado e com mais peso. */
+.linhaDestaque {
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.rotulo {
+  color: #475569;
+}
+
+.valor {
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Divergência entre contado e calculado ────────────────── */
+
+.divergencia {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.divergenciaRotulo {
+  font-weight: 600;
+}
+
+.divergenciaValor {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* Cor nunca é o único canal: o rótulo já diz confere / sobra / falta. */
+.ok {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.sobra {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.falta {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+/* ── Formulário ───────────────────────────────────────────── */
+
+.formulario {
+  margin-top: 24px;
+}
+
+.rotuloCampo {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+}
+
+.campoValor {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.campoValor:focus-within {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.prefixo {
+  padding: 0 10px;
+  font-size: 14px;
+  color: #475569;
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+  line-height: 40px;
+}
+
+.entrada {
+  flex: 1;
+  height: 100%;
+  padding: 0 12px;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.ajuda {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #475569;
+}
+
+.botao {
+  width: 100%;
+  height: 42px;
+  margin-top: 20px;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.botao:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.botao:disabled {
+  background: #cbd5e1;
+  color: #f8fafc;
+  cursor: not-allowed;
+}
+
+/* ── Mensagens ────────────────────────────────────────────── */
+
+.alertaErro {
+  margin-top: 16px;
+  padding: 10px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #991b1b;
+  font-size: 13px;
+}
+
+.nota {
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: #475569;
+}
+
+.estadoVazio {
+  color: #475569;
+  font-size: 14px;
+}
