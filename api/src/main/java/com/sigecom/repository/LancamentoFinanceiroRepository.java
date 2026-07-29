@@ -46,4 +46,9 @@ public interface LancamentoFinanceiroRepository extends JpaRepository<Lancamento
                             @Param("dataFim") LocalDateTime dataFim);
 
     boolean existsByCategoriaId(Long categoriaId);
+
+    // Usado pelo backfill de vendas antigas: mesma convenção de descrição
+    // ("Venda #" + id) usada em VendaService.registrarReceitaNoFinanceiro,
+    // já que não há FK entre lancamento_financeiro e venda.
+    boolean existsByDescricao(String descricao);
 }

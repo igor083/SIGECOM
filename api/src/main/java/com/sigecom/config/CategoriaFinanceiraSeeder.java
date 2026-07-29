@@ -7,15 +7,19 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 // so cria as categorias se a tabela estiver vazia
 // nao roda nos testes porque eles usam H2
+// @Order(0): precisa rodar antes do VendaFinanceiroBackfillRunner, que
+// depende da categoria "Venda" já existir.
 @Slf4j
 @Component
 @RequiredArgsConstructor
+@Order(0)
 @ConditionalOnProperty(name = "spring.datasource.driver-class-name",
                        havingValue = "org.postgresql.Driver")
 public class CategoriaFinanceiraSeeder implements CommandLineRunner {
