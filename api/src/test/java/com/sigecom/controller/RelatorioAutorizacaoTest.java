@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -62,7 +63,9 @@ class RelatorioAutorizacaoTest {
                         new BigDecimal("250.00"),
                         LocalDate.of(2026, 8, 1),
                         LocalDate.of(2026, 8, 31),
-                        null));
+                        null,
+                        List.of(),
+                        List.of()));
 
         mockMvc.perform(get("/relatorios/vendas").param("periodo", PeriodoRelatorio.MES.name()))
                 .andExpect(status().isOk())

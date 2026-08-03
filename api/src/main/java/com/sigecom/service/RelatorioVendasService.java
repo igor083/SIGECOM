@@ -5,6 +5,8 @@ import com.sigecom.model.response.relatorio.RelatorioVendasResponse;
 import com.sigecom.repository.UsuarioRepository;
 import com.sigecom.repository.VendaRepository;
 import com.sigecom.repository.projection.RelatorioVendasAgregado;
+import com.sigecom.repository.projection.VendasPorDiaAgregado;
+import com.sigecom.repository.projection.VendasPorFormaPagamentoAgregado;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -17,6 +19,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 
 /**
  * Relatório de vendas por período (US — acompanhar desempenho comercial).
@@ -77,6 +80,12 @@ public class RelatorioVendasService {
         long quantidade = quantidadeOuZero(agregado.quantidadeTransacoes());
         BigDecimal ticketMedio = calcularTicketMedio(totalVendas, quantidade);
 
+        // Séries para os gráficos do front — mesmo período/funcionário do resumo.
+        List<RelatorioVendasResponse.VendaDiaria> vendasPorDia =
+                montarVendasPorDia(inicio, fim, funcionarioId);
+        List<RelatorioVendasResponse.VendaPorFormaPagamento> vendasPorFormaPagamento =
+                montarVendasPorFormaPagamento(inicio, fim, funcionarioId);
+
         log.info("relatorio-vendas: periodo=[{} a {}] funcionario={} total={} qtd={} ticketMedio={}",
                 intervalo.inicio(), intervalo.fim(), funcionarioId, totalVendas, quantidade, ticketMedio);
 
@@ -86,8 +95,41 @@ public class RelatorioVendasService {
                 ticketMedio,
                 intervalo.inicio(),
                 intervalo.fim(),
-                funcionarioId
+                funcionarioId,
+                vendasPorDia,
+                vendasPorFormaPagamento
         );
+    }
+
+    // ── Séries dos gráficos ──────────────────────────────────────
+
+    private List<RelatorioVendasResponse.VendaDiaria> montarVendasPorDia(
+            LocalDateTime inicio, LocalDateTime fim, Long funcionarioId) {
+        return vendaRepository.agregarPorDia(inicio, fim, funcionarioId).stream()
+                .map(this::paraVendaDiaria)
+                .toList();
+    }
+
+    private RelatorioVendasResponse.VendaDiaria paraVendaDiaria(VendasPorDiaAgregado dia) {
+        return new RelatorioVendasResponse.VendaDiaria(
+                dia.data(),
+                escala(valorOuZero(dia.total())),
+                quantidadeOuZero(dia.quantidade()));
+    }
+
+    private List<RelatorioVendasResponse.VendaPorFormaPagamento> montarVendasPorFormaPagamento(
+            LocalDateTime inicio, LocalDateTime fim, Long funcionarioId) {
+        return vendaRepository.agregarPorFormaPagamento(inicio, fim, funcionarioId).stream()
+                .map(this::paraFormaPagamento)
+                .toList();
+    }
+
+    private RelatorioVendasResponse.VendaPorFormaPagamento paraFormaPagamento(
+            VendasPorFormaPagamentoAgregado forma) {
+        return new RelatorioVendasResponse.VendaPorFormaPagamento(
+                forma.tipoPagamento(),
+                escala(valorOuZero(forma.total())),
+                quantidadeOuZero(forma.quantidade()));
     }
 
     // ── Resolução do período ─────────────────────────────────────

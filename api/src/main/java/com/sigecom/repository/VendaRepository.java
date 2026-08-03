@@ -2,6 +2,8 @@ package com.sigecom.repository;
 
 import com.sigecom.domain.Venda;
 import com.sigecom.repository.projection.RelatorioVendasAgregado;
+import com.sigecom.repository.projection.VendasPorDiaAgregado;
+import com.sigecom.repository.projection.VendasPorFormaPagamentoAgregado;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Repository
 public interface VendaRepository extends JpaRepository<Venda, Long> {
@@ -61,5 +64,46 @@ public interface VendaRepository extends JpaRepository<Venda, Long> {
     RelatorioVendasAgregado agregarPorPeriodo(@Param("dataInicio") LocalDateTime dataInicio,
                                               @Param("dataFim") LocalDateTime dataFim,
                                               @Param("funcionarioId") Long funcionarioId);
+
+    /**
+     * Série diária do período: total e quantidade de vendas por dia, ordenada
+     * cronologicamente (US — Relatório de Vendas / gráfico "vendas por dia").
+     *
+     * CAST(v.dataHora AS LocalDate) colapsa o timestamp no dia (Hibernate 6 devolve
+     * LocalDate; no Postgres vira `cast(... as date)`). Dias sem venda não
+     * aparecem — a série é esparsa, o front lida com isso no gráfico de barras.
+     * Mesma convenção de datas/funcionário do agregarPorPeriodo.
+     */
+    @Query("SELECT new com.sigecom.repository.projection.VendasPorDiaAgregado(" +
+           "CAST(v.dataHora AS LocalDate), COALESCE(SUM(v.total), 0), COUNT(v.id)) " +
+           "FROM Venda v " +
+           "WHERE v.dataHora >= :dataInicio " +
+           "  AND v.dataHora <= :dataFim " +
+           "  AND (:funcionarioId IS NULL OR v.usuario.id = :funcionarioId) " +
+           "GROUP BY CAST(v.dataHora AS LocalDate) " +
+           "ORDER BY CAST(v.dataHora AS LocalDate)")
+    List<VendasPorDiaAgregado> agregarPorDia(@Param("dataInicio") LocalDateTime dataInicio,
+                                             @Param("dataFim") LocalDateTime dataFim,
+                                             @Param("funcionarioId") Long funcionarioId);
+
+    /**
+     * Distribuição por forma de pagamento no período: total e quantidade de
+     * vendas por TipoPagamento, do maior total para o menor
+     * (US — Relatório de Vendas / gráfico de rosca por forma de pagamento).
+     *
+     * Só aparecem formas efetivamente usadas no período. Mesma convenção de
+     * datas/funcionário do agregarPorPeriodo.
+     */
+    @Query("SELECT new com.sigecom.repository.projection.VendasPorFormaPagamentoAgregado(" +
+           "v.tipoPagamento, COALESCE(SUM(v.total), 0), COUNT(v.id)) " +
+           "FROM Venda v " +
+           "WHERE v.dataHora >= :dataInicio " +
+           "  AND v.dataHora <= :dataFim " +
+           "  AND (:funcionarioId IS NULL OR v.usuario.id = :funcionarioId) " +
+           "GROUP BY v.tipoPagamento " +
+           "ORDER BY SUM(v.total) DESC")
+    List<VendasPorFormaPagamentoAgregado> agregarPorFormaPagamento(@Param("dataInicio") LocalDateTime dataInicio,
+                                                                   @Param("dataFim") LocalDateTime dataFim,
+                                                                   @Param("funcionarioId") Long funcionarioId);
 }
 
