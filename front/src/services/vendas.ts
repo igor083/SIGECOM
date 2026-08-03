@@ -99,14 +99,16 @@ export async function confirmarVenda(request: VendaRequest): Promise<VendaRespon
 }
 
 /**
- * Histórico de vendas paginado — usado pela tela /pdv/historico.
- * As datas devem estar em ISO local (ex.: "2026-01-31T00:00:00").
+ * Histórico de vendas paginado — usado pela tela /pdv/historico e pela
+ * exportação do relatório. As datas vão como YYYY-MM-DD; `funcionarioId`
+ * filtra pelo responsável (opcional).
  */
 export async function listarVendas(params: {
   page?: number;
   size?: number;
   dataInicio?: string;
   dataFim?: string;
+  funcionarioId?: number | null;
 }): Promise<PageVendaResumo> {
   const response = await api.get<PageVendaResumo>("/vendas", { params });
   return response.data;

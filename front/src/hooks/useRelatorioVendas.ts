@@ -1,9 +1,5 @@
 "use client";
 
-// D-5: quem fala com a API de relatório é este hook; a página/o componente só exibem.
-// Espelha o useSaldo, mas delega o cálculo do preset (dia/semana/mês) ao backend
-// e só monta o intervalo manualmente no modo PERSONALIZADO.
-
 import { useState, useEffect, useCallback } from "react";
 import {
   obterRelatorioVendas,
@@ -27,7 +23,6 @@ export interface UseRelatorioVendasResult {
   setFuncionarioId: (id: number | null) => void;
   loading: boolean;
   erro: string | null;
-  /** true quando o modo é PERSONALIZADO mas ainda falta uma das datas. */
   aguardandoDatas: boolean;
   recarregar: () => Promise<void>;
 }
@@ -43,12 +38,11 @@ export function useRelatorioVendas(
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  // No modo personalizado precisamos das duas datas antes de consultar.
   const aguardandoDatas =
     modo === "PERSONALIZADO" && (!dataInicio || !dataFim);
 
   const carregar = useCallback(async () => {
-    if (aguardandoDatas) return; // evita chamada 400 com par de datas incompleto
+    if (aguardandoDatas) return;
 
     setLoading(true);
     setErro(null);

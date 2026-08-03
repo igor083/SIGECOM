@@ -1,15 +1,10 @@
 "use client";
 
-// Gráficos do relatório de vendas. Componente apresentacional puro (igual ao
-// ResumoVendas): recebe o relatório por prop e desenha, sem chamar API.
-//
-// Dois gráficos, cada um com um trabalho:
-//  - Vendas por dia   → magnitude ao longo do tempo → barras de série única (azul).
-//  - Por forma de pgto → identidade/composição      → rosca categórica com legenda.
-
+import { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
+  CartesianGrid,
   Cell,
   Legend,
   Pie,
@@ -27,12 +22,10 @@ interface GraficosVendasProps {
   erro: string | null;
 }
 
-// ── Formatação ───────────────────────────────────────────────
 function real(valor: number): string {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-// Eixo Y compacto: R$ 1,2 mil / R$ 3 mi — evita rótulos longos por tick.
 function realCompacto(valor: number): string {
   return valor.toLocaleString("pt-BR", {
     style: "currency",
@@ -47,31 +40,66 @@ function diaMes(iso: string): string {
   return `${dia}/${mes}`;
 }
 
-// ── Formas de pagamento ──────────────────────────────────────
-// Rótulo e cor são fixos por forma de pagamento (a cor segue a entidade, nunca
-// a ordem/ranking). Cores: 4 primeiros slots da paleta categórica validada.
 const PAGAMENTO: Record<TipoPagamento, { rotulo: string; cor: string }> = {
-  DINHEIRO: { rotulo: "Dinheiro", cor: "#2a78d6" }, // azul
-  PIX: { rotulo: "Pix", cor: "#008300" },           // verde
-  DEBITO: { rotulo: "Débito", cor: "#e87ba4" },     // magenta
-  CREDITO: { rotulo: "Crédito", cor: "#eda100" },   // amarelo
+  DINHEIRO: { rotulo: "Dinheiro", cor: "#2a78d6" },
+  PIX: { rotulo: "Pix", cor: "#008300" },
+  DEBITO: { rotulo: "Débito", cor: "#e87ba4" },
+  CREDITO: { rotulo: "Crédito", cor: "#eda100" },
 };
 
-const COR_BARRA = "#2563eb"; // azul da identidade visual do app (série única)
+interface TokensGrafico {
+  texto: string;
+  eixo: string;
+  grade: string;
+  primaria: string;
+  card: string;
+}
+
+const CURSOR = "rgba(37,99,235,0.08)";
+
+const TOKENS_PADRAO: TokensGrafico = {
+  texto: "#475569",
+  eixo: "#e2e8f0",
+  grade: "#f1f5f9",
+  primaria: "#2563eb",
+  card: "#ffffff",
+};
+
+function useTokensGrafico(): TokensGrafico {
+  const [tokens, setTokens] = useState<TokensGrafico>(TOKENS_PADRAO);
+  useEffect(() => {
+    const ler = () => {
+      const cs = getComputedStyle(document.documentElement);
+      const v = (nome: string, fallback: string) => cs.getPropertyValue(nome).trim() || fallback;
+      setTokens({
+        texto: v("--color-text-secondary", TOKENS_PADRAO.texto),
+        eixo: v("--color-border", TOKENS_PADRAO.eixo),
+        grade: v("--color-border", TOKENS_PADRAO.grade),
+        primaria: v("--color-primary", TOKENS_PADRAO.primaria),
+        card: v("--color-bg-card", TOKENS_PADRAO.card),
+      });
+    };
+    ler();
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    mq.addEventListener("change", ler);
+    return () => mq.removeEventListener("change", ler);
+  }, []);
+  return tokens;
+}
 
 export default function GraficosVendas({ relatorio, loading, erro }: GraficosVendasProps) {
-  // Erros e carregamento já são comunicados pelo ResumoVendas logo acima;
-  // aqui apenas não desenhamos nada para não duplicar a mensagem.
+  const t = useTokensGrafico();
+
   if (erro || loading || !relatorio) return null;
   if (relatorio.quantidadeTransacoes === 0) return null;
 
-  const dadosDia = relatorio.vendasPorDia.map((d) => ({
+  const dadosDia = (relatorio.vendasPorDia ?? []).map((d) => ({
     dia: diaMes(d.data),
     total: d.total,
     quantidade: d.quantidade,
   }));
 
-  const dadosPagamento = relatorio.vendasPorFormaPagamento.map((f) => ({
+  const dadosPagamento = (relatorio.vendasPorFormaPagamento ?? []).map((f) => ({
     tipo: f.tipoPagamento,
     rotulo: PAGAMENTO[f.tipoPagamento]?.rotulo ?? f.tipoPagamento,
     cor: PAGAMENTO[f.tipoPagamento]?.cor ?? "#94a3b8",
@@ -83,7 +111,6 @@ export default function GraficosVendas({ relatorio, loading, erro }: GraficosVen
 
   return (
     <div style={grade}>
-      {/* ── Vendas por dia ── */}
       <section style={caixa}>
         <h3 style={titulo}>Vendas por dia</h3>
         {dadosDia.length === 0 ? (
@@ -91,21 +118,22 @@ export default function GraficosVendas({ relatorio, loading, erro }: GraficosVen
         ) : (
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={dadosDia} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
+              <CartesianGrid vertical={false} stroke={t.grade} />
               <XAxis
                 dataKey="dia"
-                tick={{ fontSize: 12, fill: "#64748b" }}
+                tick={{ fontSize: 12, fill: t.texto }}
                 tickLine={false}
-                axisLine={{ stroke: "#e2e8f0" }}
+                axisLine={{ stroke: t.eixo }}
               />
               <YAxis
                 width={64}
-                tick={{ fontSize: 12, fill: "#64748b" }}
+                tick={{ fontSize: 12, fill: t.texto }}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={realCompacto}
               />
               <Tooltip
-                cursor={{ fill: "rgba(37,99,235,0.06)" }}
+                cursor={{ fill: CURSOR }}
                 formatter={(valor, _n, item) => [
                   `${real(Number(valor))} · ${item?.payload?.quantidade ?? 0} venda(s)`,
                   "Total",
@@ -113,13 +141,12 @@ export default function GraficosVendas({ relatorio, loading, erro }: GraficosVen
                 labelFormatter={(l) => `Dia ${l}`}
                 contentStyle={tooltipBox}
               />
-              <Bar dataKey="total" fill={COR_BARRA} radius={[4, 4, 0, 0]} maxBarSize={48} />
+              <Bar dataKey="total" fill={t.primaria} radius={[4, 4, 0, 0]} maxBarSize={48} />
             </BarChart>
           </ResponsiveContainer>
         )}
       </section>
 
-      {/* ── Por forma de pagamento ── */}
       <section style={caixa}>
         <h3 style={titulo}>Por forma de pagamento</h3>
         {dadosPagamento.length === 0 ? (
@@ -136,7 +163,7 @@ export default function GraficosVendas({ relatorio, loading, erro }: GraficosVen
                 innerRadius={58}
                 outerRadius={92}
                 paddingAngle={2}
-                stroke="#fff"
+                stroke={t.card}
                 strokeWidth={2}
               >
                 {dadosPagamento.map((f) => (
@@ -146,7 +173,9 @@ export default function GraficosVendas({ relatorio, loading, erro }: GraficosVen
               <Legend
                 verticalAlign="bottom"
                 height={36}
-                formatter={(valor) => <span style={{ fontSize: 13, color: "#475569" }}>{valor}</span>}
+                formatter={(valor) => (
+                  <span style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>{valor}</span>
+                )}
               />
               <Tooltip
                 formatter={(valor, _n, item) => {
@@ -167,7 +196,6 @@ export default function GraficosVendas({ relatorio, loading, erro }: GraficosVen
   );
 }
 
-// ── Estilos (light-only, alinhado ao ResumoVendas) ───────────
 const grade: React.CSSProperties = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
@@ -176,29 +204,31 @@ const grade: React.CSSProperties = {
 };
 
 const caixa: React.CSSProperties = {
-  background: "#fff",
-  border: "1px solid #e2e8f0",
+  background: "var(--color-bg-card)",
+  border: "1px solid var(--color-border)",
   borderRadius: 10,
   padding: "20px 24px",
-  boxShadow: "0 1px 4px rgba(0,0,0,.06)",
+  boxShadow: "var(--shadow-sm)",
 };
 
 const titulo: React.CSSProperties = {
   fontSize: 15,
   fontWeight: 600,
-  color: "#0f172a",
+  color: "var(--color-text)",
   margin: "0 0 16px",
 };
 
 const vazio: React.CSSProperties = {
   fontSize: 13,
-  color: "#94a3b8",
+  color: "var(--color-text-muted)",
   margin: 0,
 };
 
 const tooltipBox: React.CSSProperties = {
-  border: "1px solid #e2e8f0",
+  background: "var(--color-bg-card)",
+  border: "1px solid var(--color-border)",
   borderRadius: 8,
   fontSize: 13,
-  boxShadow: "0 4px 12px rgba(0,0,0,.08)",
+  color: "var(--color-text)",
+  boxShadow: "var(--shadow-md)",
 };

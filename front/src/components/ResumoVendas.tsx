@@ -1,8 +1,5 @@
 "use client";
 
-// Cards de KPI do relatório de vendas. Componente apresentacional puro:
-// recebe tudo por prop (dados/loading/erro), sem chamar API — igual ao PainelSaldo.
-
 import type { RelatorioVendas } from "@/services/relatorios";
 
 interface ResumoVendasProps {
@@ -16,7 +13,6 @@ function real(valor: number): string {
 }
 
 function dataBr(iso: string): string {
-  // iso vem como "yyyy-MM-dd"; monta em horário local para não cair no dia anterior.
   const [ano, mes, dia] = iso.split("-").map(Number);
   return new Date(ano, mes - 1, dia).toLocaleDateString("pt-BR");
 }
@@ -31,7 +27,7 @@ export default function ResumoVendas({ relatorio, loading, erro }: ResumoVendasP
   if (erro) {
     return (
       <div style={caixa}>
-        <p style={{ color: "#dc2626", fontSize: 14, margin: 0 }}>{erro}</p>
+        <p style={{ color: "var(--color-error)", fontSize: 14, margin: 0 }}>{erro}</p>
       </div>
     );
   }
@@ -39,7 +35,7 @@ export default function ResumoVendas({ relatorio, loading, erro }: ResumoVendasP
   if (loading || !relatorio) {
     return (
       <div style={caixa}>
-        <p style={{ color: "#94a3b8", fontSize: 14, margin: 0 }}>Carregando relatório...</p>
+        <p style={{ color: "var(--color-text-muted)", fontSize: 14, margin: 0 }}>Carregando relatório...</p>
       </div>
     );
   }
@@ -53,10 +49,10 @@ export default function ResumoVendas({ relatorio, loading, erro }: ResumoVendasP
   return (
     <div style={caixa}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16, flexWrap: "wrap", gap: 8 }}>
-        <h2 style={{ fontSize: 15, fontWeight: 600, color: "#0f172a", margin: 0 }}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--color-text)", margin: 0 }}>
           Desempenho de vendas
         </h2>
-        <span style={{ fontSize: 13, color: "#64748b" }}>
+        <span style={{ fontSize: 13, color: "var(--color-text-secondary)" }}>
           {dataBr(relatorio.dataInicio)} — {dataBr(relatorio.dataFim)}
         </span>
       </div>
@@ -66,16 +62,16 @@ export default function ResumoVendas({ relatorio, loading, erro }: ResumoVendasP
           <div
             key={c.rotulo}
             style={{
-              border: "1px solid #e2e8f0",
+              border: "1px solid var(--color-border)",
               borderRadius: 10,
               padding: "16px 18px",
-              background: c.destaque ? "#eff6ff" : "#f8fafc",
+              background: c.destaque ? "var(--color-primary-50)" : "var(--color-bg)",
             }}
           >
-            <span style={{ display: "block", fontSize: 12, color: "#64748b", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.03em", fontWeight: 600 }}>
+            <span style={{ display: "block", fontSize: 12, color: "var(--color-text-secondary)", marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.03em", fontWeight: 600 }}>
               {c.rotulo}
             </span>
-            <strong style={{ fontSize: 24, color: c.destaque ? "#1d4ed8" : "#0f172a" }}>
+            <strong style={{ fontSize: 24, color: c.destaque ? "var(--color-primary-dark)" : "var(--color-text)" }}>
               {c.valor}
             </strong>
           </div>
@@ -83,7 +79,7 @@ export default function ResumoVendas({ relatorio, loading, erro }: ResumoVendasP
       </div>
 
       {relatorio.quantidadeTransacoes === 0 && (
-        <p style={{ marginTop: 14, marginBottom: 0, fontSize: 13, color: "#94a3b8" }}>
+        <p style={{ marginTop: 14, marginBottom: 0, fontSize: 13, color: "var(--color-text-muted)" }}>
           Nenhuma venda no período selecionado.
         </p>
       )}
@@ -92,9 +88,9 @@ export default function ResumoVendas({ relatorio, loading, erro }: ResumoVendasP
 }
 
 const caixa: React.CSSProperties = {
-  background: "#fff",
-  border: "1px solid #e2e8f0",
+  background: "var(--color-bg-card)",
+  border: "1px solid var(--color-border)",
   borderRadius: 10,
   padding: "20px 24px",
-  boxShadow: "0 1px 4px rgba(0,0,0,.06)",
+  boxShadow: "var(--shadow-sm)",
 };

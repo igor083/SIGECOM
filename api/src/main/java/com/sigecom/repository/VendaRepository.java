@@ -24,9 +24,11 @@ public interface VendaRepository extends JpaRepository<Venda, Long> {
     // parametro no PREPARE e estoura "could not determine data type of parameter".
     @Query("SELECT v FROM Venda v " +
            "WHERE v.dataHora >= :dataInicio " +
-           "  AND v.dataHora <= :dataFim")
+           "  AND v.dataHora <= :dataFim " +
+           "  AND (:funcionarioId IS NULL OR v.usuario.id = :funcionarioId)")
     Page<Venda> findAllFiltrado(@Param("dataInicio") LocalDateTime dataInicio,
                                 @Param("dataFim") LocalDateTime dataFim,
+                                @Param("funcionarioId") Long funcionarioId,
                                 Pageable pageable);
 
 
