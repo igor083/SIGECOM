@@ -1,6 +1,7 @@
 package com.sigecom.repository;
 
 import com.sigecom.domain.Venda;
+import com.sigecom.repository.projection.RelatorioVendasAgregado;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -33,5 +34,32 @@ public interface VendaRepository extends JpaRepository<Venda, Long> {
            "  AND v.dataHora <= :dataFim")
        BigDecimal somarTotalPorPeriodo(@Param("dataInicio") LocalDateTime dataInicio,
                                          @Param("dataFim") LocalDateTime dataFim);
+
+    /**
+     * Agrega total e quantidade de vendas de um período, opcionalmente de um
+     * único funcionário responsável (US — Relatório de Vendas por Período).
+     *
+     * Uma só ida ao banco calcula SUM + COUNT:
+     *  - COALESCE(SUM(v.total), 0) evita null quando o período não tem vendas.
+     *  - COUNT(v.id) devolve 0 naturalmente.
+     *
+     * Datas: o service SEMPRE passa dataInicio/dataFim não-nulos (mesma razão
+     * do findAllFiltrado — ":param IS NULL" quebra a inferência de tipo temporal
+     * no Postgres). Já o funcionarioId (Long) usa o padrão IS NULL com segurança,
+     * como em LancamentoFinanceiroRepository.findAllFiltrado.
+     *
+     * Observação de escopo: hoje toda venda persistida é confirmada — não existe
+     * cancelamento no sistema. Quando o status de venda for introduzido, o filtro
+     * "confirmadas" entra nesta cláusula WHERE.
+     */
+    @Query("SELECT new com.sigecom.repository.projection.RelatorioVendasAgregado(" +
+           "COALESCE(SUM(v.total), 0), COUNT(v.id)) " +
+           "FROM Venda v " +
+           "WHERE v.dataHora >= :dataInicio " +
+           "  AND v.dataHora <= :dataFim " +
+           "  AND (:funcionarioId IS NULL OR v.usuario.id = :funcionarioId)")
+    RelatorioVendasAgregado agregarPorPeriodo(@Param("dataInicio") LocalDateTime dataInicio,
+                                              @Param("dataFim") LocalDateTime dataFim,
+                                              @Param("funcionarioId") Long funcionarioId);
 }
 
