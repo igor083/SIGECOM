@@ -2,6 +2,7 @@ package com.sigecom.repository;
 
 import com.sigecom.domain.LancamentoFinanceiro;
 import com.sigecom.domain.enums.TipoLancamento;
+import com.sigecom.repository.projection.CategoriaFinanceiraAgregado;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Repository
 public interface LancamentoFinanceiroRepository extends JpaRepository<LancamentoFinanceiro, Long> {
@@ -51,4 +53,18 @@ public interface LancamentoFinanceiroRepository extends JpaRepository<Lancamento
     // ("Venda #" + id) usada em VendaService.registrarReceitaNoFinanceiro,
     // já que não há FK entre lancamento_financeiro e venda.
     boolean existsByDescricao(String descricao);
+
+    // Soma agrupada por categoria para o relatório financeiro (SCRUM-34).
+    // GROUP BY em SQL — nunca traz a lista inteira pro Java pra somar.
+    // categoriaId IS NULL aceita Long sem risco de tipo indefinido no Postgres.
+    @Query("SELECT l.categoria.id AS categoriaId, l.categoria.nome AS categoriaNome, " +
+           "       l.tipo AS tipo, COALESCE(SUM(l.valor), 0) AS total " +
+           "FROM LancamentoFinanceiro l " +
+           "WHERE l.dataHora >= :dataInicio AND l.dataHora <= :dataFim " +
+           "  AND (:categoriaId IS NULL OR l.categoria.id = :categoriaId) " +
+           "GROUP BY l.categoria.id, l.categoria.nome, l.tipo")
+    List<CategoriaFinanceiraAgregado> somarAgrupadoPorCategoria(
+            @Param("dataInicio") LocalDateTime dataInicio,
+            @Param("dataFim") LocalDateTime dataFim,
+            @Param("categoriaId") Long categoriaId);
 }

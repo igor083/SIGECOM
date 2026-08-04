@@ -2,9 +2,11 @@ package com.sigecom.controller;
 
 import com.sigecom.domain.enums.PeriodoRelatorio;
 import com.sigecom.model.response.relatorio.RelatorioEstoqueResponse;
+import com.sigecom.model.response.relatorio.RelatorioFinanceiroResponse;
 import com.sigecom.model.response.relatorio.RelatorioMovimentacaoResponse;
 import com.sigecom.model.response.relatorio.RelatorioVendasResponse;
 import com.sigecom.service.RelatorioEstoqueService;
+import com.sigecom.service.RelatorioFinanceiroService;
 import com.sigecom.service.RelatorioMovimentacaoService;
 import com.sigecom.service.RelatorioVendasService;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ public class RelatorioController {
     private final RelatorioVendasService relatorioVendasService;
     private final RelatorioEstoqueService relatorioEstoqueService;
     private final RelatorioMovimentacaoService relatorioMovimentacaoService;
+    private final RelatorioFinanceiroService relatorioFinanceiroService;
 
     /**
      * Resumo consolidado de vendas do período: total, quantidade de transações
@@ -73,5 +76,16 @@ public class RelatorioController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
         return ResponseEntity.ok(
                 relatorioMovimentacaoService.gerar(produtoId, categoriaId, periodo, dataInicio, dataFim));
+    }
+
+    // D-2: relatório financeiro é visão de gestão, só ADMIN ve o saldo por categoria
+    @GetMapping("/financeiro")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<RelatorioFinanceiroResponse> financeiroPorPeriodo(
+            @RequestParam(required = false) PeriodoRelatorio periodo,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
+            @RequestParam(required = false) Long categoriaId) {
+        return ResponseEntity.ok(relatorioFinanceiroService.gerar(periodo, dataInicio, dataFim, categoriaId));
     }
 }
