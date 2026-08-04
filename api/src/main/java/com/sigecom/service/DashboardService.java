@@ -27,7 +27,7 @@ public class DashboardService {
         LocalDateTime fimDia = inicioDia.plusDays(1).minusNanos(1);
 
         BigDecimal realizadoHoje = vendaRepository
-                .findAllFiltrado(inicioDia, fimDia, PageRequest.of(0, Integer.MAX_VALUE))
+                .findAllFiltrado(inicioDia, fimDia, null, PageRequest.of(0, Integer.MAX_VALUE))
                 .getContent()
                 .stream()
                 .map(v -> v.getTotal() != null ? v.getTotal() : BigDecimal.ZERO)

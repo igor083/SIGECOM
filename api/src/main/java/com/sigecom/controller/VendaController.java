@@ -53,8 +53,9 @@ public class VendaController {
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataInicio,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim,
+            @RequestParam(required = false) Long funcionarioId,
             @PageableDefault(size = 10, sort = "dataHora", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        return ResponseEntity.ok(vendaService.listar(dataInicio, dataFim, pageable));
+        return ResponseEntity.ok(vendaService.listar(dataInicio, dataFim, funcionarioId, pageable));
     }
 }

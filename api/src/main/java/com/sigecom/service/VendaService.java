@@ -108,12 +108,13 @@ public class VendaService {
     // ── Histórico paginado ───────────────────────────────────────
 
     /**
-     * Lista vendas paginadas com filtro opcional por intervalo de data.
-     * O default (via controller) é ordenar por dataHora desc.
+     * Lista vendas paginadas com filtro opcional por intervalo de data e por
+     * funcionário responsável. O default (via controller) é ordenar por dataHora desc.
      */
     @Transactional(readOnly = true)
     public Page<VendaResumoResponse> listar(LocalDate dataInicio,
                                             LocalDate dataFim,
+                                            Long funcionarioId,
                                             Pageable pageable) {
         // O front manda a data como YYYY-MM-DD; converte para a faixa do dia.
         // Nunca passar null ao repositorio: no Postgres um parametro nulo em
@@ -126,7 +127,7 @@ public class VendaService {
                 ? dataFim.atTime(LocalTime.MAX)
                 : LocalDateTime.now().plusYears(100);
 
-        return vendaRepository.findAllFiltrado(inicio, fim, pageable)
+        return vendaRepository.findAllFiltrado(inicio, fim, funcionarioId, pageable)
                 .map(VendaResumoResponse::toResponse);
     }
 

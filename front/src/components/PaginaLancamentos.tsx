@@ -1,9 +1,5 @@
 "use client";
 
-// Tela unica do Financeiro (SCRUM-21/SCRUM-22): receitas e despesas juntas.
-// Reaproveita FormLancamento (que escolhe o tipo), useLancamentos, useSaldo
-// e PainelSaldo. O tipo aqui e filtro da lista e coluna da tabela.
-
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,7 +15,6 @@ function formatarReal(valor: number): string {
 }
 
 function formatarDataHora(iso: string): string {
-  // iso = "2026-07-26T14:30:00" → "26/07/2026 14:30"
   const d = new Date(iso);
   return d.toLocaleString("pt-BR", {
     day: "2-digit", month: "2-digit", year: "numeric",
@@ -28,23 +23,37 @@ function formatarDataHora(iso: string): string {
 }
 
 function corDoTipo(tipo: TipoLancamento): string {
-  return tipo === "RECEITA" ? "#16a34a" : "#dc2626";
+  return tipo === "RECEITA" ? "var(--color-success)" : "var(--color-error)";
 }
 
-const COLUNAS = "1fr 110px 150px 150px"; // Descrição/Categoria | Tipo | Valor | Data
+const COLUNAS = "1fr 110px 150px 150px";
+
+const estiloSelect: React.CSSProperties = {
+  height: "36px", padding: "0 10px", fontSize: "14px",
+  border: "1px solid var(--color-border)", borderRadius: "6px",
+  background: "var(--color-bg-card)", color: "var(--color-text)", cursor: "pointer",
+};
+
+const estiloInput: React.CSSProperties = {
+  height: "36px", padding: "0 10px", fontSize: "14px",
+  border: "1px solid var(--color-border)", borderRadius: "6px",
+  background: "var(--color-bg-card)", color: "var(--color-text)",
+};
+
+const estiloLabel: React.CSSProperties = {
+  fontSize: "12px", color: "var(--color-text-secondary)", fontWeight: 500,
+};
 
 export default function PaginaLancamentos() {
   const router = useRouter();
   const { user, loading: authLoading, isAuthenticated } = useAuth();
 
-  // D-2: quem nao for ADMIN vai pro login
   useEffect(() => {
     if (!authLoading && (!isAuthenticated || user?.perfil !== "ADMIN")) {
       router.replace("/login");
     }
   }, [authLoading, isAuthenticated, user, router]);
 
-  // o saldo vem primeiro porque o useLancamentos precisa do recarregar dele
   const {
     saldo,
     periodo,
@@ -88,16 +97,16 @@ export default function PaginaLancamentos() {
         onPeriodoChange={setPeriodo}
       />
 
-      <div style={{ display: "flex", gap: "24px", alignItems: "flex-start" }}>
+      <div style={{ display: "flex", gap: "24px", alignItems: "flex-start", flexWrap: "wrap" }}>
 
         <div style={{
           width: "320px",
           flexShrink: 0,
-          background: "#fff",
-          border: "1px solid #e2e8f0",
+          background: "var(--color-bg-card)",
+          border: "1px solid var(--color-border)",
           borderRadius: "10px",
           padding: "24px",
-          boxShadow: "0 1px 4px rgba(0,0,0,.06)",
+          boxShadow: "var(--shadow-sm)",
         }}>
           <FormLancamento
             categorias={categorias}
@@ -107,38 +116,32 @@ export default function PaginaLancamentos() {
           />
         </div>
 
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: "320px" }}>
 
           <div style={{
-            background: "#fff",
-            border: "1px solid #e2e8f0",
+            background: "var(--color-bg-card)",
+            border: "1px solid var(--color-border)",
             borderRadius: "10px",
             padding: "16px 20px",
             marginBottom: "16px",
-            boxShadow: "0 1px 4px rgba(0,0,0,.06)",
+            boxShadow: "var(--shadow-sm)",
             display: "flex",
             gap: "12px",
             flexWrap: "wrap",
             alignItems: "flex-end",
           }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}
-                     htmlFor="filtro-tipo">Tipo</label>
+              <label style={estiloLabel} htmlFor="filtro-tipo">Tipo</label>
               <select
                 id="filtro-tipo"
                 value={filtros.tipo ?? ""}
                 onChange={(e) =>
-                  // limpa a categoria: pode nao existir no novo tipo
                   setFiltros({
                     tipo: e.target.value ? (e.target.value as TipoLancamento) : undefined,
                     categoriaId: undefined,
                   })
                 }
-                style={{
-                  height: "36px", padding: "0 10px", fontSize: "14px",
-                  border: "1px solid #e2e8f0", borderRadius: "6px",
-                  background: "#fff", color: "#0f172a", cursor: "pointer",
-                }}
+                style={estiloSelect}
               >
                 <option value="">Todos</option>
                 <option value="RECEITA">Receitas</option>
@@ -147,19 +150,14 @@ export default function PaginaLancamentos() {
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}
-                     htmlFor="filtro-cat">Categoria</label>
+              <label style={estiloLabel} htmlFor="filtro-cat">Categoria</label>
               <select
                 id="filtro-cat"
                 value={filtros.categoriaId ?? ""}
                 onChange={(e) =>
                   setFiltros({ categoriaId: e.target.value ? Number(e.target.value) : undefined })
                 }
-                style={{
-                  height: "36px", padding: "0 10px", fontSize: "14px",
-                  border: "1px solid #e2e8f0", borderRadius: "6px",
-                  background: "#fff", color: "#0f172a", cursor: "pointer",
-                }}
+                style={estiloSelect}
               >
                 <option value="">Todas as categorias</option>
                 {categoriasFiltro.map((c) => (
@@ -169,34 +167,24 @@ export default function PaginaLancamentos() {
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}
-                     htmlFor="filtro-inicio">De</label>
+              <label style={estiloLabel} htmlFor="filtro-inicio">De</label>
               <input
                 id="filtro-inicio"
                 type="date"
                 value={filtros.dataInicio}
                 onChange={(e) => setFiltros({ dataInicio: e.target.value })}
-                style={{
-                  height: "36px", padding: "0 10px", fontSize: "14px",
-                  border: "1px solid #e2e8f0", borderRadius: "6px",
-                  background: "#fff", color: "#0f172a",
-                }}
+                style={estiloInput}
               />
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <label style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}
-                     htmlFor="filtro-fim">Até</label>
+              <label style={estiloLabel} htmlFor="filtro-fim">Até</label>
               <input
                 id="filtro-fim"
                 type="date"
                 value={filtros.dataFim}
                 onChange={(e) => setFiltros({ dataFim: e.target.value })}
-                style={{
-                  height: "36px", padding: "0 10px", fontSize: "14px",
-                  border: "1px solid #e2e8f0", borderRadius: "6px",
-                  background: "#fff", color: "#0f172a",
-                }}
+                style={estiloInput}
               />
             </div>
 
@@ -206,8 +194,8 @@ export default function PaginaLancamentos() {
               }
               style={{
                 height: "36px", padding: "0 14px", fontSize: "13px",
-                border: "1px solid #e2e8f0", borderRadius: "6px",
-                background: "#f8fafc", color: "#475569", cursor: "pointer",
+                border: "1px solid var(--color-border)", borderRadius: "6px",
+                background: "var(--color-bg)", color: "var(--color-text-secondary)", cursor: "pointer",
                 fontFamily: "inherit",
               }}
             >
@@ -216,20 +204,20 @@ export default function PaginaLancamentos() {
           </div>
 
           <div style={{
-            background: "#fff",
-            border: "1px solid #e2e8f0",
+            background: "var(--color-bg-card)",
+            border: "1px solid var(--color-border)",
             borderRadius: "10px",
-            boxShadow: "0 1px 4px rgba(0,0,0,.06)",
+            boxShadow: "var(--shadow-sm)",
             overflow: "hidden",
           }}>
             <div style={{
               display: "grid",
               gridTemplateColumns: COLUNAS,
               padding: "12px 20px",
-              borderBottom: "1px solid #f1f5f9",
+              borderBottom: "1px solid var(--color-border)",
               fontSize: "12px",
               fontWeight: 600,
-              color: "#94a3b8",
+              color: "var(--color-text-muted)",
               textTransform: "uppercase",
               letterSpacing: "0.04em",
             }}>
@@ -240,19 +228,19 @@ export default function PaginaLancamentos() {
             </div>
 
             {erro && (
-              <div style={{ padding: "24px 20px", color: "#dc2626", fontSize: "14px" }}>
+              <div style={{ padding: "24px 20px", color: "var(--color-error)", fontSize: "14px" }}>
                 {erro}
               </div>
             )}
 
             {!erro && loading && (
-              <div style={{ padding: "40px 20px", textAlign: "center", color: "#94a3b8", fontSize: "14px" }}>
+              <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--color-text-muted)", fontSize: "14px" }}>
                 Carregando...
               </div>
             )}
 
             {!erro && !loading && lancamentos.length === 0 && (
-              <div style={{ padding: "40px 20px", textAlign: "center", color: "#94a3b8", fontSize: "14px" }}>
+              <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--color-text-muted)", fontSize: "14px" }}>
                 Nenhum lançamento encontrado para os filtros selecionados.
               </div>
             )}
@@ -264,16 +252,16 @@ export default function PaginaLancamentos() {
                   display: "grid",
                   gridTemplateColumns: COLUNAS,
                   padding: "14px 20px",
-                  borderBottom: idx < lancamentos.length - 1 ? "1px solid #f8fafc" : "none",
+                  borderBottom: idx < lancamentos.length - 1 ? "1px solid var(--color-border)" : "none",
                   alignItems: "center",
                   fontSize: "14px",
                 }}
               >
                 <div>
-                  <div style={{ fontWeight: 500, color: "#0f172a" }}>
+                  <div style={{ fontWeight: 500, color: "var(--color-text)" }}>
                     {l.descricao}
                   </div>
-                  <div style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>
+                  <div style={{ fontSize: "12px", color: "var(--color-text-muted)", marginTop: "2px" }}>
                     {l.categoria.nome}
                   </div>
                 </div>
@@ -283,7 +271,9 @@ export default function PaginaLancamentos() {
                     fontSize: "12px",
                     fontWeight: 600,
                     color: corDoTipo(l.tipo),
-                    background: l.tipo === "RECEITA" ? "#f0fdf4" : "#fef2f2",
+                    background: l.tipo === "RECEITA"
+                      ? "color-mix(in srgb, var(--color-success) 12%, transparent)"
+                      : "color-mix(in srgb, var(--color-error) 10%, transparent)",
                     borderRadius: "999px",
                     padding: "3px 10px",
                   }}>
@@ -295,7 +285,7 @@ export default function PaginaLancamentos() {
                   {formatarReal(l.valor)}
                 </div>
 
-                <div style={{ textAlign: "center", color: "#64748b" }}>
+                <div style={{ textAlign: "center", color: "var(--color-text-secondary)" }}>
                   {formatarDataHora(l.dataHora)}
                 </div>
               </div>
@@ -309,7 +299,7 @@ export default function PaginaLancamentos() {
               justifyContent: "space-between",
               alignItems: "center",
               fontSize: "13px",
-              color: "#64748b",
+              color: "var(--color-text-secondary)",
             }}>
               <span>{totalElements} registro{totalElements !== 1 ? "s" : ""}</span>
 
@@ -319,9 +309,9 @@ export default function PaginaLancamentos() {
                   disabled={page === 0}
                   style={{
                     height: "30px", padding: "0 10px", fontSize: "13px",
-                    border: "1px solid #e2e8f0", borderRadius: "6px",
-                    background: page === 0 ? "#f8fafc" : "#fff",
-                    color: page === 0 ? "#cbd5e1" : "#475569",
+                    border: "1px solid var(--color-border)", borderRadius: "6px",
+                    background: page === 0 ? "var(--color-bg)" : "var(--color-bg-card)",
+                    color: page === 0 ? "var(--color-text-muted)" : "var(--color-text-secondary)",
                     cursor: page === 0 ? "not-allowed" : "pointer",
                     fontFamily: "inherit",
                   }}
@@ -338,9 +328,9 @@ export default function PaginaLancamentos() {
                   disabled={page >= totalPages - 1}
                   style={{
                     height: "30px", padding: "0 10px", fontSize: "13px",
-                    border: "1px solid #e2e8f0", borderRadius: "6px",
-                    background: page >= totalPages - 1 ? "#f8fafc" : "#fff",
-                    color: page >= totalPages - 1 ? "#cbd5e1" : "#475569",
+                    border: "1px solid var(--color-border)", borderRadius: "6px",
+                    background: page >= totalPages - 1 ? "var(--color-bg)" : "var(--color-bg-card)",
+                    color: page >= totalPages - 1 ? "var(--color-text-muted)" : "var(--color-text-secondary)",
                     cursor: page >= totalPages - 1 ? "not-allowed" : "pointer",
                     fontFamily: "inherit",
                   }}
