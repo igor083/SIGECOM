@@ -52,14 +52,6 @@ public class RelatorioController {
                 relatorioVendasService.gerar(periodo, dataInicio, dataFim, funcionarioId));
     }
 
-    /**
-     * Relatório de estoque: lista os produtos ativos com quantidade atual,
-     * nível mínimo e status de criticidade (NORMAL/ALERTA/CRITICO), além de um
-     * resumo (totais e valor em estoque). Filtra por categoria e busca por nome;
-     * ordena pela quantidade disponível.
-     *
-     * D-2: visão de gestão — somente ADMIN.
-     */
     @GetMapping("/estoque")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<RelatorioEstoqueResponse> estoque(
@@ -71,13 +63,6 @@ public class RelatorioController {
                 relatorioEstoqueService.gerar(categoriaId, busca, ordenacao));
     }
 
-    /**
-     * Movimentações de estoque (saídas por venda) agregadas por produto e por dia,
-     * no período. Filtra por produto específico e/ou categoria — permite ao admin
-     * ver o giro de um item ou tipo e identificar baixo giro.
-     *
-     * D-2: visão de gestão — somente ADMIN.
-     */
     @GetMapping("/estoque/movimentacoes")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<RelatorioMovimentacaoResponse> movimentacoes(

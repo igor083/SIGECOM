@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -33,4 +34,11 @@ public interface ProdutoRepository extends JpaRepository<Produto, Long> {
     Page<Produto> findAllFiltrado(@Param("nome") String nome,
                                   @Param("categoriaId") Long categoriaId,
                                   Pageable pageable);
+
+    @Query("SELECT p FROM Produto p WHERE p.ativo = true " +
+           "AND (:categoriaId IS NULL OR p.categoria.id = :categoriaId) " +
+           "AND (:nome IS NULL OR LOWER(p.nome) LIKE LOWER(CONCAT('%', CAST(:nome AS String), '%')))")
+    List<Produto> findParaRelatorioEstoque(@Param("categoriaId") Long categoriaId,
+                                           @Param("nome") String nome,
+                                           Sort sort);
 }
