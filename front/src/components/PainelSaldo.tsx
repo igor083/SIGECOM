@@ -1,8 +1,5 @@
 "use client";
 
-// Cartao de saldo do periodo. Recebe tudo por prop pra funcionar em qualquer tela,
-// o Henzo reaproveita na tela de gestao dele no SCRUM-26.
-
 import type { Saldo } from "@/services/lancamentos";
 import type { PeriodoSaldo } from "@/hooks/useSaldo";
 
@@ -35,12 +32,12 @@ export default function PainelSaldo({
 
   return (
     <div style={{
-      background: "#fff",
-      border: "1px solid #e2e8f0",
+      background: "var(--color-bg-card)",
+      border: "1px solid var(--color-border)",
       borderRadius: "10px",
       padding: "20px 24px",
       marginBottom: "16px",
-      boxShadow: "0 1px 4px rgba(0,0,0,.06)",
+      boxShadow: "var(--shadow-sm)",
     }}>
       <div style={{
         display: "flex",
@@ -48,7 +45,7 @@ export default function PainelSaldo({
         alignItems: "center",
         marginBottom: "16px",
       }}>
-        <h2 style={{ fontSize: "15px", fontWeight: 600, color: "#0f172a", margin: 0 }}>
+        <h2 style={{ fontSize: "15px", fontWeight: 600, color: "var(--color-text)", margin: 0 }}>
           Saldo operacional
         </h2>
 
@@ -60,9 +57,9 @@ export default function PainelSaldo({
                 onClick={() => onPeriodoChange(valor)}
                 style={{
                   height: "30px", padding: "0 12px", fontSize: "13px",
-                  border: "1px solid #e2e8f0", borderRadius: "6px",
-                  background: periodo === valor ? "#2563eb" : "#f8fafc",
-                  color: periodo === valor ? "#fff" : "#475569",
+                  border: "1px solid var(--color-border)", borderRadius: "6px",
+                  background: periodo === valor ? "var(--color-primary)" : "var(--color-bg)",
+                  color: periodo === valor ? "#fff" : "var(--color-text-secondary)",
                   cursor: "pointer", fontFamily: "inherit",
                   fontWeight: periodo === valor ? 600 : 400,
                 }}
@@ -75,47 +72,46 @@ export default function PainelSaldo({
       </div>
 
       {erro && (
-        <p style={{ color: "#dc2626", fontSize: "14px", margin: 0 }}>{erro}</p>
+        <p style={{ color: "var(--color-error)", fontSize: "14px", margin: 0 }}>{erro}</p>
       )}
 
       {!erro && loading && (
-        <p style={{ color: "#94a3b8", fontSize: "14px", margin: 0 }}>Carregando...</p>
+        <p style={{ color: "var(--color-text-muted)", fontSize: "14px", margin: 0 }}>Carregando...</p>
       )}
 
       {!erro && !loading && saldo && (
         <div style={{ display: "flex", gap: "32px", flexWrap: "wrap" }}>
           <div>
-            <span style={{ display: "block", fontSize: "12px", color: "#94a3b8", marginBottom: "4px" }}>
+            <span style={{ display: "block", fontSize: "12px", color: "var(--color-text-muted)", marginBottom: "4px" }}>
               Receitas
             </span>
-            <strong style={{ fontSize: "18px", color: "#16a34a" }}>
+            <strong style={{ fontSize: "18px", color: "var(--color-success)" }}>
               {real(saldo.totalReceitas)}
             </strong>
           </div>
 
           <div>
-            <span style={{ display: "block", fontSize: "12px", color: "#94a3b8", marginBottom: "4px" }}>
+            <span style={{ display: "block", fontSize: "12px", color: "var(--color-text-muted)", marginBottom: "4px" }}>
               Despesas
             </span>
-            <strong style={{ fontSize: "18px", color: "#dc2626" }}>
+            <strong style={{ fontSize: "18px", color: "var(--color-error)" }}>
               {real(saldo.totalDespesas)}
             </strong>
           </div>
 
-          {/* saldo negativo ganha fundo e rotulo, nao so o sinal de menos */}
           <div style={{
             paddingLeft: "32px",
-            borderLeft: "1px solid #f1f5f9",
-            background: negativo ? "#fef2f2" : "transparent",
+            borderLeft: "1px solid var(--color-border)",
+            background: negativo ? "color-mix(in srgb, var(--color-error) 8%, transparent)" : "transparent",
             borderRadius: negativo ? "8px" : 0,
             padding: negativo ? "8px 16px 8px 32px" : "0 0 0 32px",
           }}>
-            <span style={{ display: "block", fontSize: "12px", color: "#94a3b8", marginBottom: "4px" }}>
-              Saldo {negativo && <span style={{ color: "#dc2626", fontWeight: 600 }}>· no vermelho</span>}
+            <span style={{ display: "block", fontSize: "12px", color: "var(--color-text-muted)", marginBottom: "4px" }}>
+              Saldo {negativo && <span style={{ color: "var(--color-error)", fontWeight: 600 }}>· no vermelho</span>}
             </span>
             <strong style={{
               fontSize: "22px",
-              color: negativo ? "#dc2626" : "#0f172a",
+              color: negativo ? "var(--color-error)" : "var(--color-text)",
             }}>
               {real(saldo.saldo)}
             </strong>
