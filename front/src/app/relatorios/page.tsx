@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
-import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
+import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import styles from "./relatorios.module.css";
 
 export default function RelatoriosHubPage() {
@@ -46,15 +46,20 @@ export default function RelatoriosHubPage() {
           </span>
         </Link>
 
-        <div className={`${styles.card} ${styles.cardDisabled}`} aria-disabled>
+        <Link href="/relatorios/estoque" className={styles.card}>
           <div className={styles.iconeWrapper}>
-            <InsightsOutlinedIcon sx={{ fontSize: 32 }} />
+            <Inventory2OutlinedIcon sx={{ fontSize: 32 }} />
           </div>
           <div className={styles.textos}>
-            <span className={styles.cardTitulo}>Mais relatórios</span>
-            <span className={styles.cardDescricao}>Em breve.</span>
+            <span className={styles.cardTitulo}>Relatório de estoque</span>
+            <span className={styles.cardDescricao}>
+              Níveis de estoque, produtos em alerta/crítico, valor em estoque e giro por produto.
+            </span>
           </div>
-        </div>
+          <span className={styles.seta} aria-hidden>
+            →
+          </span>
+        </Link>
       </div>
     </AppShell>
   );
