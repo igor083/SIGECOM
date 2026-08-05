@@ -84,6 +84,43 @@
   color: #92400e;
 }
 
+.exportBtn {
+  height: 38px;
+  padding: 0 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid var(--color-success);
+  border-radius: var(--radius-sm);
+  background: var(--color-success);
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.exportBtn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-success) 85%, #000);
+  border-color: color-mix(in srgb, var(--color-success) 85%, #000);
+}
+
+.exportBtn:disabled {
+  background: var(--color-border);
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.avisoErro {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  background-color: color-mix(in srgb, var(--color-error) 8%, var(--color-bg-card));
+  border: 1px solid color-mix(in srgb, var(--color-error) 35%, transparent);
+  color: var(--color-error);
+}
+
 @media (max-width: 768px) {
   .filters {
     flex-direction: column;

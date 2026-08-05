@@ -9,6 +9,8 @@ import GraficosFinanceiro from "@/components/GraficosFinanceiro";
 import { useRelatorioFinanceiro } from "@/hooks/useRelatorioFinanceiro";
 import type { ModoPeriodo } from "@/hooks/useRelatorioVendas";
 import { listarCategoriasFinanceiras, type CategoriaFinanceira } from "@/services/lancamentos";
+import { exportarRelatorioFinanceiroXlsx } from "@/lib/exportarRelatorioFinanceiroXlsx";
+import { mensagemDeErro } from "@/lib/apiError";
 import styles from "./financeiro.module.css";
 
 const MODOS: [ModoPeriodo, string][] = [
@@ -38,6 +40,33 @@ export default function RelatorioFinanceiroPage() {
   } = useRelatorioFinanceiro("MES");
 
   const [categorias, setCategorias] = useState<CategoriaFinanceira[]>([]);
+  const [exportando, setExportando] = useState(false);
+  const [erroExport, setErroExport] = useState<string | null>(null);
+
+  const rotuloPeriodo = MODOS.find(([v]) => v === modo)?.[1] ?? "";
+  const categoriaSelecionada =
+    categoriaId != null
+      ? categorias.find((c) => c.id === categoriaId)?.nome ?? null
+      : null;
+  const podeExportar =
+    !!relatorio && !loading && !erro && (relatorio.porCategoria?.length ?? 0) > 0;
+
+  async function handleExportar() {
+    if (!relatorio) return;
+    setExportando(true);
+    setErroExport(null);
+    try {
+      await exportarRelatorioFinanceiroXlsx({
+        relatorio,
+        categoriaNome: categoriaSelecionada,
+        periodoLabel: rotuloPeriodo,
+      });
+    } catch (err) {
+      setErroExport(mensagemDeErro(err, "Não foi possível exportar a planilha."));
+    } finally {
+      setExportando(false);
+    }
+  }
 
   useEffect(() => {
     if (!authLoading && (!isAuthenticated || user?.perfil !== "ADMIN")) {
@@ -123,11 +152,34 @@ export default function RelatorioFinanceiroPage() {
             ))}
           </select>
         </div>
+
+        <div className={styles.filterGroup} style={{ marginLeft: "auto" }}>
+          <span className={styles.filterLabel}>&nbsp;</span>
+          <button
+            type="button"
+            className={styles.exportBtn}
+            onClick={handleExportar}
+            disabled={!podeExportar || exportando}
+            title={
+              podeExportar
+                ? "Exportar relatório financeiro para planilha (.xlsx)"
+                : "Gere um relatório com lançamentos para exportar"
+            }
+          >
+            {exportando ? "Exportando…" : "Exportar XLSX"}
+          </button>
+        </div>
       </div>
 
       {aguardandoDatas && (
         <div className={styles.aviso} role="status">
           Selecione as datas de início e fim para gerar o relatório personalizado.
+        </div>
+      )}
+
+      {erroExport && (
+        <div className={styles.avisoErro} role="alert">
+          {erroExport}
         </div>
       )}
 
