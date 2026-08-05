@@ -40,3 +40,35 @@ export async function obterRelatorioVendas(
   const response = await api.get<RelatorioVendas>("/relatorios/vendas", { params });
   return response.data;
 }
+
+export type TipoLancamento = "RECEITA" | "DESPESA";
+
+export interface CategoriaFinanceiraTotal {
+  categoriaId: number;
+  categoriaNome: string;
+  tipo: TipoLancamento;
+  total: number;
+}
+
+export interface RelatorioFinanceiro {
+  totalReceitas: number;
+  totalDespesas: number;
+  saldo: number;
+  dataInicio: string;
+  dataFim: string;
+  porCategoria: CategoriaFinanceiraTotal[];
+}
+
+export interface RelatorioFinanceiroParams {
+  periodo?: PeriodoRelatorio;
+  dataInicio?: string;
+  dataFim?: string;
+  categoriaId?: number;
+}
+
+export async function obterRelatorioFinanceiro(
+  params: RelatorioFinanceiroParams
+): Promise<RelatorioFinanceiro> {
+  const response = await api.get<RelatorioFinanceiro>("/relatorios/financeiro", { params });
+  return response.data;
+}

@@ -5,7 +5,7 @@ import type { PeriodoSaldo } from "@/hooks/useSaldo";
 
 interface PainelSaldoProps {
   saldo: Saldo | null;
-  periodo: PeriodoSaldo;
+  periodo?: PeriodoSaldo;
   loading: boolean;
   erro: string | null;
   onPeriodoChange?: (p: PeriodoSaldo) => void;
