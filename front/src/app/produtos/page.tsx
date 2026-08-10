@@ -44,6 +44,8 @@ export default function GestaoProdutosPage() {
 
   const [formNome, setFormNome] = useState("");
   const [formDescricao, setFormDescricao] = useState("");
+  // SCRUM-160: link da imagem que aparece na grade do PDV
+  const [formImagemUrl, setFormImagemUrl] = useState("");
   const [formPreco, setFormPreco] = useState("");
   const [formEstoqueMinimo, setFormEstoqueMinimo] = useState("");
   const [formCategoriaId, setFormCategoriaId] = useState("");
@@ -98,7 +100,7 @@ export default function GestaoProdutosPage() {
   }
 
   const abrirCriar = () => {
-    setFormNome(""); setFormDescricao(""); setFormPreco("");
+    setFormNome(""); setFormDescricao(""); setFormImagemUrl(""); setFormPreco("");
     setFormEstoqueMinimo("5"); setFormCategoriaId(categorias[0]?.id.toString() ?? "");
     setModalErro(null); setModalSucesso(null);
     setFinanceParams(obterParametrosFinanceiros()); setFormCmv(""); setMostrarComposicao(false);
@@ -108,7 +110,7 @@ export default function GestaoProdutosPage() {
 
   const abrirEditar = (prod: Produto) => {
     setProdutoSelecionado(prod);
-    setFormNome(prod.nome); setFormDescricao(prod.descricao);
+    setFormNome(prod.nome); setFormDescricao(prod.descricao); setFormImagemUrl(prod.imagemUrl ?? "");
     setFormPreco(prod.preco.toString()); setFormEstoqueMinimo(prod.estoqueMinimo.toString());
     setFormCategoriaId(prod.categoria.id.toString());
     setModalErro(null); setModalSucesso(null);
@@ -145,7 +147,7 @@ export default function GestaoProdutosPage() {
     if (isNaN(precoNum) || precoNum < 0) { setModalErro("Preço inválido."); return; }
     if (isNaN(estMinNum) || estMinNum < 0) { setModalErro("Estoque mínimo inválido."); return; }
     try {
-      await criar({ nome: formNome.trim(), descricao: formDescricao.trim(), preco: precoNum, estoqueMinimo: estMinNum, categoriaId: parseInt(formCategoriaId) });
+      await criar({ nome: formNome.trim(), descricao: formDescricao.trim(), imagemUrl: formImagemUrl.trim(), preco: precoNum, estoqueMinimo: estMinNum, categoriaId: parseInt(formCategoriaId) });
       setModalSucesso("Produto cadastrado com sucesso!");
       setTimeout(fecharModal, 1000);
     } catch (err) { setModalErro(mensagemDeErro(err, "Não foi possível cadastrar o produto.")); }
@@ -162,7 +164,7 @@ export default function GestaoProdutosPage() {
     if (isNaN(precoNum) || precoNum < 0) { setModalErro("Preço inválido."); return; }
     if (isNaN(estMinNum) || estMinNum < 0) { setModalErro("Estoque mínimo inválido."); return; }
     try {
-      await editar(produtoSelecionado.id, { nome: formNome.trim(), descricao: formDescricao.trim(), preco: precoNum, estoqueMinimo: estMinNum, categoriaId: parseInt(formCategoriaId) });
+      await editar(produtoSelecionado.id, { nome: formNome.trim(), descricao: formDescricao.trim(), imagemUrl: formImagemUrl.trim(), preco: precoNum, estoqueMinimo: estMinNum, categoriaId: parseInt(formCategoriaId) });
       setModalSucesso("Produto atualizado com sucesso!");
       setTimeout(fecharModal, 1000);
     } catch (err) { setModalErro(mensagemDeErro(err, "Não foi possível atualizar o produto.")); }
@@ -433,6 +435,10 @@ export default function GestaoProdutosPage() {
                     <label htmlFor="c-desc">Descrição</label>
                     <textarea id="c-desc" className={styles.formTextarea} placeholder="Detalhes do produto..." value={formDescricao} onChange={(e) => setFormDescricao(e.target.value)} disabled={mutating} />
                   </div>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="c-imagem">Link da imagem</label>
+                    <input id="c-imagem" type="url" className={styles.formInput} placeholder="https://..." value={formImagemUrl} onChange={(e) => setFormImagemUrl(e.target.value)} disabled={mutating} />
+                  </div>
                 </div>
               </div>
               <div className={styles.modalFooter}>
@@ -496,6 +502,10 @@ export default function GestaoProdutosPage() {
                   <div className={styles.formGroup}>
                     <label htmlFor="e-desc">Descrição</label>
                     <textarea id="e-desc" className={styles.formTextarea} value={formDescricao} onChange={(e) => setFormDescricao(e.target.value)} disabled={mutating} />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="e-imagem">Link da imagem</label>
+                    <input id="e-imagem" type="url" className={styles.formInput} placeholder="https://..." value={formImagemUrl} onChange={(e) => setFormImagemUrl(e.target.value)} disabled={mutating} />
                   </div>
                 </div>
               </div>

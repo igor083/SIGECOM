@@ -10,6 +10,8 @@ public record ProdutoResponse(
         Long id,
         String nome,
         String descricao,
+        // SCRUM-160: pode vir null; o front mostra espaco reservado, nunca imagem quebrada
+        String imagemUrl,
         BigDecimal preco,
         CategoriaInfo categoria,
         Integer qtdEstoque,
@@ -24,6 +26,7 @@ public record ProdutoResponse(
                 .id(produto.getId())
                 .nome(produto.getNome())
                 .descricao(produto.getDescricao())
+                .imagemUrl(produto.getImagemUrl())
                 .preco(produto.getPreco())
                 .categoria(new CategoriaInfo(produto.getCategoria().getId(), produto.getCategoria().getNome()))
                 .qtdEstoque(produto.getQtdEstoque())

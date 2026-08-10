@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
-import BuscaProduto from "@/components/BuscaProduto";
+import GradeProdutos from "@/components/GradeProdutos";
 import Carrinho from "@/components/Carrinho";
 import { useCarrinho } from "@/hooks/useCarrinho";
 import styles from "./nova.module.css";
@@ -30,10 +30,10 @@ export default function NovaVendaPage() {
       </div>
 
       <div className={styles.layout}>
-        {/* Coluna esquerda: busca de produtos (US-024) */}
+        {/* Coluna esquerda: catálogo em grade + busca (US-024 / SCRUM-160) */}
         <section className={styles.colunaBusca}>
-          <h2 className={styles.secaoTitulo}>Buscar produto</h2>
-          <BuscaProduto onSelecionar={carrinho.adicionarItem} />
+          <h2 className={styles.secaoTitulo}>Produtos</h2>
+          <GradeProdutos onSelecionar={carrinho.adicionarItem} />
         </section>
 
         {/* Coluna direita: carrinho (US-025 / US-026 / US-027) */}

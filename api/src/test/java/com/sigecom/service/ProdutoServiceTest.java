@@ -54,6 +54,7 @@ class ProdutoServiceTest {
         CadastroProdutoRequest request = new CadastroProdutoRequest(
                 "Refrigerante 2L",
                 "Garrafa pet 2 litros",
+                "https://cdn.exemplo.com/refri.jpg",
                 BigDecimal.valueOf(9.90),
                 1L,
                 15
@@ -71,6 +72,7 @@ class ProdutoServiceTest {
         assertEquals(10L, response.id());
         assertEquals("Refrigerante 2L", response.nome());
         assertEquals("Garrafa pet 2 litros", response.descricao());
+        assertEquals("https://cdn.exemplo.com/refri.jpg", response.imagemUrl());
         assertEquals(BigDecimal.valueOf(9.90), response.preco());
         assertEquals(1L, response.categoria().id());
         assertEquals("Bebidas", response.categoria().nome());
@@ -84,6 +86,7 @@ class ProdutoServiceTest {
         CadastroProdutoRequest request = new CadastroProdutoRequest(
                 "Salgadinho",
                 null,
+                "   ",
                 null,
                 1L,
                 null
@@ -96,12 +99,15 @@ class ProdutoServiceTest {
         assertEquals(BigDecimal.ZERO, response.preco());
         assertEquals(0, response.qtdEstoque());
         assertNull(response.descricao());
+        // SCRUM-160: link em branco vira null, nao string vazia
+        assertNull(response.imagemUrl());
     }
 
     @Test
     void cadastrar_DeveLancarNotFound_QuandoCategoriaInexistente() {
         CadastroProdutoRequest request = new CadastroProdutoRequest(
                 "Produto",
+                null,
                 null,
                 null,
                 99L,
@@ -154,7 +160,7 @@ class ProdutoServiceTest {
     }
 
     private EditarProdutoRequest editarRequest(String nome, Long categoriaId) {
-        return new EditarProdutoRequest(nome, "nova descrição", BigDecimal.valueOf(12.50), categoriaId, 3);
+        return new EditarProdutoRequest(nome, "nova descrição", null, BigDecimal.valueOf(12.50), categoriaId, 3);
     }
 
     @Test
