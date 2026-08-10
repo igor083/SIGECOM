@@ -72,7 +72,11 @@ public class ProdutoService {
     		
     		produto.setNome(request.nome().trim());
     	    produto.setDescricao(request.descricao());
-    	    produto.setImagemUrl(normalizarImagem(request.imagemUrl()));
+    	    // campo ausente (null) mantem a imagem atual; string em branco apaga.
+    	    // Sem isso, qualquer cliente que nao mande o campo zerava a foto calado.
+    	    if (request.imagemUrl() != null) {
+    	        produto.setImagemUrl(normalizarImagem(request.imagemUrl()));
+    	    }
     	    produto.setPreco(request.preco());
     	    produto.setCategoria(categoria);
     	    produto.setEstoqueMinimo(request.estoqueMinimo());

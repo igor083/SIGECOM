@@ -22,6 +22,11 @@ import styles from "./GradeProdutos.module.css";
 interface GradeProdutosProps {
   /** Chamado ao clicar num produto com estoque. */
   onSelecionar: (produto: Produto) => void;
+  /**
+   * Muda para forçar recarga do catálogo. Depois de uma venda o estoque
+   * caiu no banco, e a grade não pode continuar mostrando o número velho.
+   */
+  versao?: number;
 }
 
 function formatarPreco(valor: number): string {
@@ -68,7 +73,7 @@ function FotoProduto({ produto }: { produto: Produto }) {
   );
 }
 
-export default function GradeProdutos({ onSelecionar }: GradeProdutosProps) {
+export default function GradeProdutos({ onSelecionar, versao = 0 }: GradeProdutosProps) {
   const {
     produtos,
     abas,
@@ -77,8 +82,12 @@ export default function GradeProdutos({ onSelecionar }: GradeProdutosProps) {
     termo,
     setTermo,
     carregando,
+    buscando,
     erro,
-  } = useGradeProdutos();
+    catalogoTruncado,
+    totalNoCatalogo,
+    recarregar,
+  } = useGradeProdutos(versao);
 
   return (
     <div className={styles.container}>
@@ -93,6 +102,15 @@ export default function GradeProdutos({ onSelecionar }: GradeProdutosProps) {
           autoComplete="off"
           aria-label="Buscar produto por nome"
         />
+        {buscando && <span className={styles.aviso}>Buscando…</span>}
+        {/* Nao esconder o limite: o operador precisa saber que a grade nao
+            mostra tudo, e que a busca por nome alcanca o resto. */}
+        {catalogoTruncado && !buscando && (
+          <span className={styles.aviso}>
+            Mostrando {abas[0]?.quantidade ?? 0} de {totalNoCatalogo} produtos. Use a busca
+            para achar os demais.
+          </span>
+        )}
       </div>
 
       {abas.length > 1 && (
@@ -114,7 +132,15 @@ export default function GradeProdutos({ onSelecionar }: GradeProdutosProps) {
       )}
 
       <div aria-live="polite">
-        {erro && <div className={styles.erro} role="alert">{erro}</div>}
+        {erro && (
+          <div className={styles.erro} role="alert">
+            <span>{erro}</span>
+            {/* sem isto o PDV ficava travado ate dar F5 */}
+            <button type="button" className={styles.tentarDeNovo} onClick={() => recarregar()}>
+              Tentar de novo
+            </button>
+          </div>
+        )}
 
         {carregando && <div className={styles.mensagem}>Carregando produtos…</div>}
 
@@ -141,7 +167,9 @@ export default function GradeProdutos({ onSelecionar }: GradeProdutosProps) {
                     if (!semEstoque) onSelecionar(produto);
                   }}
                 >
-                  <FotoProduto produto={produto} />
+                  {/* key pela URL: link corrigido depois de uma recarga
+                      precisa sair do estado "falhou" */}
+                  <FotoProduto key={produto.imagemUrl ?? "sem-foto"} produto={produto} />
                   <div className={styles.info}>
                     <span className={styles.nome}>{produto.nome}</span>
                     <div className={styles.categoria}>

@@ -61,7 +61,7 @@ function LinhaResumo({ rotulo, valor, destaque = false }: {
   );
 }
 
-function ResumoDoDia({ dados, esperado }: { dados: Fechamento; esperado: number }) {
+function ResumoDoDia({ dados, esperado }: { dados: Fechamento; esperado: number | null }) {
   return (
     <div className={styles.resumo}>
       <LinhaResumo rotulo="Total de vendas" valor={dados.totalVendas} />
@@ -69,7 +69,11 @@ function ResumoDoDia({ dados, esperado }: { dados: Fechamento; esperado: number 
       <LinhaResumo rotulo="Total de despesas" valor={dados.totalDespesas} />
       {/* "Saldo calculado" grudado num numero negativo foi o que fez o bug passar */}
       <LinhaResumo rotulo="Resultado do dia" valor={dados.saldoCalculado} />
-      <LinhaResumo rotulo="Esperado em caixa" valor={esperado} destaque />
+      {/* Sem fundo valido nao da pra saber o esperado. Melhor nao mostrar do que
+          mostrar receitas - despesas, que e justamente o numero enganoso. */}
+      {esperado !== null && (
+        <LinhaResumo rotulo="Esperado em caixa" valor={esperado} destaque />
+      )}
     </div>
   );
 }
@@ -108,13 +112,13 @@ export default function CaixaPage() {
   const valorContado = Number(valorFisico);
   const valorValido = valorFisico !== "" && !Number.isNaN(valorContado) && valorContado >= 0;
 
-  const fundoTexto = fundo ?? (fechamento ? String(fechamento.fundoTroco) : "");
+  const fundoTexto = fundo ?? (fechamento ? String(fechamento.fundoTroco ?? 0) : "");
   const fundoInformado = Number(fundoTexto);
   const fundoValido = fundoTexto !== "" && !Number.isNaN(fundoInformado) && fundoInformado >= 0;
 
-  const esperado = fechamento
-    ? calcularEsperado(fechamento, fundoValido ? fundoInformado : 0)
-    : 0;
+  // null enquanto o fundo for invalido: sem fundo nao da pra saber o esperado
+  const esperado =
+    fechamento && fundoValido ? calcularEsperado(fechamento, fundoInformado) : null;
 
   async function handleSubmit(evento: React.FormEvent) {
     evento.preventDefault();
@@ -148,19 +152,20 @@ export default function CaixaPage() {
 
             <ResumoDoDia
               dados={fechamento}
-              esperado={jaFechado ? fechamento.saldoEsperado : esperado}
+              esperado={jaFechado ? (fechamento.saldoEsperado ?? 0) : esperado}
             />
 
             {jaFechado ? (
               <>
-                <LinhaResumo rotulo="Fundo de troco" valor={fechamento.fundoTroco} />
+                {/* fechamento gravado antes do SCRUM-161 vem com null nas colunas novas */}
+                <LinhaResumo rotulo="Fundo de troco" valor={fechamento.fundoTroco ?? 0} />
                 <LinhaResumo
                   rotulo="Valor contado"
                   valor={fechamento.valorFisicoInformado ?? 0}
                 />
                 <Divergencia
                   valorContado={fechamento.valorFisicoInformado ?? 0}
-                  saldoEsperado={fechamento.saldoEsperado}
+                  saldoEsperado={fechamento.saldoEsperado ?? 0}
                 />
                 <p className={styles.nota}>
                   O fechamento do dia já foi confirmado e não pode ser alterado.
@@ -212,7 +217,7 @@ export default function CaixaPage() {
                   Conte o dinheiro em caixa e informe o total. Use ponto para os centavos.
                 </p>
 
-                {valorValido && fundoValido && (
+                {valorValido && fundoValido && esperado !== null && (
                   <>
                     <Divergencia valorContado={valorContado} saldoEsperado={esperado} />
                     {valorContado >= fundoInformado && (

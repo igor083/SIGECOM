@@ -12,8 +12,9 @@ public record FechamentoRequest(
     @PositiveOrZero(message = "O valor  não pode ser negativo")
     BigDecimal valorFisicoInformado,
 
-    // quanto tinha na gaveta quando o caixa abriu (SCRUM-161)
-    @NotNull(message = "O fundo de troco é obrigatório")
+    // Quanto tinha na gaveta quando o caixa abriu (SCRUM-161).
+    // Opcional de proposito: cliente antigo que nao manda o campo continua
+    // fechando o caixa, e o service cai no fundo padrao da loja.
     @PositiveOrZero(message = "O fundo de troco não pode ser negativo")
     BigDecimal fundoTroco
 ) {}

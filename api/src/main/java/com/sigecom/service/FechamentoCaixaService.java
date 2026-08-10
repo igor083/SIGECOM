@@ -83,8 +83,10 @@ public class FechamentoCaixaService {
         }
 
         Usuario responsavel = usuarioAutenticado();
-        // vale o fundo informado pelo operador, nao o padrao: se ele abriu com 50, e 50
-        FechamentoResponse preview = calcularPreview(hoje, request.fundoTroco());
+        // vale o fundo informado pelo operador, nao o padrao: se ele abriu com 50, e 50.
+        // Se o cliente nao mandou o campo, cai no padrao da loja.
+        BigDecimal fundoInformado = request.fundoTroco() != null ? request.fundoTroco() : fundoTrocoPadrao;
+        FechamentoResponse preview = calcularPreview(hoje, fundoInformado);
 
         FechamentoCaixa fechamento = FechamentoCaixa.builder()
                 .usuario(responsavel)

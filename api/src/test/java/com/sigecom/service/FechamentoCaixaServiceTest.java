@@ -227,6 +227,22 @@ class FechamentoCaixaServiceTest {
     }
 
     @Test
+    void confirmar_SemFundoNoRequest_DeveCairNoPadraoDaLoja() {
+        // cliente antigo, que nao conhece o campo, nao pode receber 400
+        when(fechamentoCaixaRepository.existsByDataFechamento(any())).thenReturn(false);
+        when(usuarioRepository.findByEmail("func@sigecom.com")).thenReturn(Optional.of(funcionario));
+        when(vendaRepository.somarTotalPorPeriodo(any(), any())).thenReturn(BigDecimal.ZERO);
+        when(lancamentoFinanceiroRepository.somarPorTipo(any(), any(), any())).thenReturn(BigDecimal.ZERO);
+        when(fechamentoCaixaRepository.save(any(FechamentoCaixa.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        FechamentoResponse response = fechamentoCaixaService.confirmar(
+                new FechamentoRequest(new BigDecimal("100.00"), null));
+
+        assertEquals(0, new BigDecimal("100.00").compareTo(response.fundoTroco()));
+        assertEquals(0, new BigDecimal("100.00").compareTo(response.saldoEsperado()));
+    }
+
+    @Test
     void confirmar_DeveGravarFundoESaldoEsperadoNaEntidade() {
         when(fechamentoCaixaRepository.existsByDataFechamento(any())).thenReturn(false);
         when(usuarioRepository.findByEmail("func@sigecom.com")).thenReturn(Optional.of(funcionario));

@@ -15,6 +15,11 @@ export default function NovaVendaPage() {
   const { loading, isAuthenticated } = useAuth();
   const carrinho = useCarrinho();
 
+  // Venda confirmada baixa o estoque no banco. Sem isto a grade seguiria
+  // mostrando a quantidade velha e deixaria montar carrinho acima do estoque.
+  // O id da venda serve de versao: muda a cada venda, sem estado extra.
+  const versaoCatalogo = carrinho.comprovante?.id ?? 0;
+
   useEffect(() => {
     if (!loading && !isAuthenticated) router.replace("/login");
   }, [loading, isAuthenticated, router]);
@@ -33,7 +38,7 @@ export default function NovaVendaPage() {
         {/* Coluna esquerda: catálogo em grade + busca (US-024 / SCRUM-160) */}
         <section className={styles.colunaBusca}>
           <h2 className={styles.secaoTitulo}>Produtos</h2>
-          <GradeProdutos onSelecionar={carrinho.adicionarItem} />
+          <GradeProdutos onSelecionar={carrinho.adicionarItem} versao={versaoCatalogo} />
         </section>
 
         {/* Coluna direita: carrinho (US-025 / US-026 / US-027) */}

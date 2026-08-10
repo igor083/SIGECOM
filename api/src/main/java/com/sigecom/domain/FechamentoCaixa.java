@@ -48,15 +48,16 @@ public class FechamentoCaixa {
     @Column(name = "saldo_calculado", precision = 12, scale = 2)
     private BigDecimal saldoCalculado = BigDecimal.ZERO;
 
-    // Dinheiro que ja estava na gaveta quando o dia comecou (SCRUM-161)
-    @NotNull
+    // Dinheiro que ja estava na gaveta quando o dia comecou (SCRUM-161).
+    // Sem @NotNull de proposito: com ddl-auto=update, coluna nova NOT NULL
+    // em tabela que ja tem linha o Postgres rejeita, e o Hibernate engole
+    // o erro e sobe sem a coluna. Fechamento antigo fica com null aqui.
     @Builder.Default
     @Column(name = "fundo_troco", precision = 12, scale = 2)
     private BigDecimal fundoTroco = BigDecimal.ZERO;
 
     // Gravado, e nao so calculado na hora: se o fundo padrao mudar,
     // o fechamento antigo continua contando a historia dele (SCRUM-161)
-    @NotNull
     @Builder.Default
     @Column(name = "saldo_esperado", precision = 12, scale = 2)
     private BigDecimal saldoEsperado = BigDecimal.ZERO;
