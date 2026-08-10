@@ -11,7 +11,7 @@ export interface UseFechamentoResult {
   erro: string | null;
   confirmando: boolean;
   erroConfirmar: string | null;
-  confirmar: (valorFisicoInformado: number) => Promise<void>;
+  confirmar: (valorFisicoInformado: number, fundoTroco: number) => Promise<void>;
 }
 
 export function useFechamento(): UseFechamentoResult {
@@ -42,11 +42,11 @@ export function useFechamento(): UseFechamentoResult {
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [carregar]);
 
-  const confirmar = useCallback(async (valorFisicoInformado: number) => {
+  const confirmar = useCallback(async (valorFisicoInformado: number, fundoTroco: number) => {
     setConfirmando(true);
     setErroConfirmar(null);
     try {
-      setFechamento(await confirmarFechamento(valorFisicoInformado));
+      setFechamento(await confirmarFechamento(valorFisicoInformado, fundoTroco));
     } catch (err) {
       setErroConfirmar(mensagemDeErro(err, "Não foi possível confirmar o fechamento."));
     } finally {

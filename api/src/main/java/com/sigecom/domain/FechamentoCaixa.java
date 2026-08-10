@@ -48,6 +48,19 @@ public class FechamentoCaixa {
     @Column(name = "saldo_calculado", precision = 12, scale = 2)
     private BigDecimal saldoCalculado = BigDecimal.ZERO;
 
+    // Dinheiro que ja estava na gaveta quando o dia comecou (SCRUM-161)
+    @NotNull
+    @Builder.Default
+    @Column(name = "fundo_troco", precision = 12, scale = 2)
+    private BigDecimal fundoTroco = BigDecimal.ZERO;
+
+    // Gravado, e nao so calculado na hora: se o fundo padrao mudar,
+    // o fechamento antigo continua contando a historia dele (SCRUM-161)
+    @NotNull
+    @Builder.Default
+    @Column(name = "saldo_esperado", precision = 12, scale = 2)
+    private BigDecimal saldoEsperado = BigDecimal.ZERO;
+
     @NotNull
     @Builder.Default
     @Column(name = "valor_fisico_informado", precision = 12, scale = 2)

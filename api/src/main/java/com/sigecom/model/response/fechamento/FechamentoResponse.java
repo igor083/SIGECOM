@@ -7,13 +7,17 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public record FechamentoResponse(
-        
+
         Long id,
         LocalDate dataFechamento,
         BigDecimal totalVendas,
         BigDecimal totalReceitas,
         BigDecimal totalDespesas,
+        // resultado financeiro do dia (receitas - despesas). NAO e dinheiro na gaveta.
         BigDecimal saldoCalculado,
+        // fundo de troco e o que se espera contar na gaveta (SCRUM-161)
+        BigDecimal fundoTroco,
+        BigDecimal saldoEsperado,
         BigDecimal valorFisicoInformado,
         LocalDateTime fechadoEm,
         String responsavel
@@ -27,6 +31,8 @@ public record FechamentoResponse(
                 f.getTotalReceitas(),
                 f.getTotalDespesas(),
                 f.getSaldoCalculado(),
+                f.getFundoTroco(),
+                f.getSaldoEsperado(),
                 f.getValorFisicoInformado(),
                 f.getFechadoEm(),
                 f.getUsuario().getNome()

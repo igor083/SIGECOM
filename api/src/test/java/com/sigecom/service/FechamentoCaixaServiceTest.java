@@ -21,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
@@ -67,6 +68,9 @@ class FechamentoCaixaServiceTest {
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(funcionario.getEmail(), null, List.of())
         );
+
+        // @Value nao e resolvido com @InjectMocks; o padrao vem do application.properties em runtime
+        ReflectionTestUtils.setField(fechamentoCaixaService, "fundoTrocoPadrao", new BigDecimal("100.00"));
     }
 
     @AfterEach
@@ -128,7 +132,7 @@ class FechamentoCaixaServiceTest {
         });
 
         FechamentoResponse response = fechamentoCaixaService.confirmar(
-                new FechamentoRequest(new BigDecimal("70.00")));
+                new FechamentoRequest(new BigDecimal("70.00"), new BigDecimal("100.00")));
 
         assertEquals(5L, response.id());
         assertEquals(new BigDecimal("70.00"), response.saldoCalculado());
@@ -146,10 +150,103 @@ class FechamentoCaixaServiceTest {
         when(fechamentoCaixaRepository.existsByDataFechamento(LocalDate.now())).thenReturn(true);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class,
-                () -> fechamentoCaixaService.confirmar(new FechamentoRequest(new BigDecimal("50.00"))));
+                () -> fechamentoCaixaService.confirmar(
+                        new FechamentoRequest(new BigDecimal("50.00"), new BigDecimal("100.00"))));
 
         assertEquals(HttpStatus.CONFLICT, ex.getStatusCode());
         verify(fechamentoCaixaRepository, never()).save(any());
         verifyNoInteractions(vendaRepository, lancamentoFinanceiroRepository);
+    }
+
+    // ── SCRUM-161: fundo de troco ──────────────────────────────────────────
+
+    @Test
+    void calcularPreview_SemMovimento_DeveEsperarOFundoNaGaveta() {
+        // O caso que prova o conserto: antes daria zero, e zero esta errado
+        // quando tem cem reais de troco dentro da gaveta.
+        when(vendaRepository.somarTotalPorPeriodo(any(), any())).thenReturn(BigDecimal.ZERO);
+        when(lancamentoFinanceiroRepository.somarPorTipo(any(), any(), any())).thenReturn(BigDecimal.ZERO);
+
+        FechamentoResponse preview = fechamentoCaixaService.calcularPreview(LocalDate.now());
+
+        assertEquals(0, new BigDecimal("100.00").compareTo(preview.fundoTroco()));
+        assertEquals(0, new BigDecimal("100.00").compareTo(preview.saldoEsperado()));
+        assertEquals(0, BigDecimal.ZERO.compareTo(preview.saldoCalculado()));
+    }
+
+    @Test
+    void calcularPreview_ComMovimento_DeveSomarFundoMaisReceitasMenosDespesas() {
+        when(vendaRepository.somarTotalPorPeriodo(any(), any())).thenReturn(new BigDecimal("100.00"));
+        when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.RECEITA), any(), any()))
+                .thenReturn(new BigDecimal("100.00"));
+        when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.DESPESA), any(), any()))
+                .thenReturn(new BigDecimal("30.00"));
+
+        FechamentoResponse preview = fechamentoCaixaService.calcularPreview(LocalDate.now());
+
+        // 100 de fundo + 100 de receita - 30 de despesa
+        assertEquals(0, new BigDecimal("170.00").compareTo(preview.saldoEsperado()));
+        // o resultado do dia continua sendo receitas - despesas, sem o fundo
+        assertEquals(0, new BigDecimal("70.00").compareTo(preview.saldoCalculado()));
+    }
+
+    @Test
+    void calcularPreview_ComDespesaMaiorQueReceita_NaoDeveEsperarGavetaNegativa() {
+        // A cena real que abriu o card: -82,99 de resultado, 100 de fundo.
+        when(vendaRepository.somarTotalPorPeriodo(any(), any())).thenReturn(new BigDecimal("17.01"));
+        when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.RECEITA), any(), any()))
+                .thenReturn(new BigDecimal("17.01"));
+        when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.DESPESA), any(), any()))
+                .thenReturn(new BigDecimal("100.00"));
+
+        FechamentoResponse preview = fechamentoCaixaService.calcularPreview(LocalDate.now());
+
+        assertEquals(0, new BigDecimal("-82.99").compareTo(preview.saldoCalculado()));
+        // esperado real: 100 + 17,01 - 100 = 17,01. Nunca negativo.
+        assertEquals(0, new BigDecimal("17.01").compareTo(preview.saldoEsperado()));
+
+        // Contando 200 a sobra e 182,99, e nao os 282,99 que o bug mostrava.
+        BigDecimal contado = new BigDecimal("200.00");
+        assertEquals(0, new BigDecimal("182.99").compareTo(contado.subtract(preview.saldoEsperado())));
+    }
+
+    @Test
+    void confirmar_DeveUsarOFundoInformado_NaoOPadrao() {
+        when(fechamentoCaixaRepository.existsByDataFechamento(any())).thenReturn(false);
+        when(usuarioRepository.findByEmail("func@sigecom.com")).thenReturn(Optional.of(funcionario));
+        when(vendaRepository.somarTotalPorPeriodo(any(), any())).thenReturn(BigDecimal.ZERO);
+        when(lancamentoFinanceiroRepository.somarPorTipo(any(), any(), any())).thenReturn(BigDecimal.ZERO);
+        when(fechamentoCaixaRepository.save(any(FechamentoCaixa.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // operador abriu a gaveta com 50, nao com os 100 do padrao
+        FechamentoResponse response = fechamentoCaixaService.confirmar(
+                new FechamentoRequest(new BigDecimal("50.00"), new BigDecimal("50.00")));
+
+        assertEquals(0, new BigDecimal("50.00").compareTo(response.fundoTroco()));
+        assertEquals(0, new BigDecimal("50.00").compareTo(response.saldoEsperado()));
+    }
+
+    @Test
+    void confirmar_DeveGravarFundoESaldoEsperadoNaEntidade() {
+        when(fechamentoCaixaRepository.existsByDataFechamento(any())).thenReturn(false);
+        when(usuarioRepository.findByEmail("func@sigecom.com")).thenReturn(Optional.of(funcionario));
+        when(vendaRepository.somarTotalPorPeriodo(any(), any())).thenReturn(new BigDecimal("80.00"));
+        when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.RECEITA), any(), any()))
+                .thenReturn(new BigDecimal("80.00"));
+        when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.DESPESA), any(), any()))
+                .thenReturn(new BigDecimal("20.00"));
+        when(fechamentoCaixaRepository.save(any(FechamentoCaixa.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        fechamentoCaixaService.confirmar(
+                new FechamentoRequest(new BigDecimal("160.00"), new BigDecimal("100.00")));
+
+        ArgumentCaptor<FechamentoCaixa> captor = ArgumentCaptor.forClass(FechamentoCaixa.class);
+        verify(fechamentoCaixaRepository).save(captor.capture());
+        FechamentoCaixa salvo = captor.getValue();
+
+        // gravado, e nao recalculado depois: fechamento antigo guarda a historia dele
+        assertEquals(0, new BigDecimal("100.00").compareTo(salvo.getFundoTroco()));
+        assertEquals(0, new BigDecimal("160.00").compareTo(salvo.getSaldoEsperado()));
+        assertEquals(0, new BigDecimal("60.00").compareTo(salvo.getSaldoCalculado()));
     }
 }
