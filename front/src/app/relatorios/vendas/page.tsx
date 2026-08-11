@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
+import BreadcrumbRelatorios from "@/components/BreadcrumbRelatorios";
 import ResumoVendas from "@/components/ResumoVendas";
 import GraficosVendas from "@/components/GraficosVendas";
 import { useRelatorioVendas, type ModoPeriodo } from "@/hooks/useRelatorioVendas";
@@ -91,6 +92,12 @@ export default function RelatorioVendasPage() {
 
   return (
     <AppShell title="Relatórios — Vendas por período">
+      <BreadcrumbRelatorios
+        trilha={[
+          { label: "Relatórios", href: "/relatorios" },
+          { label: "Vendas" },
+        ]}
+      />
       <div className={styles.filters}>
         <div className={styles.filterGroup}>
           <span className={styles.filterLabel}>Período</span>
