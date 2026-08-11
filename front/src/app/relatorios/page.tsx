@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
 import styles from "./relatorios.module.css";
 
 export default function RelatoriosHubPage() {
@@ -54,6 +55,21 @@ export default function RelatoriosHubPage() {
             <span className={styles.cardTitulo}>Relatório de estoque</span>
             <span className={styles.cardDescricao}>
               Níveis de estoque, produtos em alerta/crítico, valor em estoque e giro por produto.
+            </span>
+          </div>
+          <span className={styles.seta} aria-hidden>
+            →
+          </span>
+        </Link>
+
+        <Link href="/relatorios/financeiro" className={styles.card}>
+          <div className={styles.iconeWrapper}>
+            <AccountBalanceWalletOutlinedIcon sx={{ fontSize: 32 }} />
+          </div>
+          <div className={styles.textos}>
+            <span className={styles.cardTitulo}>Relatório financeiro</span>
+            <span className={styles.cardDescricao}>
+              Receitas, despesas e saldo do período, com quebra por categoria financeira.
             </span>
           </div>
           <span className={styles.seta} aria-hidden>
