@@ -24,9 +24,17 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* a grade de produtos precisa de mais espaco que o carrinho:
+     com 1fr 1fr cabiam so 2 produtos por linha (SCRUM-160) */
+  grid-template-columns: minmax(0, 1.7fr) minmax(320px, 1fr);
   gap: 24px;
   align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 1fr);
+  }
 }
 
 .secaoTitulo {

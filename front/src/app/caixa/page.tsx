@@ -112,6 +112,10 @@ export default function CaixaPage() {
   const valorContado = Number(valorFisico);
   const valorValido = valorFisico !== "" && !Number.isNaN(valorContado) && valorContado >= 0;
 
+  // fechamento gravado antes do SCRUM-161: sem fundo, não dá para conferir nada
+  const legado =
+    jaFechado && (fechamento?.fundoTroco == null || fechamento?.saldoEsperado == null);
+
   const fundoTexto = fundo ?? (fechamento ? String(fechamento.fundoTroco ?? 0) : "");
   const fundoInformado = Number(fundoTexto);
   const fundoValido = fundoTexto !== "" && !Number.isNaN(fundoInformado) && fundoInformado >= 0;
@@ -152,21 +156,33 @@ export default function CaixaPage() {
 
             <ResumoDoDia
               dados={fechamento}
-              esperado={jaFechado ? (fechamento.saldoEsperado ?? 0) : esperado}
+              esperado={jaFechado ? fechamento.saldoEsperado : esperado}
             />
 
             {jaFechado ? (
               <>
-                {/* fechamento gravado antes do SCRUM-161 vem com null nas colunas novas */}
-                <LinhaResumo rotulo="Fundo de troco" valor={fechamento.fundoTroco ?? 0} />
+                {/* Fechamento gravado antes do SCRUM-161 vem sem fundo. Tratar
+                    esse null como zero afirmaria que a gaveta abriu vazia, e
+                    devolveria a mesma mentira que o card veio consertar. */}
+                {legado ? (
+                  <p className={styles.nota}>
+                    Fechamento anterior ao controle de fundo de troco. Não dá para
+                    conferir a divergência: o valor que havia na gaveta na abertura
+                    não foi registrado.
+                  </p>
+                ) : (
+                  <LinhaResumo rotulo="Fundo de troco" valor={fechamento.fundoTroco!} />
+                )}
                 <LinhaResumo
                   rotulo="Valor contado"
                   valor={fechamento.valorFisicoInformado ?? 0}
                 />
-                <Divergencia
-                  valorContado={fechamento.valorFisicoInformado ?? 0}
-                  saldoEsperado={fechamento.saldoEsperado ?? 0}
-                />
+                {!legado && (
+                  <Divergencia
+                    valorContado={fechamento.valorFisicoInformado ?? 0}
+                    saldoEsperado={fechamento.saldoEsperado!}
+                  />
+                )}
                 <p className={styles.nota}>
                   O fechamento do dia já foi confirmado e não pode ser alterado.
                 </p>

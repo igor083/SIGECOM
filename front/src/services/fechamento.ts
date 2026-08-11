@@ -9,9 +9,10 @@ export interface Fechamento {
   totalDespesas: number;
   // resultado financeiro do dia (receitas - despesas). Nao e dinheiro na gaveta.
   saldoCalculado: number;
-  // SCRUM-161: fundo de troco e o que se espera contar na gaveta
-  fundoTroco: number;
-  saldoEsperado: number;
+  // SCRUM-161: fundo de troco e o que se espera contar na gaveta.
+  // null em fechamento gravado antes deste campo existir.
+  fundoTroco: number | null;
+  saldoEsperado: number | null;
   valorFisicoInformado: number | null;
   fechadoEm: string | null;
   responsavel: string | null;
