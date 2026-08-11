@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
+import BreadcrumbRelatorios from "@/components/BreadcrumbRelatorios";
 import ResumoEstoque from "@/components/ResumoEstoque";
 import TabelaEstoque from "@/components/TabelaEstoque";
 import { useRelatorioEstoque } from "@/hooks/useRelatorioEstoque";
@@ -58,6 +59,12 @@ export default function RelatorioEstoquePage() {
 
   return (
     <AppShell title="Relatórios — Estoque">
+      <BreadcrumbRelatorios
+        trilha={[
+          { label: "Relatórios", href: "/relatorios" },
+          { label: "Estoque" },
+        ]}
+      />
       <div className={styles.filters}>
         <div className={styles.filterGroup}>
           <label htmlFor="busca" className={styles.filterLabel}>Buscar produto</label>

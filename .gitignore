@@ -1,5 +1,7 @@
 .claude/
 /.metadata/
+.vscode/
+**/node_modules/
 
 api/src/main/resources/application-local.properties
 api/.settings/
