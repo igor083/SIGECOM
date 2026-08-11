@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
-import BuscaProduto from "@/components/BuscaProduto";
+import GradeProdutos from "@/components/GradeProdutos";
 import Carrinho from "@/components/Carrinho";
 import { useCarrinho } from "@/hooks/useCarrinho";
 import styles from "./nova.module.css";
@@ -14,6 +14,11 @@ export default function NovaVendaPage() {
   const router = useRouter();
   const { loading, isAuthenticated } = useAuth();
   const carrinho = useCarrinho();
+
+  // Venda confirmada baixa o estoque no banco. Sem isto a grade seguiria
+  // mostrando a quantidade velha e deixaria montar carrinho acima do estoque.
+  // O id da venda serve de versao: muda a cada venda, sem estado extra.
+  const versaoCatalogo = carrinho.comprovante?.id ?? 0;
 
   useEffect(() => {
     if (!loading && !isAuthenticated) router.replace("/login");
@@ -30,10 +35,10 @@ export default function NovaVendaPage() {
       </div>
 
       <div className={styles.layout}>
-        {/* Coluna esquerda: busca de produtos (US-024) */}
+        {/* Coluna esquerda: catálogo em grade + busca (US-024 / SCRUM-160) */}
         <section className={styles.colunaBusca}>
-          <h2 className={styles.secaoTitulo}>Buscar produto</h2>
-          <BuscaProduto onSelecionar={carrinho.adicionarItem} />
+          <h2 className={styles.secaoTitulo}>Produtos</h2>
+          <GradeProdutos onSelecionar={carrinho.adicionarItem} versao={versaoCatalogo} />
         </section>
 
         {/* Coluna direita: carrinho (US-025 / US-026 / US-027) */}

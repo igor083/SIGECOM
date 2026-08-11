@@ -18,6 +18,8 @@ export interface Produto {
   id: number;
   nome: string;
   descricao: string;
+  /** SCRUM-160: link da imagem. null quando o produto não tem foto. */
+  imagemUrl: string | null;
   preco: number;
   qtdEstoque: number;
   estoqueMinimo: number;
@@ -28,6 +30,7 @@ export interface Produto {
 export interface ProdutoRequest {
   nome: string;
   descricao: string;
+  imagemUrl?: string | null;
   preco: number;
   estoqueMinimo: number;
   categoriaId: number;

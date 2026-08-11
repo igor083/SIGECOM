@@ -29,15 +29,23 @@ function formatarData(data: string): string {
 
 type Tom = "ok" | "sobra" | "falta";
 
-function calcularDivergencia(valorContado: number, saldoCalculado: number): {
+// SCRUM-161: compara com o esperado na gaveta (fundo + receitas - despesas),
+// nunca com o resultado do dia. Gaveta de dinheiro nao fica negativa.
+function calcularDivergencia(valorContado: number, saldoEsperado: number): {
   diferenca: number;
   rotulo: string;
   tom: Tom;
 } {
-  const diferenca = Number((valorContado - saldoCalculado).toFixed(2));
+  const diferenca = Number((valorContado - saldoEsperado).toFixed(2));
   if (diferenca === 0) return { diferenca, rotulo: "Caixa confere", tom: "ok" };
   if (diferenca > 0) return { diferenca, rotulo: "Sobra em caixa", tom: "sobra" };
   return { diferenca, rotulo: "Falta em caixa", tom: "falta" };
+}
+
+// O campo de fundo e editavel, entao o esperado tem que ser recalculado na tela.
+// Nao da pra usar o saldoEsperado da API direto: ele veio com o fundo padrao.
+function calcularEsperado(dados: Fechamento, fundoInformado: number): number {
+  return Number((fundoInformado + dados.totalReceitas - dados.totalDespesas).toFixed(2));
 }
 
 function LinhaResumo({ rotulo, valor, destaque = false }: {
@@ -53,22 +61,28 @@ function LinhaResumo({ rotulo, valor, destaque = false }: {
   );
 }
 
-function ResumoDoDia({ dados }: { dados: Fechamento }) {
+function ResumoDoDia({ dados, esperado }: { dados: Fechamento; esperado: number | null }) {
   return (
     <div className={styles.resumo}>
       <LinhaResumo rotulo="Total de vendas" valor={dados.totalVendas} />
       <LinhaResumo rotulo="Total de receitas" valor={dados.totalReceitas} />
       <LinhaResumo rotulo="Total de despesas" valor={dados.totalDespesas} />
-      <LinhaResumo rotulo="Saldo calculado" valor={dados.saldoCalculado} destaque />
+      {/* "Saldo calculado" grudado num numero negativo foi o que fez o bug passar */}
+      <LinhaResumo rotulo="Resultado do dia" valor={dados.saldoCalculado} />
+      {/* Sem fundo valido nao da pra saber o esperado. Melhor nao mostrar do que
+          mostrar receitas - despesas, que e justamente o numero enganoso. */}
+      {esperado !== null && (
+        <LinhaResumo rotulo="Esperado em caixa" valor={esperado} destaque />
+      )}
     </div>
   );
 }
 
-function Divergencia({ valorContado, saldoCalculado }: {
+function Divergencia({ valorContado, saldoEsperado }: {
   valorContado: number;
-  saldoCalculado: number;
+  saldoEsperado: number;
 }) {
-  const { diferenca, rotulo, tom } = calcularDivergencia(valorContado, saldoCalculado);
+  const { diferenca, rotulo, tom } = calcularDivergencia(valorContado, saldoEsperado);
   return (
     <div className={`${styles.divergencia} ${styles[tom]}`}>
       <span className={styles.divergenciaRotulo}>{rotulo}</span>
@@ -86,6 +100,8 @@ export default function CaixaPage() {
     useFechamento();
 
   const [valorFisico, setValorFisico] = useState("");
+  // fundo de troco: pre-preenchido com o padrao que veio da API, mas editavel
+  const [fundo, setFundo] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) router.replace("/login");
@@ -96,10 +112,22 @@ export default function CaixaPage() {
   const valorContado = Number(valorFisico);
   const valorValido = valorFisico !== "" && !Number.isNaN(valorContado) && valorContado >= 0;
 
+  // fechamento gravado antes do SCRUM-161: sem fundo, não dá para conferir nada
+  const legado =
+    jaFechado && (fechamento?.fundoTroco == null || fechamento?.saldoEsperado == null);
+
+  const fundoTexto = fundo ?? (fechamento ? String(fechamento.fundoTroco ?? 0) : "");
+  const fundoInformado = Number(fundoTexto);
+  const fundoValido = fundoTexto !== "" && !Number.isNaN(fundoInformado) && fundoInformado >= 0;
+
+  // null enquanto o fundo for invalido: sem fundo nao da pra saber o esperado
+  const esperado =
+    fechamento && fundoValido ? calcularEsperado(fechamento, fundoInformado) : null;
+
   async function handleSubmit(evento: React.FormEvent) {
     evento.preventDefault();
-    if (!valorValido || confirmando) return;
-    await confirmar(valorContado);
+    if (!valorValido || !fundoValido || confirmando) return;
+    await confirmar(valorContado, fundoInformado);
   }
 
   return (
@@ -126,24 +154,63 @@ export default function CaixaPage() {
               </span>
             </header>
 
-            <ResumoDoDia dados={fechamento} />
+            <ResumoDoDia
+              dados={fechamento}
+              esperado={jaFechado ? fechamento.saldoEsperado : esperado}
+            />
 
             {jaFechado ? (
               <>
+                {/* Fechamento gravado antes do SCRUM-161 vem sem fundo. Tratar
+                    esse null como zero afirmaria que a gaveta abriu vazia, e
+                    devolveria a mesma mentira que o card veio consertar. */}
+                {legado ? (
+                  <p className={styles.nota}>
+                    Fechamento anterior ao controle de fundo de troco. Não dá para
+                    conferir a divergência: o valor que havia na gaveta na abertura
+                    não foi registrado.
+                  </p>
+                ) : (
+                  <LinhaResumo rotulo="Fundo de troco" valor={fechamento.fundoTroco!} />
+                )}
                 <LinhaResumo
                   rotulo="Valor contado"
                   valor={fechamento.valorFisicoInformado ?? 0}
                 />
-                <Divergencia
-                  valorContado={fechamento.valorFisicoInformado ?? 0}
-                  saldoCalculado={fechamento.saldoCalculado}
-                />
+                {!legado && (
+                  <Divergencia
+                    valorContado={fechamento.valorFisicoInformado ?? 0}
+                    saldoEsperado={fechamento.saldoEsperado!}
+                  />
+                )}
                 <p className={styles.nota}>
                   O fechamento do dia já foi confirmado e não pode ser alterado.
                 </p>
               </>
             ) : (
               <form className={styles.formulario} onSubmit={handleSubmit}>
+                <label className={styles.rotuloCampo} htmlFor="fundo-troco">
+                  Fundo de troco
+                </label>
+                <div className={styles.campoValor}>
+                  <span className={styles.prefixo} aria-hidden="true">R$</span>
+                  <input
+                    id="fundo-troco"
+                    className={styles.entrada}
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    inputMode="decimal"
+                    placeholder="0,00"
+                    value={fundoTexto}
+                    onChange={(e) => setFundo(e.target.value)}
+                    disabled={confirmando}
+                  />
+                </div>
+                <p className={styles.ajuda}>
+                  Quanto tinha na gaveta quando o caixa abriu.
+                </p>
+
                 <label className={styles.rotuloCampo} htmlFor="valor-fisico">
                   Valor físico contado em caixa
                 </label>
@@ -166,16 +233,30 @@ export default function CaixaPage() {
                   Conte o dinheiro em caixa e informe o total. Use ponto para os centavos.
                 </p>
 
-                {valorValido && (
-                  <Divergencia
-                    valorContado={valorContado}
-                    saldoCalculado={fechamento.saldoCalculado}
-                  />
+                {valorValido && fundoValido && esperado !== null && (
+                  <>
+                    <Divergencia valorContado={valorContado} saldoEsperado={esperado} />
+                    {valorContado >= fundoInformado && (
+                      <>
+                        <LinhaResumo
+                          rotulo="Sangria sugerida"
+                          valor={Number((valorContado - fundoInformado).toFixed(2))}
+                        />
+                        <p className={styles.ajuda}>
+                          Valor a retirar, deixando o fundo de troco na gaveta.
+                        </p>
+                      </>
+                    )}
+                  </>
                 )}
 
                 {erroConfirmar && <div className={styles.alertaErro}>{erroConfirmar}</div>}
 
-                <button className={styles.botao} type="submit" disabled={!valorValido || confirmando}>
+                <button
+                  className={styles.botao}
+                  type="submit"
+                  disabled={!valorValido || !fundoValido || confirmando}
+                >
                   {confirmando ? "Confirmando…" : "Confirmar fechamento"}
                 </button>
               </form>

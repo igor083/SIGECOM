@@ -37,6 +37,7 @@ public class ProdutoService {
         Produto produto = Produto.builder()
                 .nome(request.nome().trim())
                 .descricao(request.descricao())
+                .imagemUrl(normalizarImagem(request.imagemUrl()))
                 .preco(request.preco() != null ? request.preco() : BigDecimal.ZERO)
                 .categoria(categoria)
                 .qtdEstoque(request.qtdEstoqueInicial() != null ? request.qtdEstoqueInicial() : 0)
@@ -71,6 +72,11 @@ public class ProdutoService {
     		
     		produto.setNome(request.nome().trim());
     	    produto.setDescricao(request.descricao());
+    	    // campo ausente (null) mantem a imagem atual; string em branco apaga.
+    	    // Sem isso, qualquer cliente que nao mande o campo zerava a foto calado.
+    	    if (request.imagemUrl() != null) {
+    	        produto.setImagemUrl(normalizarImagem(request.imagemUrl()));
+    	    }
     	    produto.setPreco(request.preco());
     	    produto.setCategoria(categoria);
     	    produto.setEstoqueMinimo(request.estoqueMinimo());
@@ -97,6 +103,13 @@ public class ProdutoService {
     		log.info("Produto desativado (soft delete): id={}", id);
     	}
     
+
+    // SCRUM-160: campo em branco vira null, pra nao gravar string vazia
+    // e o front conseguir distinguir "sem imagem" com um teste so.
+    private String normalizarImagem(String imagemUrl) {
+        if (imagemUrl == null || imagemUrl.isBlank()) return null;
+        return imagemUrl.trim();
+    }
 
     @Transactional(readOnly = true)
     public Page<ProdutoResponse> listarEstoqueBaixo(Pageable pageable) {
