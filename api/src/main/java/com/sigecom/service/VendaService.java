@@ -69,7 +69,8 @@ public class VendaService {
     private static final BigDecimal CEM = new BigDecimal("100");
 
     // Categoria de receita usada para lançar toda venda no financeiro.
-    // Criada pelo CategoriaFinanceiraSeeder — sempre presente em produção.
+    // Cadastrada pelo admin na tela de categorias financeiras — é pré-requisito
+    // de operação, e sua ausência é reportada em registrarReceitaNoFinanceiro.
     private static final String CATEGORIA_VENDA = "Venda";
 
     // ── Preview (US-026) ─────────────────────────────────────────
@@ -191,7 +192,8 @@ public class VendaService {
         CategoriaFinanceira categoria = categoriaFinanceiraRepository
                 .findFirstByNomeIgnoreCaseAndTipo(CATEGORIA_VENDA, TipoLancamento.RECEITA)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Categoria financeira '" + CATEGORIA_VENDA + "' não encontrada"));
+                        "Categoria financeira '" + CATEGORIA_VENDA + "' (RECEITA) não encontrada. "
+                        + "Cadastre-a em Financeiro > Categorias antes de registrar vendas."));
 
         LancamentoFinanceiro lancamento = LancamentoFinanceiro.builder()
                 .usuario(operador)

@@ -7,8 +7,6 @@
 
 import api from "./api";
 
-const IS_MOCK = process.env.NEXT_PUBLIC_MOCK_API === "true";
-
 // ── Tipos ────────────────────────────────────────────────────
 
 /** Perfis de usuário suportados pela API. */
@@ -65,24 +63,6 @@ export interface ApiError {
  * @returns Token JWT e tempo de expiração.
  */
 export async function login(email: string, senha: string): Promise<LoginResponse> {
-  if (IS_MOCK) {
-    await new Promise((r) => setTimeout(r, 400));
-    if (!email || !senha) {
-      throw { response: { status: 401, data: { usuarioMensagem: "E-mail ou senha incorretos." } } };
-    }
-    // Monta fake JWT no formato header.payload.signature
-    // useAuth decodifica o payload buscando: sub, user_id, role, exp (em segundos)
-    const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-    const payload = btoa(JSON.stringify({
-      sub: email,
-      user_id: 1,
-      role: "ADMIN",
-      exp: Math.floor(Date.now() / 1000) + 3600,
-    }));
-    const fakeToken = `${header}.${payload}.mock-signature`;
-    return { token: fakeToken, expiresIn: 3600000 };
-  }
-
   const response = await api.post<LoginResponse>("/auth/login", {
     email,
     senha,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useLancamentos } from "@/hooks/useLancamentos";
@@ -42,6 +43,12 @@ const estiloInput: React.CSSProperties = {
 
 const estiloLabel: React.CSSProperties = {
   fontSize: "12px", color: "var(--color-text-secondary)", fontWeight: 500,
+};
+
+const estiloLinkCategorias: React.CSSProperties = {
+  fontSize: "13px", fontWeight: 500, color: "var(--color-text-secondary)",
+  textDecoration: "none", padding: "6px 12px", borderRadius: "6px",
+  border: "1px solid var(--color-border)", background: "var(--color-bg-card)",
 };
 
 export default function PaginaLancamentos() {
@@ -89,6 +96,14 @@ export default function PaginaLancamentos() {
 
   return (
     <AppShell title="Financeiro">
+      {/* Acesso ao CRUD de categorias: é lá que a categoria "Venda",
+          pré-requisito do PDV, é cadastrada. */}
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "12px" }}>
+        <Link href="/financeiro/categorias" style={estiloLinkCategorias}>
+          Gerenciar categorias
+        </Link>
+      </div>
+
       <PainelSaldo
         saldo={saldo}
         periodo={periodo}
