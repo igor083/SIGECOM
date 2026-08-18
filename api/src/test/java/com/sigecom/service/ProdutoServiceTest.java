@@ -2,12 +2,14 @@ package com.sigecom.service;
 
 import com.sigecom.domain.CategoriaProduto;
 import com.sigecom.domain.Produto;
+import com.sigecom.domain.enums.FiltroEstoque;
 import com.sigecom.model.request.produto.CadastroProdutoRequest;
 import com.sigecom.model.request.produto.EditarProdutoRequest;
 import com.sigecom.model.response.produto.ProdutoResponse;
 import com.sigecom.repository.CategoriaProdutoRepository;
 import com.sigecom.repository.ProdutoRepository;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -135,13 +137,39 @@ class ProdutoServiceTest {
                 .build();
         Pageable pageable = PageRequest.of(0, 10);
         Page<Produto> pagina = new PageImpl<>(List.of(produto), pageable, 1);
-        when(produtoRepository.findAllFiltrado(null, null, pageable)).thenReturn(pagina);
+        // filtro nulo cai em TODOS: os dois flags vao true e a query nao recorta estoque
+        when(produtoRepository.findAllFiltrado(null, null, true, true, pageable)).thenReturn(pagina);
 
-        Page<ProdutoResponse> resultado = produtoService.listar(null, null, pageable);
+        Page<ProdutoResponse> resultado = produtoService.listar(null, null, null, pageable);
 
         assertEquals(1, resultado.getContent().size());
         assertEquals("Produto A", resultado.getContent().get(0).nome());
         assertEquals(1L, resultado.getContent().get(0).categoria().id());
+    }
+
+    @Test
+    @DisplayName("listar: filtro BAIXO restringe a query ao estoque critico")
+    void listar_FiltroBaixo_RepassaFlagsCorretos() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(produtoRepository.findAllFiltrado(null, null, true, false, pageable))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        produtoService.listar(null, null, FiltroEstoque.BAIXO, pageable);
+
+        // incluiBaixo=true, incluiNormal=false -> so qtdEstoque <= estoqueMinimo
+        verify(produtoRepository).findAllFiltrado(null, null, true, false, pageable);
+    }
+
+    @Test
+    @DisplayName("listar: filtro NORMAL restringe a query ao estoque com folga")
+    void listar_FiltroNormal_RepassaFlagsCorretos() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(produtoRepository.findAllFiltrado(null, null, false, true, pageable))
+                .thenReturn(new PageImpl<>(List.of(), pageable, 0));
+
+        produtoService.listar(null, null, FiltroEstoque.NORMAL, pageable);
+
+        verify(produtoRepository).findAllFiltrado(null, null, false, true, pageable);
     }
 
     // ── editar ───────────────────────────────────────────────

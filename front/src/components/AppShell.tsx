@@ -40,10 +40,12 @@ const ADMIN_NAV: NavItem[] = [
   { label: "Configurações", href: "/configuracoes", Icon: SettingsOutlinedIcon },
 ];
 
+// Só rotas que o perfil FUNCIONARIO realmente acessa. /produtos abre em modo
+// consulta para ele — as ações de escrita ficam ocultas na própria tela.
 const FUNC_NAV: NavItem[] = [
   { label: "Dashboard", href: "/dashboard/funcionario", Icon: HomeOutlinedIcon },
-  { label: "Produtos", href: "/produtos", Icon: Inventory2OutlinedIcon },
   { label: "PDV", href: "/pdv", Icon: PointOfSaleOutlinedIcon },
+  { label: "Produtos", href: "/produtos", Icon: Inventory2OutlinedIcon },
   { label: "Caixa", href: "/caixa", Icon: ReceiptLongOutlinedIcon },
 ];
 

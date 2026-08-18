@@ -1,6 +1,7 @@
 package com.sigecom.controller;
 
 import com.sigecom.domain.Produto;
+import com.sigecom.domain.enums.FiltroEstoque;
 import com.sigecom.model.request.produto.AjustarEstoqueRequest;
 import com.sigecom.model.request.produto.CadastroProdutoRequest;
 import com.sigecom.model.request.produto.EditarProdutoRequest;
@@ -27,17 +28,24 @@ public class ProdutoController {
     private final EstoqueService estoqueService;
 
     @PostMapping
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')") // D-2: mesma regra de editar/excluir/ajustar
     public ResponseEntity<ProdutoResponse> cadastrar(@Valid @RequestBody CadastroProdutoRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(produtoService.cadastrar(request));
     }
 
+    /**
+     * @param estoque recorte por nível de estoque (TODOS, BAIXO, NORMAL).
+     *                Filtra no banco, junto com nome e categoria — a tela não
+     *                pode filtrar sobre a página carregada, senão um produto
+     *                em nível crítico na página 2 some do filtro "estoque baixo".
+     */
     @GetMapping
     public ResponseEntity<Page<ProdutoResponse>> listar(
             @RequestParam(required = false) String nome,
             @RequestParam(required = false) Long categoriaId,
+            @RequestParam(required = false) FiltroEstoque estoque,
             Pageable pageable) {
-        return ResponseEntity.ok(produtoService.listar(nome, categoriaId, pageable));
+        return ResponseEntity.ok(produtoService.listar(nome, categoriaId, estoque, pageable));
     }
 
     @GetMapping("/por-tipo/{categoriaId}")

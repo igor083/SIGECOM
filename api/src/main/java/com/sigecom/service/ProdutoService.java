@@ -2,6 +2,7 @@ package com.sigecom.service;
 
 import com.sigecom.domain.CategoriaProduto;
 import com.sigecom.domain.Produto;
+import com.sigecom.domain.enums.FiltroEstoque;
 import com.sigecom.model.request.produto.CadastroProdutoRequest;
 import com.sigecom.model.request.produto.EditarProdutoRequest;
 import com.sigecom.model.response.produto.ProdutoResponse;
@@ -50,8 +51,11 @@ public class ProdutoService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProdutoResponse> listar(String nome, Long categoriaId, Pageable pageable) {
-        return produtoRepository.findAllFiltrado(nome, categoriaId, pageable)
+    public Page<ProdutoResponse> listar(String nome, Long categoriaId,
+                                        FiltroEstoque filtroEstoque, Pageable pageable) {
+        FiltroEstoque filtro = (filtroEstoque != null) ? filtroEstoque : FiltroEstoque.TODOS;
+        return produtoRepository
+                .findAllFiltrado(nome, categoriaId, filtro.incluiBaixo(), filtro.incluiNormal(), pageable)
                 .map(ProdutoResponse::toResponse);
     }
 
