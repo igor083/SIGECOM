@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useProdutos } from "@/hooks/useProdutos";
 import { mensagemDeErro } from "@/lib/apiError";
-import type { Produto } from "@/services/produtos";
+import type { Produto, FiltroEstoque } from "@/services/produtos";
 import { criarCategoria } from "@/services/categorias";
 import { obterParametrosFinanceiros } from "@/services/parametrosFinanceiros";
 import { precoSugerido, calcularMarkup, type ParametrosFinanceiros } from "@/lib/markup";
@@ -20,7 +20,11 @@ function codigoProduto(id: number): string {
   return `#P${id.toString().padStart(3, "0")}`;
 }
 
-type Tab = "todos" | "emEstoque" | "estoqueBaixo";
+const TABS: { valor: FiltroEstoque; rotulo: string }[] = [
+  { valor: "TODOS", rotulo: "Todos" },
+  { valor: "NORMAL", rotulo: "Em estoque" },
+  { valor: "BAIXO", rotulo: "Estoque Baixo" },
+];
 
 function getStatus(prod: Produto): { label: string; color: string } {
   if (prod.qtdEstoque === 0) return { label: "Sem estoque", color: "#dc2626" };
@@ -32,13 +36,17 @@ export default function GestaoProdutosPage() {
   const router = useRouter();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
 
+  // Só busca depois que a sessão foi resolvida. O hook monta junto com a
+  // página; sem esta trava ele dispara as chamadas antes de haver token e a
+  // API devolve 401, derrubando a sessão de quem só estava abrindo a tela.
+  const sessaoPronta = !authLoading && isAuthenticated;
+
   const {
     produtosPage, categorias, loading, mutating, erro,
-    nome, setNome, categoriaId, setCategoriaId, page, setPage,
+    nome, setNome, categoriaId, setCategoriaId,
+    filtroEstoque, setFiltroEstoque, page, setPage,
     criar, editar, excluir, ajustarEstoqueProduto,
-  } = useProdutos(8);
-
-  const [tab, setTab] = useState<Tab>("todos");
+  } = useProdutos(8, sessaoPronta);
   const [modalAberto, setModalAberto] = useState<"criar" | "editar" | "estoque" | "excluir" | null>(null);
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
 
@@ -62,19 +70,24 @@ export default function GestaoProdutosPage() {
   const [catSalvando, setCatSalvando] = useState(false);
   const [catErro, setCatErro] = useState<string | null>(null);
 
+  // FUNCIONARIO entra, mas só consulta: ele precisa conferir preço e estoque
+  // para vender. Quem cadastra, edita, ajusta estoque e exclui é o ADMIN.
+  //
+  // Isto aqui é só o espelho da regra: quem decide é o @PreAuthorize das
+  // quatro rotas de escrita no ProdutoController. Esconder o botão melhora a
+  // tela, não protege nada.
+  const podeEditar = user?.perfil === "ADMIN";
+
   useEffect(() => {
     if (authLoading) return;
-    if (!isAuthenticated || user?.perfil !== "ADMIN") router.replace("/login");
-  }, [authLoading, isAuthenticated, user, router]);
+    if (!isAuthenticated) router.replace("/login");
+  }, [authLoading, isAuthenticated, router]);
 
+  // A listagem já vem filtrada do servidor — inclusive por nível de estoque.
+  // Não filtre aqui: o filtro client-side só enxerga a página atual e some
+  // com produto crítico que está na página seguinte.
   const produtos = produtosPage?.content ?? [];
   const totalPages = produtosPage?.totalPages ?? 1;
-
-  const produtosFiltrados = useMemo(() => {
-    if (tab === "emEstoque") return produtos.filter((p) => p.qtdEstoque > p.estoqueMinimo);
-    if (tab === "estoqueBaixo") return produtos.filter((p) => p.qtdEstoque <= p.estoqueMinimo);
-    return produtos;
-  }, [tab, produtos]);
 
   // Categorias do backend + as criadas nesta sessao (aparecem sem recarregar a pagina)
   const categoriasTodas = useMemo(() => {
@@ -193,7 +206,7 @@ export default function GestaoProdutosPage() {
     } catch (err) { setModalErro(mensagemDeErro(err, "Falha ao excluir o produto.")); }
   }
 
-  if (authLoading || !isAuthenticated || user?.perfil !== "ADMIN") {
+  if (authLoading || !isAuthenticated) {
     return (
       <div className={styles.loadingContainer}>
         <div className={styles.spinner} />
@@ -203,7 +216,7 @@ export default function GestaoProdutosPage() {
   }
 
   return (
-    <AppShell title="Gestão de Produtos">
+    <AppShell title={podeEditar ? "Gestão de Produtos" : "Consulta de Produtos"}>
       {erro && (
         <div className={`${styles.alert} ${styles.alertError}`} role="alert">
           {erro}
@@ -214,22 +227,25 @@ export default function GestaoProdutosPage() {
       <div className={styles.sectionHeader}>
         <h2 className={styles.sectionTitle}>Lista de Produtos</h2>
 
-        {/* Tabs */}
+        {/* Tabs — cada uma refaz a busca no servidor e volta pra página 1 */}
         <div className={styles.tabs}>
-          {(["todos", "emEstoque", "estoqueBaixo"] as Tab[]).map((t) => (
+          {TABS.map(({ valor, rotulo }) => (
             <button
-              key={t}
-              className={`${styles.tab} ${tab === t ? styles.tabActive : ""}`}
-              onClick={() => setTab(t)}
+              key={valor}
+              className={`${styles.tab} ${filtroEstoque === valor ? styles.tabActive : ""}`}
+              onClick={() => setFiltroEstoque(valor)}
+              disabled={loading}
             >
-              {t === "todos" ? "Todos" : t === "emEstoque" ? "Em estoque" : "Estoque Baixo"}
+              {rotulo}
             </button>
           ))}
         </div>
 
-        <button className={styles.primaryBtn} onClick={abrirCriar}>
-          + Adicionar produto
-        </button>
+        {podeEditar && (
+          <button className={styles.primaryBtn} onClick={abrirCriar}>
+            + Adicionar produto
+          </button>
+        )}
       </div>
 
       {/* Filtros */}
@@ -264,11 +280,15 @@ export default function GestaoProdutosPage() {
           <div className={styles.spinner} />
           <p>Carregando produtos...</p>
         </div>
-      ) : produtosFiltrados.length === 0 ? (
+      ) : produtos.length === 0 ? (
         <div className={styles.emptyContainer}>
           <div className={styles.emptyIcon}>📦</div>
           <h3>Nenhum produto encontrado</h3>
-          <p>Tente ajustar os filtros ou cadastre um novo produto.</p>
+          <p>
+            {podeEditar
+              ? "Tente ajustar os filtros ou cadastre um novo produto."
+              : "Tente ajustar os filtros da busca."}
+          </p>
         </div>
       ) : (
         <>
@@ -282,11 +302,11 @@ export default function GestaoProdutosPage() {
                   <th>Preço</th>
                   <th>Estoque</th>
                   <th>Status</th>
-                  <th style={{ width: "120px" }}>Ações</th>
+                  {podeEditar && <th style={{ width: "120px" }}>Ações</th>}
                 </tr>
               </thead>
               <tbody>
-                {produtosFiltrados.map((prod) => {
+                {produtos.map((prod) => {
                   const status = getStatus(prod);
                   return (
                     <tr key={prod.id}>
@@ -300,6 +320,7 @@ export default function GestaoProdutosPage() {
                           {status.label}
                         </span>
                       </td>
+                      {podeEditar && (
                       <td>
                         <div className={styles.actionsCell}>
                           <button className={`${styles.iconBtn} ${styles.iconBtnStock}`} title="Ajustar Estoque" onClick={() => abrirEstoque(prod)}>
@@ -319,6 +340,7 @@ export default function GestaoProdutosPage() {
                           </button>
                         </div>
                       </td>
+                      )}
                     </tr>
                   );
                 })}

@@ -18,6 +18,7 @@ import {
   type CategoriaProduto,
   type PageProduto,
   type ProdutoRequest,
+  type FiltroEstoque,
 } from "@/services/produtos";
 import { mensagemDeErro } from "@/lib/apiError";
 
@@ -33,6 +34,8 @@ export interface UseProdutosResult {
   setNome: (nome: string) => void;
   categoriaId: number | undefined;
   setCategoriaId: (id: number | undefined) => void;
+  filtroEstoque: FiltroEstoque;
+  setFiltroEstoque: (filtro: FiltroEstoque) => void;
   page: number;
   setPage: (page: number) => void;
   size: number;
@@ -46,7 +49,15 @@ export interface UseProdutosResult {
   ajustarEstoqueProduto: (id: number, quantidade: number) => Promise<Produto>;
 }
 
-export function useProdutos(initialSize = 10): UseProdutosResult {
+/**
+ * @param initialSize itens por pagina.
+ * @param habilitado  libera as requisições. Passe `false` enquanto a
+ *   autenticação ainda não foi resolvida: o hook monta junto com a página, e
+ *   sem essa trava ele dispara as chamadas antes de existir token. Sem
+ *   Authorization a API responde 401, o interceptor derruba a sessão e o
+ *   usuário é jogado no /login sem ter feito nada errado.
+ */
+export function useProdutos(initialSize = 10, habilitado = true): UseProdutosResult {
   const [produtosPage, setProdutosPage] = useState<PageProduto | null>(null);
   const [categorias, setCategorias] = useState<CategoriaProduto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +67,7 @@ export function useProdutos(initialSize = 10): UseProdutosResult {
   // Estados de Filtro/Paginação
   const [nome, setNomeState] = useState("");
   const [categoriaId, setCategoriaIdState] = useState<number | undefined>(undefined);
+  const [filtroEstoque, setFiltroEstoqueState] = useState<FiltroEstoque>("TODOS");
   const [page, setPageState] = useState(0);
   const [size, setSizeState] = useState(initialSize);
 
@@ -70,6 +82,13 @@ export function useProdutos(initialSize = 10): UseProdutosResult {
     setPageState(0);
   }, []);
 
+  // Trocar o recorte de estoque e um filtro como os outros: volta pra
+  // primeira pagina e refaz a busca no servidor.
+  const setFiltroEstoque = useCallback((val: FiltroEstoque) => {
+    setFiltroEstoqueState(val);
+    setPageState(0);
+  }, []);
+
   const setPage = useCallback((val: number) => {
     setPageState(val);
   }, []);
@@ -81,6 +100,8 @@ export function useProdutos(initialSize = 10): UseProdutosResult {
 
   // ── Carregamento de Categorias ──────────────────────────────
   useEffect(() => {
+    if (!habilitado) return;
+
     let active = true;
     async function fetchCats() {
       try {
@@ -89,23 +110,35 @@ export function useProdutos(initialSize = 10): UseProdutosResult {
           setCategorias(data);
         }
       } catch (err) {
-        console.error("Erro ao carregar categorias", err);
+        // Não derruba a tela: sem categorias os filtros ficam vazios, mas a
+        // listagem de produtos continua utilizável.
+        if (active) {
+          setErro((atual) => atual ?? mensagemDeErro(err, "Não foi possível carregar as categorias."));
+        }
       }
     }
     fetchCats();
     return () => {
       active = false;
     };
-  }, []);
+  }, [habilitado]);
 
   // ── Carregamento de Produtos ─────────────────────────────────
   const carregarProdutos = useCallback(async () => {
+    // Continua "carregando" enquanto a autenticação não resolve, para a tela
+    // mostrar o spinner em vez de um "nenhum produto encontrado" falso.
+    if (!habilitado) {
+      setLoading(true);
+      return;
+    }
+
     setLoading(true);
     setErro(null);
     try {
       const data = await listarProdutos({
         nome: nome || undefined,
         categoriaId,
+        estoque: filtroEstoque,
         page,
         size,
       });
@@ -116,7 +149,7 @@ export function useProdutos(initialSize = 10): UseProdutosResult {
     } finally {
       setLoading(false);
     }
-  }, [nome, categoriaId, page, size]);
+  }, [habilitado, nome, categoriaId, filtroEstoque, page, size]);
 
   // Recarrega sempre que filtros ou paginação mudarem
   useEffect(() => {
@@ -200,6 +233,8 @@ export function useProdutos(initialSize = 10): UseProdutosResult {
     setNome,
     categoriaId,
     setCategoriaId,
+    filtroEstoque,
+    setFiltroEstoque,
     page,
     setPage,
     size,

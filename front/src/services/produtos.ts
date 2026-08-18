@@ -48,11 +48,22 @@ export interface PageProduto {
 // ── Métodos de Serviço ────────────────────────────────────────
 
 /**
+ * Recorte por nível de estoque da listagem.
+ * `BAIXO` = qtdEstoque <= estoqueMinimo; `NORMAL` = o resto.
+ */
+export type FiltroEstoque = "TODOS" | "BAIXO" | "NORMAL";
+
+/**
  * Consulta e lista os produtos, com suporte a filtros e paginação.
+ *
+ * Todos os filtros — inclusive o de estoque — são resolvidos no servidor.
+ * Filtrar no cliente esconderia um produto crítico que está na página
+ * seguinte, e a tela mostraria "nenhum produto" sem que fosse verdade.
  */
 export async function listarProdutos(params: {
   nome?: string;
   categoriaId?: number;
+  estoque?: FiltroEstoque;
   page?: number;
   size?: number;
 }): Promise<PageProduto> {
@@ -107,5 +118,17 @@ export async function listarCategorias(): Promise<CategoriaProduto[]> {
  */
 export async function listarProdutosPorTipo(categoriaId: number): Promise<Produto[]> {
   const response = await api.get<Produto[]>(`/produtos/por-tipo/${categoriaId}`);
+  return response.data;
+}
+
+/**
+ * Produtos em nível crítico (qtdEstoque <= estoqueMinimo).
+ * Liberado para FUNCIONARIO — alimenta o alerta do painel do funcionário.
+ */
+export async function listarEstoqueBaixo(params: {
+  page?: number;
+  size?: number;
+} = {}): Promise<PageProduto> {
+  const response = await api.get<PageProduto>("/produtos/estoque-baixo", { params });
   return response.data;
 }

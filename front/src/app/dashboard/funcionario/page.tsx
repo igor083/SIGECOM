@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
-import EmConstrucao from "@/components/EmConstrucao";
+import PainelFuncionario from "@/components/PainelFuncionario";
 import styles from "../dashboard.module.css";
 
 export default function DashboardFuncionarioPage() {
@@ -25,12 +25,13 @@ export default function DashboardFuncionarioPage() {
     );
   }
 
+  // O token não carrega o nome, só o e-mail — usa a parte antes do @ como
+  // tratamento informal nos textos vazios do painel.
+  const primeiroNome = user.email.split("@")[0];
+
   return (
     <AppShell title="Painel do Funcionário">
-      <EmConstrucao
-        titulo="Dashboard em desenvolvimento"
-        descricao="Os indicadores e resumos do dia serão exibidos aqui quando os módulos de PDV e caixa estiverem integrados à API."
-      />
+      <PainelFuncionario funcionarioId={user.userId} primeiroNome={primeiroNome} />
     </AppShell>
   );
 }
