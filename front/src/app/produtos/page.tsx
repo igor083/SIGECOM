@@ -58,6 +58,8 @@ export default function GestaoProdutosPage() {
   const [formEstoqueMinimo, setFormEstoqueMinimo] = useState("");
   const [formCategoriaId, setFormCategoriaId] = useState("");
   const [formQtdEstoque, setFormQtdEstoque] = useState("");
+  // SCRUM-185: quantidade inicial só existe no cadastro, a edição nunca mexe em estoque
+  const [formQtdInicial, setFormQtdInicial] = useState("");
   const [modalErro, setModalErro] = useState<string | null>(null);
   const [modalSucesso, setModalSucesso] = useState<string | null>(null);
   const [formCmv, setFormCmv] = useState("");
@@ -115,6 +117,7 @@ export default function GestaoProdutosPage() {
   const abrirCriar = () => {
     setFormNome(""); setFormDescricao(""); setFormImagemUrl(""); setFormPreco("");
     setFormEstoqueMinimo("5"); setFormCategoriaId(categorias[0]?.id.toString() ?? "");
+    setFormQtdInicial("0");
     setModalErro(null); setModalSucesso(null);
     setFinanceParams(obterParametrosFinanceiros()); setFormCmv(""); setMostrarComposicao(false);
     setCriandoCat(false); setNovaCatNome(""); setCatErro(null);
@@ -159,8 +162,10 @@ export default function GestaoProdutosPage() {
     const estMinNum = parseInt(formEstoqueMinimo);
     if (isNaN(precoNum) || precoNum < 0) { setModalErro("Preço inválido."); return; }
     if (isNaN(estMinNum) || estMinNum < 0) { setModalErro("Estoque mínimo inválido."); return; }
+    const qtdInicialNum = formQtdInicial.trim() === "" ? 0 : parseInt(formQtdInicial);
+    if (isNaN(qtdInicialNum) || qtdInicialNum < 0) { setModalErro("Quantidade inicial inválida."); return; }
     try {
-      await criar({ nome: formNome.trim(), descricao: formDescricao.trim(), imagemUrl: formImagemUrl.trim(), preco: precoNum, estoqueMinimo: estMinNum, categoriaId: parseInt(formCategoriaId) });
+      await criar({ nome: formNome.trim(), descricao: formDescricao.trim(), imagemUrl: formImagemUrl.trim(), preco: precoNum, estoqueMinimo: estMinNum, categoriaId: parseInt(formCategoriaId), qtdEstoqueInicial: qtdInicialNum });
       setModalSucesso("Produto cadastrado com sucesso!");
       setTimeout(fecharModal, 1000);
     } catch (err) { setModalErro(mensagemDeErro(err, "Não foi possível cadastrar o produto.")); }
@@ -452,6 +457,10 @@ export default function GestaoProdutosPage() {
                       <label htmlFor="c-estmin">Estoque Mínimo *</label>
                       <input id="c-estmin" className={styles.formInput} type="number" min="0" placeholder="5" value={formEstoqueMinimo} onChange={(e) => setFormEstoqueMinimo(e.target.value)} disabled={mutating} required />
                     </div>
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="c-qtdinicial">Quantidade em Estoque</label>
+                    <input id="c-qtdinicial" className={styles.formInput} type="number" min="0" placeholder="0" value={formQtdInicial} onChange={(e) => setFormQtdInicial(e.target.value)} disabled={mutating} />
                   </div>
                   <div className={styles.formGroup}>
                     <label htmlFor="c-desc">Descrição</label>
