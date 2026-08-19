@@ -60,11 +60,11 @@ public class ProdutoController {
      */
     @PostMapping("/{id}/ajustar-estoque")
     @PreAuthorize("hasRole('ADMIN')") // D-2
-    public ResponseEntity<Produto> ajustarEstoque(
+    public ResponseEntity<ProdutoResponse> ajustarEstoque(
             @PathVariable Long id,
             @Valid @RequestBody AjustarEstoqueRequest request) {
         Produto produto = estoqueService.ajustarEstoque(id, request.quantidade());
-        return ResponseEntity.ok(produto);
+        return ResponseEntity.ok(ProdutoResponse.toResponse(produto));
     }
     
     
