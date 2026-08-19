@@ -8,6 +8,7 @@ import AppShell from "@/components/AppShell";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
+import ShoppingCartCheckoutOutlinedIcon from "@mui/icons-material/ShoppingCartCheckoutOutlined";
 import styles from "./relatorios.module.css";
 
 export default function RelatoriosHubPage() {
@@ -55,6 +56,21 @@ export default function RelatoriosHubPage() {
             <span className={styles.cardTitulo}>Relatório de estoque</span>
             <span className={styles.cardDescricao}>
               Níveis de estoque, produtos em alerta/crítico, valor em estoque e giro por produto.
+            </span>
+          </div>
+          <span className={styles.seta} aria-hidden>
+            →
+          </span>
+        </Link>
+
+        <Link href="/relatorios/estoque/reposicao" className={styles.card}>
+          <div className={styles.iconeWrapper}>
+            <ShoppingCartCheckoutOutlinedIcon sx={{ fontSize: 32 }} />
+          </div>
+          <div className={styles.textos}>
+            <span className={styles.cardTitulo}>Sugestão de compra</span>
+            <span className={styles.cardDescricao}>
+              Quanto comprar de cada produto pelo giro do período, com valor estimado pelo preço de venda.
             </span>
           </div>
           <span className={styles.seta} aria-hidden>
