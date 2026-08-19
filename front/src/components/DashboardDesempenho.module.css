@@ -99,7 +99,7 @@
 }
 
 .kpiAlerta {
-  color: var(--color-warning, #f59e0b);
+  color: var(--color-warning);
 }
 
 /* Charts grid */
@@ -285,8 +285,8 @@
 }
 
 .modalBadge[data-azul="true"] {
-  color: #0369a1;
-  background: #e0f2fe;
+  color: var(--color-info-text);
+  background: var(--color-info-bg);
 }
 
 .modalBadge[data-azul="false"] {
@@ -301,7 +301,7 @@
 }
 
 .modalPercentual[data-azul="true"] {
-  color: #0ea5e9;
+  color: var(--color-info);
 }
 
 .modalPercentual[data-azul="false"] {
@@ -323,7 +323,7 @@
 }
 
 .modalBarraFill[data-azul="true"] {
-  background: #0ea5e9;
+  background: var(--color-info);
 }
 
 .modalBarraFill[data-azul="false"] {

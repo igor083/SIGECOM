@@ -1,16 +1,20 @@
-/* Tela de Fechamento de Caixa (US-022 / US-023) */
+/* Tela de Fechamento de Caixa (US-022 / US-023)
+
+   Segue as convenções das demais telas: cores e raios pelos tokens do
+   design system, tipografia na escala em rem. Antes este arquivo era o
+   único em px, com a própria sombra e os próprios tons de verde/amarelo/
+   vermelho — o que deixava a tela visivelmente fora do padrão. */
 
 .pagina {
   max-width: 560px;
-  margin: 0 auto;
 }
 
 .card {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 28px 32px 32px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
 }
 
 /* ── Cabeçalho: título + selo de estado ───────────────────── */
@@ -19,43 +23,43 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
 }
 
 .titulo {
   margin: 0 0 2px;
-  font-size: 18px;
-  font-weight: 600;
-  color: #0f172a;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text);
 }
 
 .subtitulo {
   margin: 0;
-  font-size: 13px;
-  color: #475569;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
 }
 
 .selo,
 .seloAberto {
   flex-shrink: 0;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
+  padding: 0.22rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 700;
   line-height: 1.4;
 }
 
 .selo {
-  background: #f1f5f9;
-  color: #334155;
-  border: 1px solid #cbd5e1;
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-hover);
 }
 
 .seloAberto {
-  background: #eff6ff;
-  color: #1d4ed8;
-  border: 1px solid #bfdbfe;
+  background: var(--color-primary-50);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary-100);
 }
 
 /* ── Resumo do dia ────────────────────────────────────────── */
@@ -63,7 +67,7 @@
 .resumo {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .linha,
@@ -71,25 +75,25 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 16px;
-  font-size: 14px;
+  gap: 1rem;
+  font-size: 0.875rem;
 }
 
 /* O saldo calculado é o número que importa: separado e com mais peso. */
 .linhaDestaque {
   margin-top: 4px;
-  padding-top: 12px;
-  border-top: 1px solid #e2e8f0;
-  font-size: 15px;
-  font-weight: 600;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .rotulo {
-  color: #475569;
+  color: var(--color-text-secondary);
 }
 
 .valor {
-  color: #0f172a;
+  color: var(--color-text);
   font-variant-numeric: tabular-nums;
 }
 
@@ -99,139 +103,143 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 16px;
-  margin-top: 16px;
-  padding: 12px 14px;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 0.75rem 0.875rem;
   border: 1px solid;
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
 }
 
 .divergenciaRotulo {
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .divergenciaValor {
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* Cor nunca é o único canal: o rótulo já diz confere / sobra / falta. */
 .ok {
-  background: #f0fdf4;
-  border-color: #bbf7d0;
-  color: #166534;
+  background: var(--color-success-bg);
+  border-color: var(--color-success-border);
+  color: var(--color-success-text);
 }
 
 .sobra {
-  background: #fffbeb;
-  border-color: #fde68a;
-  color: #92400e;
+  background: var(--color-warning-bg);
+  border-color: var(--color-warning-border);
+  color: var(--color-warning-text);
 }
 
 .falta {
-  background: #fef2f2;
-  border-color: #fecaca;
-  color: #991b1b;
+  background: var(--color-error-bg);
+  border-color: var(--color-error-border);
+  color: var(--color-error-text);
 }
 
 /* ── Formulário ───────────────────────────────────────────── */
 
 .formulario {
-  margin-top: 24px;
+  margin-top: 1.25rem;
 }
 
 .rotuloCampo {
   display: block;
-  margin-bottom: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #334155;
+  margin-bottom: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
 }
 
 .campoValor {
   display: flex;
   align-items: center;
-  height: 42px;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  background: #fff;
+  height: 40px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-card);
   overflow: hidden;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .campoValor:focus-within {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .prefixo {
-  padding: 0 10px;
-  font-size: 14px;
-  color: #475569;
-  background: #f8fafc;
-  border-right: 1px solid #e2e8f0;
-  line-height: 40px;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  padding: 0 0.625rem;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-border);
 }
 
 .entrada {
   flex: 1;
   height: 100%;
-  padding: 0 12px;
+  padding: 0 0.75rem;
   border: none;
   outline: none;
-  font-size: 14px;
-  color: #0f172a;
+  background: transparent;
+  font-size: 0.9rem;
+  color: var(--color-text);
   font-variant-numeric: tabular-nums;
 }
 
 .ajuda {
-  margin: 6px 0 0;
-  font-size: 12px;
-  color: #475569;
+  margin: 0.4rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
 }
 
 .botao {
   width: 100%;
-  height: 42px;
-  margin-top: 20px;
+  height: 40px;
+  margin-top: 1.25rem;
   border: none;
-  border-radius: 6px;
-  background: #2563eb;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
   color: #fff;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
+  transition: background var(--transition-fast);
 }
 
 .botao:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: var(--color-primary-dark);
 }
 
 .botao:disabled {
-  background: #cbd5e1;
-  color: #f8fafc;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
 /* ── Mensagens ────────────────────────────────────────────── */
 
 .alertaErro {
-  margin-top: 16px;
-  padding: 10px 14px;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  background: #fef2f2;
-  color: #991b1b;
-  font-size: 13px;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-error-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
+  font-size: 0.875rem;
 }
 
 .nota {
-  margin: 16px 0 0;
-  font-size: 13px;
-  color: #475569;
+  margin: 1rem 0 0;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
 }
 
 .estadoVazio {
-  color: #475569;
-  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
 }

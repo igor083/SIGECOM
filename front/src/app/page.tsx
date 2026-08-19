@@ -28,8 +28,8 @@ export default function Home() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: "#f0f2f5",
-        color: "#94a3b8",
+        background: "var(--color-bg)",
+        color: "var(--color-text-muted)",
         fontSize: "0.875rem",
       }}
     >

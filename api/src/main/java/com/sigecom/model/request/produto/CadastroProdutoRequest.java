@@ -30,5 +30,9 @@ public record CadastroProdutoRequest(
         Long categoriaId,
 
         @Min(value = 0, message = "A quantidade inicial não pode ser negativa")
-        Integer qtdEstoqueInicial
+        Integer qtdEstoqueInicial,
+
+        // SCRUM-185: sem este campo o valor que a tela mandava era descartado calado
+        @Min(value = 0, message = "O estoque mínimo não pode ser negativo")
+        Integer estoqueMinimo
 ) {}

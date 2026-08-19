@@ -460,7 +460,7 @@ function EtapaProdutos({ carrinho }: CarrinhoProps) {
                   onClick={() => confirmarRemocao(produto.id)}
                   aria-label={`Remover ${produto.nome}`}
                   title={confirmandoRemocaoId === produto.id ? "Clique de novo para confirmar" : "Remover item"}
-                  style={confirmandoRemocaoId === produto.id ? { color: "#dc2626", background: "#fee2e2", fontWeight: 700 } : undefined}
+                  style={confirmandoRemocaoId === produto.id ? { color: "var(--color-error)", background: "var(--color-error-bg)", fontWeight: 700 } : undefined}
                 >
                   ×
                 </button>

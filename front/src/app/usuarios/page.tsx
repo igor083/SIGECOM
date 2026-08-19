@@ -274,7 +274,7 @@ export default function UsuariosPage() {
                         {u.ativo ? "Ativo" : "Inativo"}
                       </span>
                     </td>
-                    <td style={{ fontSize: "0.8rem", color: "#64748b" }}>
+                    <td className={s.dateCell}>
                       {formatarData(u.criadoEm)}
                     </td>
                     <td>
@@ -431,8 +431,8 @@ export default function UsuariosPage() {
               <div className={s.modalBody}>
                 {modalErro && <div className={`${s.alert} ${s.alertError}`}>{modalErro}</div>}
                 {modalSucesso && <div className={`${s.alert} ${s.alertSuccess}`}>{modalSucesso}</div>}
-                <p style={{ fontSize: "0.82rem", color: "#64748b", margin: 0 }}>
-                  Redefinindo senha de <strong style={{ color: "#0f172a" }}>{selecionado.nome}</strong>.
+                <p className={s.confirmText} style={{ margin: 0 }}>
+                  Redefinindo senha de <strong className={s.confirmStrong}>{selecionado.nome}</strong>.
                   O usuário receberá uma senha temporária e será solicitado a alterá-la no próximo acesso.
                 </p>
                 <div className={s.formGroup}>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
+import Breadcrumb from "@/components/Breadcrumb";
 import PainelSaldo from "@/components/PainelSaldo";
 import GraficosFinanceiro from "@/components/GraficosFinanceiro";
 import { useRelatorioFinanceiro } from "@/hooks/useRelatorioFinanceiro";
@@ -92,6 +93,12 @@ export default function RelatorioFinanceiroPage() {
   // D-5: camada de página só monta UI e delega lógica ao hook
   return (
     <AppShell title="Relatórios — Financeiro por período">
+      <Breadcrumb
+        trilha={[
+          { label: "Relatórios", href: "/relatorios" },
+          { label: "Financeiro" },
+        ]}
+      />
       <div className={styles.filters}>
         <div className={styles.filterGroup}>
           <span className={styles.filterLabel}>Período</span>

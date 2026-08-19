@@ -1,7 +1,7 @@
 .shell {
   display: flex;
   min-height: 100vh;
-  background: #f0f2f5;
+  background: var(--color-bg);
 }
 
 /* ── Sidebar ── */
@@ -11,21 +11,45 @@
   left: 0;
   width: 160px;
   height: 100vh;
-  background: #ffffff;
-  border-right: 1px solid #e2e8f0;
+  background: var(--color-bg-card);
+  border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   z-index: 20;
   overflow-y: auto;
+  transition: width 0.2s ease;
+}
+
+.sidebarCollapsed {
+  width: 56px;
+}
+
+.sidebarCollapsed .brandRow {
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.sidebarCollapsed .navItem {
+  justify-content: center;
+  padding: 10px 0;
+  border-left-width: 3px;
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 12px 12px 16px;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .brand {
   padding: 20px 16px 16px;
   font-size: 0.9rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--color-text);
   letter-spacing: -0.01em;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-surface-subtle);
 }
 
 .nav {
@@ -38,7 +62,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  color: #94a3b8;
+  color: var(--color-text-muted);
   font-size: 0.8rem;
   font-weight: 500;
   text-decoration: none;
@@ -47,14 +71,14 @@
 }
 
 .navItem:hover {
-  color: #475569;
-  background: #f8fafc;
+  color: var(--color-text-secondary);
+  background: var(--color-bg);
 }
 
 .navItem.active {
-  color: #2563eb;
-  border-left-color: #2563eb;
-  background: #eff6ff;
+  color: var(--color-primary);
+  border-left-color: var(--color-primary);
+  background: var(--color-primary-50);
 }
 
 .navIcon {
@@ -69,14 +93,19 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  transition: margin-left 0.2s ease;
+}
+
+.shellCollapsed .content {
+  margin-left: 56px;
 }
 
 .topbar {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  background: var(--color-bg-card);
+  border-bottom: 1px solid var(--color-border);
   height: 56px;
   display: flex;
   align-items: center;
@@ -87,7 +116,7 @@
 .pageTitle {
   font-size: 1rem;
   font-weight: 600;
-  color: #64748b;
+  color: var(--color-text-secondary);
   margin: 0;
 }
 
@@ -109,7 +138,7 @@
 }
 
 .iconBtn:hover {
-  background: #f1f5f9;
+  background: var(--color-surface-subtle);
 }
 
 .userMenuWrapper {
@@ -121,7 +150,7 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #2563eb 0%, #f97316 70%, #10b981 100%);
+  background: linear-gradient(135deg, var(--color-primary) 0%, #f97316 70%, #10b981 100%);
   border: 2px solid transparent;
   cursor: pointer;
   display: flex;
@@ -138,7 +167,7 @@
 }
 
 .avatarActive {
-  border-color: #2563eb;
+  border-color: var(--color-primary);
   opacity: 1;
 }
 
@@ -146,10 +175,10 @@
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
   min-width: 200px;
   z-index: 100;
   animation: menuFadeIn 0.12s ease-out;
@@ -171,7 +200,7 @@
 .userMenuEmail {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--color-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -179,12 +208,12 @@
 
 .userMenuRole {
   font-size: 0.72rem;
-  color: #64748b;
+  color: var(--color-text-secondary);
 }
 
 .userMenuDivider {
   height: 1px;
-  background: #f1f5f9;
+  background: var(--color-surface-subtle);
   margin: 0;
 }
 
@@ -198,18 +227,18 @@
   border: none;
   font-size: 0.82rem;
   font-weight: 500;
-  color: #dc2626;
+  color: var(--color-error);
   cursor: pointer;
   transition: background 0.12s;
   text-align: left;
 }
 
 .userMenuItem:hover {
-  background: #fef2f2;
+  background: var(--color-error-bg);
 }
 
 .main {
   flex: 1;
   padding: 24px;
-  background: #f0f2f5;
+  background: var(--color-bg);
 }

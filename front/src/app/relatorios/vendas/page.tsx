@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
-import BreadcrumbRelatorios from "@/components/BreadcrumbRelatorios";
+import Breadcrumb from "@/components/Breadcrumb";
 import ResumoVendas from "@/components/ResumoVendas";
 import GraficosVendas from "@/components/GraficosVendas";
 import { useRelatorioVendas, type ModoPeriodo } from "@/hooks/useRelatorioVendas";
@@ -92,7 +92,7 @@ export default function RelatorioVendasPage() {
 
   return (
     <AppShell title="Relatórios — Vendas por período">
-      <BreadcrumbRelatorios
+      <Breadcrumb
         trilha={[
           { label: "Relatórios", href: "/relatorios" },
           { label: "Vendas" },

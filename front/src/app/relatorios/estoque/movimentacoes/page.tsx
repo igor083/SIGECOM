@@ -4,7 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
-import BreadcrumbRelatorios from "@/components/BreadcrumbRelatorios";
+import Breadcrumb from "@/components/Breadcrumb";
 import ResumoMovimentacao from "@/components/ResumoMovimentacao";
 import TabelaMovimentacao from "@/components/TabelaMovimentacao";
 import ChartCard from "@/components/charts/ChartCard";
@@ -91,7 +91,7 @@ function Conteudo() {
 
   return (
     <AppShell title="Relatórios — Movimentações de estoque">
-      <BreadcrumbRelatorios
+      <Breadcrumb
         trilha={[
           { label: "Relatórios", href: "/relatorios" },
           { label: "Estoque", href: "/relatorios/estoque" },
