@@ -2,9 +2,13 @@ package com.sigecom.controller;
 
 import com.sigecom.domain.enums.PeriodoRelatorio;
 import com.sigecom.model.response.relatorio.RelatorioFinanceiroResponse;
+import com.sigecom.model.response.relatorio.RelatorioReposicaoResponse;
 import com.sigecom.model.response.relatorio.RelatorioVendasResponse;
+import com.sigecom.service.RelatorioEstoqueService;
 import com.sigecom.service.RelatorioFinanceiroService;
+import com.sigecom.service.RelatorioMovimentacaoService;
 import com.sigecom.service.RelatorioVendasService;
+import com.sigecom.service.ReposicaoEstoqueService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -18,6 +22,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -39,6 +44,15 @@ class RelatorioAutorizacaoTest {
 
     @MockitoBean
     private RelatorioFinanceiroService relatorioFinanceiroService;
+
+    @MockitoBean
+    private ReposicaoEstoqueService reposicaoEstoqueService;
+
+    @MockitoBean
+    private RelatorioEstoqueService relatorioEstoqueService;
+
+    @MockitoBean
+    private RelatorioMovimentacaoService relatorioMovimentacaoService;
 
     @Test
     @WithMockUser(roles = "FUNCIONARIO")
@@ -114,5 +128,74 @@ class RelatorioAutorizacaoTest {
                 .andExpect(jsonPath("$.saldo").value(1150.00))
                 .andExpect(jsonPath("$.totalReceitas").value(3000.00))
                 .andExpect(jsonPath("$.totalDespesas").value(1850.00));
+    }
+
+    @Test
+    @WithMockUser(roles = "FUNCIONARIO")
+    void estoque_DeveDevolver403_QuandoUsuarioForFuncionario() throws Exception {
+        mockMvc.perform(get("/relatorios/estoque"))
+                .andExpect(status().isForbidden());
+
+        verify(relatorioEstoqueService, never()).gerar(any(), any(), any());
+    }
+
+    @Test
+    void estoque_DeveDevolver401_QuandoNaoHouverUsuario() throws Exception {
+        mockMvc.perform(get("/relatorios/estoque"))
+                .andExpect(status().isUnauthorized());
+
+        verify(relatorioEstoqueService, never()).gerar(any(), any(), any());
+    }
+
+    @Test
+    @WithMockUser(roles = "FUNCIONARIO")
+    void movimentacoes_DeveDevolver403_QuandoUsuarioForFuncionario() throws Exception {
+        mockMvc.perform(get("/relatorios/estoque/movimentacoes"))
+                .andExpect(status().isForbidden());
+
+        verify(relatorioMovimentacaoService, never()).gerar(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void movimentacoes_DeveDevolver401_QuandoNaoHouverUsuario() throws Exception {
+        mockMvc.perform(get("/relatorios/estoque/movimentacoes"))
+                .andExpect(status().isUnauthorized());
+
+        verify(relatorioMovimentacaoService, never()).gerar(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    @WithMockUser(roles = "FUNCIONARIO")
+    void reposicao_DeveDevolver403_QuandoUsuarioForFuncionario() throws Exception {
+        mockMvc.perform(get("/relatorios/estoque/reposicao"))
+                .andExpect(status().isForbidden());
+
+        verify(reposicaoEstoqueService, never()).gerar(any(), anyInt(), anyInt());
+    }
+
+    @Test
+    void reposicao_DeveDevolver401_QuandoNaoHouverUsuario() throws Exception {
+        mockMvc.perform(get("/relatorios/estoque/reposicao"))
+                .andExpect(status().isUnauthorized());
+
+        verify(reposicaoEstoqueService, never()).gerar(any(), anyInt(), anyInt());
+    }
+
+    // contra-exemplo: sem ele os dois acima passariam ate com a rota quebrada
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void reposicao_DeveDevolver200ComResumo_QuandoUsuarioForAdmin() throws Exception {
+        when(reposicaoEstoqueService.gerar(any(), anyInt(), anyInt())).thenReturn(
+                new RelatorioReposicaoResponse(
+                        new RelatorioReposicaoResponse.Resumo(
+                                2, 42, new BigDecimal("174.00"), 30, 15,
+                                LocalDate.of(2026, 7, 20), LocalDate.of(2026, 8, 18)),
+                        List.of()));
+
+        mockMvc.perform(get("/relatorios/estoque/reposicao"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resumo.produtosParaRepor").value(2))
+                .andExpect(jsonPath("$.resumo.unidadesSugeridas").value(42))
+                .andExpect(jsonPath("$.resumo.valorEstimadoPrecoVenda").value(174.00));
     }
 }
