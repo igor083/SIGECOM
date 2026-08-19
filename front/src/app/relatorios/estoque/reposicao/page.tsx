@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
-import BreadcrumbRelatorios from "@/components/BreadcrumbRelatorios";
+import Breadcrumb from "@/components/Breadcrumb";
 import ResumoReposicao from "@/components/ResumoReposicao";
 import TabelaReposicao from "@/components/TabelaReposicao";
 import { useRelatorioReposicao } from "@/hooks/useRelatorioReposicao";
@@ -44,7 +44,7 @@ export default function RelatorioReposicaoPage() {
 
   return (
     <AppShell title="Relatórios — Sugestão de compra">
-      <BreadcrumbRelatorios
+      <Breadcrumb
         trilha={[
           { label: "Relatórios", href: "/relatorios" },
           { label: "Estoque", href: "/relatorios/estoque" },
