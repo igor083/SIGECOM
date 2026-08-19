@@ -12,7 +12,8 @@ import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
-import NotificationsOutlinedIcon from "@mui/icons-material/NotificationsOutlined";
+import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
+import ChevronLeftOutlinedIcon from "@mui/icons-material/ChevronLeftOutlined";
 import LogoutIcon from "@mui/icons-material/Logout";
 import type { SvgIconComponent } from "@mui/icons-material";
 import styles from "./AppShell.module.css";
@@ -58,6 +59,12 @@ export default function AppShell({ title, children }: AppShellProps) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("sidebar-collapsed") === "true";
+    }
+    return false;
+  });
   const menuRef = useRef<HTMLDivElement>(null);
 
   const navItems = user?.perfil === "ADMIN" ? ADMIN_NAV : FUNC_NAV;
@@ -74,6 +81,14 @@ export default function AppShell({ title, children }: AppShellProps) {
     logout();
   }
 
+  function toggleSidebar() {
+    setCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("sidebar-collapsed", String(next));
+      return next;
+    });
+  }
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -85,9 +100,22 @@ export default function AppShell({ title, children }: AppShellProps) {
   }, [menuOpen]);
 
   return (
-    <div className={styles.shell}>
-      <aside className={styles.sidebar}>
-        <div className={styles.brand}>SIGECOM</div>
+    <div className={`${styles.shell} ${collapsed ? styles.shellCollapsed : ""}`}>
+      <aside className={`${styles.sidebar} ${collapsed ? styles.sidebarCollapsed : ""}`}>
+        <div className={styles.brandRow}>
+          {!collapsed && <span className={styles.brand}>SIGECOM</span>}
+          <button
+            className={styles.toggleBtn}
+            onClick={toggleSidebar}
+            title={collapsed ? "Expandir menu" : "Recolher menu"}
+          >
+            {collapsed ? (
+              <MenuOutlinedIcon sx={{ fontSize: 20 }} />
+            ) : (
+              <ChevronLeftOutlinedIcon sx={{ fontSize: 20 }} />
+            )}
+          </button>
+        </div>
         <nav className={styles.nav}>
           {navItems.map((item) => {
             const active = isActive(item);
@@ -96,9 +124,10 @@ export default function AppShell({ title, children }: AppShellProps) {
                 key={item.href}
                 href={item.href}
                 className={`${styles.navItem} ${active ? styles.active : ""}`}
+                title={collapsed ? item.label : undefined}
               >
                 <item.Icon className={styles.navIcon} fontSize="small" />
-                <span>{item.label}</span>
+                {!collapsed && <span>{item.label}</span>}
               </Link>
             );
           })}
@@ -109,12 +138,6 @@ export default function AppShell({ title, children }: AppShellProps) {
         <header className={styles.topbar}>
           <h1 className={styles.pageTitle}>{title}</h1>
           <div className={styles.topbarRight}>
-            <button className={styles.iconBtn} title="Configurações">
-              <SettingsOutlinedIcon sx={{ fontSize: 20, color: "#94a3b8" }} />
-            </button>
-            <button className={styles.iconBtn} title="Notificações">
-              <NotificationsOutlinedIcon sx={{ fontSize: 20, color: "#94a3b8" }} />
-            </button>
 
             <div className={styles.userMenuWrapper} ref={menuRef}>
               <button
