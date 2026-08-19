@@ -1,11 +1,4 @@
-// =============================================================
-// hooks/useProdutos.ts — Hook de Controle de Produtos (SIGECOM)
-// =============================================================
-// Centraliza o estado dos produtos, carregamento, erros e as
-// funções de mutação (cadastro, edição, exclusão, ajuste).
-// Garante o isolamento entre UI e Serviços (driver D-5).
-// =============================================================
-
+// D-5: o estado e as chamadas de produto ficam aqui, a tela só consome
 import { useState, useEffect, useCallback } from "react";
 import {
   listarProdutos,
@@ -18,6 +11,7 @@ import {
   type CategoriaProduto,
   type PageProduto,
   type ProdutoRequest,
+  type CadastroProdutoRequest,
   type FiltroEstoque,
 } from "@/services/produtos";
 import { mensagemDeErro } from "@/lib/apiError";
@@ -43,20 +37,13 @@ export interface UseProdutosResult {
 
   // Operações
   recarregar: () => Promise<void>;
-  criar: (dados: ProdutoRequest) => Promise<Produto>;
+  criar: (dados: CadastroProdutoRequest) => Promise<Produto>;
   editar: (id: number, dados: ProdutoRequest) => Promise<Produto>;
   excluir: (id: number) => Promise<void>;
   ajustarEstoqueProduto: (id: number, quantidade: number) => Promise<Produto>;
 }
 
-/**
- * @param initialSize itens por pagina.
- * @param habilitado  libera as requisições. Passe `false` enquanto a
- *   autenticação ainda não foi resolvida: o hook monta junto com a página, e
- *   sem essa trava ele dispara as chamadas antes de existir token. Sem
- *   Authorization a API responde 401, o interceptor derruba a sessão e o
- *   usuário é jogado no /login sem ter feito nada errado.
- */
+// habilitado=false enquanto a autenticação não resolve, senão a API responde 401 e derruba a sessão
 export function useProdutos(initialSize = 10, habilitado = true): UseProdutosResult {
   const [produtosPage, setProdutosPage] = useState<PageProduto | null>(null);
   const [categorias, setCategorias] = useState<CategoriaProduto[]>([]);
@@ -98,7 +85,6 @@ export function useProdutos(initialSize = 10, habilitado = true): UseProdutosRes
     setPageState(0);
   }, []);
 
-  // ── Carregamento de Categorias ──────────────────────────────
   useEffect(() => {
     if (!habilitado) return;
 
@@ -123,7 +109,6 @@ export function useProdutos(initialSize = 10, habilitado = true): UseProdutosRes
     };
   }, [habilitado]);
 
-  // ── Carregamento de Produtos ─────────────────────────────────
   const carregarProdutos = useCallback(async () => {
     // Continua "carregando" enquanto a autenticação não resolve, para a tela
     // mostrar o spinner em vez de um "nenhum produto encontrado" falso.
@@ -158,9 +143,7 @@ export function useProdutos(initialSize = 10, habilitado = true): UseProdutosRes
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [carregarProdutos]);
 
-  // ── Mutadores (Cadastro, Edição, Exclusão, Ajuste) ────────────
-
-  const criar = useCallback(async (dados: ProdutoRequest) => {
+  const criar = useCallback(async (dados: CadastroProdutoRequest) => {
     setMutating(true);
     setErro(null);
     try {
