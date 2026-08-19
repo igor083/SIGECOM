@@ -4,6 +4,7 @@ import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
+import Breadcrumb from "@/components/Breadcrumb";
 import { obterParametrosFinanceiros, salvarParametrosFinanceiros } from "@/services/parametrosFinanceiros";
 import { calcularMarkup } from "@/lib/markup";
 import styles from "./financeiro.module.css";
@@ -101,6 +102,13 @@ export default function ParametrosFinanceirosPage() {
 
   return (
     <AppShell title="Parâmetros Financeiros">
+      <Breadcrumb
+        trilha={[
+          { label: "Configurações", href: "/configuracoes" },
+          { label: "Parâmetros Financeiros" },
+        ]}
+      />
+
       <div className={styles.card}>
         <h2 className={styles.cardTitle}>Markup e Projeção de Margens</h2>
 

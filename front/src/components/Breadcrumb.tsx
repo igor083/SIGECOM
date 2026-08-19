@@ -3,7 +3,7 @@
 import Link from "next/link";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import styles from "./BreadcrumbRelatorios.module.css";
+import styles from "./Breadcrumb.module.css";
 
 export interface ItemTrilha {
   label: string;
@@ -14,7 +14,7 @@ interface Props {
   trilha: ItemTrilha[];
 }
 
-export default function BreadcrumbRelatorios({ trilha }: Props) {
+export default function Breadcrumb({ trilha }: Props) {
   const backHref = [...trilha].reverse().find((item) => item.href)?.href;
 
   return (

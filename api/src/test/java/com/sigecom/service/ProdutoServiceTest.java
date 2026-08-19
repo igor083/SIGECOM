@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -59,7 +60,8 @@ class ProdutoServiceTest {
                 "https://cdn.exemplo.com/refri.jpg",
                 BigDecimal.valueOf(9.90),
                 1L,
-                15
+                15,
+                5
         );
         when(categoriaProdutoRepository.findById(1L)).thenReturn(Optional.of(categoria));
         when(produtoRepository.save(any(Produto.class))).thenAnswer(inv -> {
@@ -91,6 +93,7 @@ class ProdutoServiceTest {
                 "   ",
                 null,
                 1L,
+                null,
                 null
         );
         when(categoriaProdutoRepository.findById(1L)).thenReturn(Optional.of(categoria));
@@ -113,6 +116,7 @@ class ProdutoServiceTest {
                 null,
                 null,
                 99L,
+                null,
                 null
         );
         when(categoriaProdutoRepository.findById(99L)).thenReturn(Optional.empty());
@@ -172,7 +176,6 @@ class ProdutoServiceTest {
         verify(produtoRepository).findAllFiltrado(null, null, false, true, pageable);
     }
 
-    // ── editar ───────────────────────────────────────────────
 
     private Produto produtoExistente(Long id, int qtdEstoque) {
         return Produto.builder()
@@ -264,7 +267,6 @@ class ProdutoServiceTest {
         verify(produtoRepository, never()).save(any(Produto.class));
     }
 
-    // ── excluir ──────────────────────────────────────────────
 
     @Test
     void excluir_DeveDesativarProduto_QuandoEstoqueEstiverZerado() {
@@ -302,5 +304,82 @@ class ProdutoServiceTest {
         assertEquals(HttpStatus.NOT_FOUND, exception.getStatusCode());
         assertEquals("Produto não encontrado", exception.getReason());
         verify(produtoRepository, never()).save(any(Produto.class));
+    }
+
+    // SCRUM-185: estoque minimo no cadastro
+
+    @Test
+    void cadastrar_DevePersistirEstoqueMinimo_QuandoInformadoNoRequest() {
+        CadastroProdutoRequest request = new CadastroProdutoRequest(
+                "Arroz 1kg",
+                null,
+                null,
+                BigDecimal.valueOf(24.90),
+                1L,
+                20,
+                7
+        );
+        when(categoriaProdutoRepository.findById(1L)).thenReturn(Optional.of(categoria));
+        when(produtoRepository.save(any(Produto.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ProdutoResponse response = produtoService.cadastrar(request);
+
+        assertEquals(7, response.estoqueMinimo());
+        assertEquals(20, response.qtdEstoque());
+    }
+
+    @Test
+    void cadastrar_DeveUsarZeroDeEstoqueMinimo_QuandoCampoOmitido() {
+        CadastroProdutoRequest request = new CadastroProdutoRequest(
+                "Feijão 1kg",
+                null,
+                null,
+                BigDecimal.valueOf(8.50),
+                1L,
+                3,
+                null
+        );
+        when(categoriaProdutoRepository.findById(1L)).thenReturn(Optional.of(categoria));
+        when(produtoRepository.save(any(Produto.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ProdutoResponse response = produtoService.cadastrar(request);
+
+        assertEquals(0, response.estoqueMinimo());
+    }
+
+    @Test
+    void editar_NaoDeveMexerNoQtdEstoque_QuandoEditarProdutoRecemCadastrado() {
+        CadastroProdutoRequest cadastro = new CadastroProdutoRequest(
+                "Macarrão",
+                null,
+                null,
+                BigDecimal.valueOf(4.00),
+                1L,
+                12,
+                4
+        );
+        when(categoriaProdutoRepository.findById(1L)).thenReturn(Optional.of(categoria));
+        when(produtoRepository.save(any(Produto.class))).thenAnswer(inv -> {
+            Produto p = inv.getArgument(0);
+            if (p.getId() == null) p.setId(50L);
+            return p;
+        });
+
+        produtoService.cadastrar(cadastro);
+
+        ArgumentCaptor<Produto> captor = ArgumentCaptor.forClass(Produto.class);
+        verify(produtoRepository).save(captor.capture());
+        Produto salvo = captor.getValue();
+        when(produtoRepository.findById(50L)).thenReturn(Optional.of(salvo));
+
+        EditarProdutoRequest edicao = new EditarProdutoRequest(
+                "Macarrão Grano Duro", "nova descrição", null, BigDecimal.valueOf(6.00), 1L, 9);
+        ProdutoResponse response = produtoService.editar(50L, edicao);
+
+        // a edicao logo apos o cadastro so mexe no que o usuario mandou
+        assertEquals(9, response.estoqueMinimo());
+        assertEquals(BigDecimal.valueOf(6.00), response.preco());
+        assertEquals(12, response.qtdEstoque());
+        assertTrue(response.ativo());
     }
 }

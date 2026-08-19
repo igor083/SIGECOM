@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
+import Breadcrumb from "@/components/Breadcrumb";
 import GradeProdutos from "@/components/GradeProdutos";
 import Carrinho from "@/components/Carrinho";
 import { useCarrinho } from "@/hooks/useCarrinho";
@@ -28,11 +28,12 @@ export default function NovaVendaPage() {
 
   return (
     <AppShell title="PDV — Nova venda">
-      <div className={styles.topo}>
-        <Link href="/pdv" className={styles.voltar}>
-          ← Voltar ao PDV
-        </Link>
-      </div>
+      <Breadcrumb
+        trilha={[
+          { label: "PDV", href: "/pdv" },
+          { label: "Nova venda" },
+        ]}
+      />
 
       <div className={styles.layout}>
         {/* Coluna esquerda: catálogo em grade + busca (US-024 / SCRUM-160) */}

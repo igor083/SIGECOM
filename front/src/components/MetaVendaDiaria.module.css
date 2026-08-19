@@ -25,8 +25,8 @@
   font-weight: 700;
   padding: 3px 10px;
   border-radius: var(--radius-full);
-  color: #0369a1;
-  background: #e0f2fe;
+  color: var(--color-info-text);
+  background: var(--color-info-bg);
 }
 
 .badgeAbaixo {
@@ -80,7 +80,7 @@
 .percentualAzul {
   font-size: 18px;
   font-weight: 700;
-  color: #0369a1;
+  color: var(--color-info-text);
 }
 
 .percentualAbaixo {
@@ -99,7 +99,7 @@
 
 .barraAzul {
   height: 100%;
-  background: #0ea5e9;
+  background: var(--color-info);
   border-radius: var(--radius-full);
   transition: width 0.6s ease;
 }

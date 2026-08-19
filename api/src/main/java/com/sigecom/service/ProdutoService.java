@@ -42,6 +42,8 @@ public class ProdutoService {
                 .preco(request.preco() != null ? request.preco() : BigDecimal.ZERO)
                 .categoria(categoria)
                 .qtdEstoque(request.qtdEstoqueInicial() != null ? request.qtdEstoqueInicial() : 0)
+                // SCRUM-185: null aqui repete o default 0 da entidade em vez de estourar no unboxing
+                .estoqueMinimo(request.estoqueMinimo() != null ? request.estoqueMinimo() : 0)
                 .build();
 
         Produto salvo = produtoRepository.save(produto);

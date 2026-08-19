@@ -353,7 +353,7 @@
 
 .itemDescontoInfo {
   font-size: 11px;
-  color: var(--color-success, #16a34a);
+  color: var(--color-success);
   padding-left: 4px;
 }
 
@@ -608,7 +608,7 @@
 .comprovanteTitulo {
   font-size: 16px;
   font-weight: 700;
-  color: var(--color-success, #16a34a);
+  color: var(--color-success);
 }
 
 .comprovanteSub {

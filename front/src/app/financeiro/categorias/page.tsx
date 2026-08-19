@@ -21,6 +21,7 @@ import {
 } from "@/services/categoriasFinanceiras";
 import { mensagemDeErro } from "@/lib/apiError";
 import AppShell from "@/components/AppShell";
+import Breadcrumb from "@/components/Breadcrumb";
 import s from "./categorias.module.css";
 
 const CATEGORIA_VENDA = "Venda";
@@ -166,6 +167,13 @@ export default function CategoriasFinanceirasPage() {
 
   return (
     <AppShell title="Categorias Financeiras">
+      <Breadcrumb
+        trilha={[
+          { label: "Financeiro", href: "/financeiro" },
+          { label: "Categorias" },
+        ]}
+      />
+
       {erro && <div className={s.alertError} role="alert">{erro}</div>}
 
       {/* Sem a categoria "Venda" o PDV não fecha venda nenhuma — avisa e resolve no clique. */}

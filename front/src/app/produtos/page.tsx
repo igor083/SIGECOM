@@ -10,6 +10,7 @@ import { criarCategoria } from "@/services/categorias";
 import { obterParametrosFinanceiros } from "@/services/parametrosFinanceiros";
 import { precoSugerido, calcularMarkup, type ParametrosFinanceiros } from "@/lib/markup";
 import AppShell from "@/components/AppShell";
+import Breadcrumb from "@/components/Breadcrumb";
 import styles from "./produtos.module.css";
 
 function formatarPreco(valor: number): string {
@@ -27,9 +28,9 @@ const TABS: { valor: FiltroEstoque; rotulo: string }[] = [
 ];
 
 function getStatus(prod: Produto): { label: string; color: string } {
-  if (prod.qtdEstoque === 0) return { label: "Sem estoque", color: "#dc2626" };
-  if (prod.qtdEstoque <= prod.estoqueMinimo) return { label: "Estoque baixo", color: "#dc2626" };
-  return { label: "Em estoque", color: "#16a34a" };
+  if (prod.qtdEstoque === 0) return { label: "Sem estoque", color: "var(--color-error)" };
+  if (prod.qtdEstoque <= prod.estoqueMinimo) return { label: "Estoque baixo", color: "var(--color-error)" };
+  return { label: "Em estoque", color: "var(--color-success)" };
 }
 
 export default function GestaoProdutosPage() {
@@ -222,6 +223,17 @@ export default function GestaoProdutosPage() {
 
   return (
     <AppShell title={podeEditar ? "Gestão de Produtos" : "Consulta de Produtos"}>
+      {/* Só o admin chega aqui pelo hub /estoque; o funcionário entra direto
+          pelo menu lateral, então para ele a trilha não teria de onde voltar. */}
+      {podeEditar && (
+        <Breadcrumb
+          trilha={[
+            { label: "Produtos", href: "/estoque" },
+            { label: "Gestão de Produtos" },
+          ]}
+        />
+      )}
+
       {erro && (
         <div className={`${styles.alert} ${styles.alertError}`} role="alert">
           {erro}
@@ -403,7 +415,7 @@ export default function GestaoProdutosPage() {
                           <button type="button" className={styles.primaryBtn} style={{ padding: "8px 12px" }} onClick={handleCriarCategoria} disabled={catSalvando || !novaCatNome.trim()}>{catSalvando ? "..." : "Criar"}</button>
                           <button type="button" className={styles.secondaryBtn} style={{ padding: "8px 12px" }} onClick={() => { setCriandoCat(false); setCatErro(null); }} disabled={catSalvando}>Cancelar</button>
                         </div>
-                        {catErro && <span style={{ color: "#dc2626", fontSize: "0.78rem" }}>{catErro}</span>}
+                        {catErro && <span style={{ color: "var(--color-error)", fontSize: "0.78rem" }}>{catErro}</span>}
                       </div>
                     )}
                   </div>
@@ -414,16 +426,16 @@ export default function GestaoProdutosPage() {
                     </div>
                     <div className={styles.formGroup} style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
                       {financeParams && parseFloat(formCmv) > 0 && (
-                        <div style={{ fontSize: "0.8rem", color: "#64748b" }}>
+                        <div style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)" }}>
                           Sugerido: <strong>R$ {precoSugerido(parseFloat(formCmv), financeParams).toFixed(2)}</strong>
-                          <button type="button" style={{ marginLeft: "6px", background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }} onClick={() => setFormPreco(precoSugerido(parseFloat(formCmv), financeParams!).toFixed(2))}>Aplicar</button>
+                          <button type="button" style={{ marginLeft: "6px", background: "var(--color-primary-50)", color: "var(--color-primary)", border: "1px solid var(--color-primary-100)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }} onClick={() => setFormPreco(precoSugerido(parseFloat(formCmv), financeParams!).toFixed(2))}>Aplicar</button>
                         </div>
                       )}
                     </div>
                   </div>
                   {financeParams && parseFloat(formCmv) > 0 && (
                     <div>
-                      <button type="button" style={{ background: "none", border: "none", color: "#2563eb", textDecoration: "underline", cursor: "pointer", fontSize: "0.75rem", padding: 0 }} onClick={() => setMostrarComposicao(!mostrarComposicao)}>
+                      <button type="button" style={{ background: "none", border: "none", color: "var(--color-primary)", textDecoration: "underline", cursor: "pointer", fontSize: "0.75rem", padding: 0 }} onClick={() => setMostrarComposicao(!mostrarComposicao)}>
                         {mostrarComposicao ? "Ocultar composição" : "Ver composição do preço"}
                       </button>
                       {mostrarComposicao && (() => {
@@ -432,15 +444,15 @@ export default function GestaoProdutosPage() {
                         const precoP = precoSugerido(cmvNum, params);
                         const emReais = (pct: number) => formatarPreco((pct / 100) * precoP);
                         return (
-                          <div style={{ marginTop: "0.5rem", padding: "0.75rem", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", fontSize: "0.75rem", color: "#64748b", lineHeight: 1.7 }}>
-                            <div style={{ marginBottom: 4, color: "#334155", fontWeight: 600 }}>Como o preço de {formatarPreco(precoP)} se forma:</div>
-                            <div>Custo do produto (CMV): <strong style={{ color: "#334155" }}>{formatarPreco(cmvNum)}</strong></div>
+                          <div style={{ marginTop: "0.5rem", padding: "0.75rem", background: "var(--color-bg)", border: "1px solid var(--color-border)", borderRadius: "6px", fontSize: "0.75rem", color: "var(--color-text-secondary)", lineHeight: 1.7 }}>
+                            <div style={{ marginBottom: 4, color: "var(--color-text)", fontWeight: 600 }}>Como o preço de {formatarPreco(precoP)} se forma:</div>
+                            <div>Custo do produto (CMV): <strong style={{ color: "var(--color-text)" }}>{formatarPreco(cmvNum)}</strong></div>
                             <div>Impostos ({params.impostosPercent}%): {emReais(params.impostosPercent)}</div>
                             <div>Custos fixos ({params.custosFixosPercent}%): {emReais(params.custosFixosPercent)}</div>
                             <div>Comissão ({params.comissaoPercent}%): {emReais(params.comissaoPercent)}</div>
                             <div>Maquininha ({params.taxaMaquininhaPercent}%): {emReais(params.taxaMaquininhaPercent)}</div>
-                            <div>Seu lucro ({params.lucroDesejadoPercent}%): <strong style={{ color: "#16a34a" }}>{emReais(params.lucroDesejadoPercent)}</strong></div>
-                            <div style={{ borderTop: "1px solid #cbd5e1", marginTop: 6, paddingTop: 4, color: "#334155", fontWeight: 600 }}>
+                            <div>Seu lucro ({params.lucroDesejadoPercent}%): <strong style={{ color: "var(--color-success)" }}>{emReais(params.lucroDesejadoPercent)}</strong></div>
+                            <div style={{ borderTop: "1px solid var(--color-border-hover)", marginTop: 6, paddingTop: 4, color: "var(--color-text)", fontWeight: 600 }}>
                               Preço de venda: {formatarPreco(precoP)} &nbsp;·&nbsp; markup {calcularMarkup(params).toFixed(3)}
                             </div>
                           </div>
@@ -513,9 +525,9 @@ export default function GestaoProdutosPage() {
                     </div>
                     <div className={styles.formGroup} style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
                       {financeParams && parseFloat(formCmv) > 0 && (
-                        <div style={{ fontSize: "0.8rem", color: "#64748b" }}>
+                        <div style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)" }}>
                           Sugerido: <strong>R$ {precoSugerido(parseFloat(formCmv), financeParams).toFixed(2)}</strong>
-                          <button type="button" style={{ marginLeft: "6px", background: "#eff6ff", color: "#2563eb", border: "1px solid #bfdbfe", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }} onClick={() => setFormPreco(precoSugerido(parseFloat(formCmv), financeParams!).toFixed(2))}>Aplicar</button>
+                          <button type="button" style={{ marginLeft: "6px", background: "var(--color-primary-50)", color: "var(--color-primary)", border: "1px solid var(--color-primary-100)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }} onClick={() => setFormPreco(precoSugerido(parseFloat(formCmv), financeParams!).toFixed(2))}>Aplicar</button>
                         </div>
                       )}
                     </div>
@@ -597,7 +609,7 @@ export default function GestaoProdutosPage() {
               {modalErro && <div className={`${styles.alert} ${styles.alertError}`}>{modalErro}</div>}
               {modalSucesso && <div className={`${styles.alert} ${styles.alertSuccess}`}>{modalSucesso}</div>}
               <p className={styles.confirmDeleteText}>Tem certeza que deseja excluir <strong>{produtoSelecionado?.nome}</strong>?</p>
-              <p className={styles.confirmDeleteText} style={{ fontSize: "0.85rem", color: "#64748b" }}>Esta ação é permanente.</p>
+              <p className={styles.confirmDeleteText} style={{ fontSize: "0.85rem", color: "var(--color-text-secondary)" }}>Esta ação é permanente.</p>
               <div className={styles.confirmDeleteWarning}>⚠️ Se o produto possuir histórico de vendas, a exclusão será rejeitada.</div>
             </div>
             <div className={styles.modalFooter}>

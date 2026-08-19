@@ -12,6 +12,7 @@ import {
 } from "@/services/categorias";
 import { mensagemDeErro } from "@/lib/apiError";
 import AppShell from "@/components/AppShell";
+import Breadcrumb from "@/components/Breadcrumb";
 import styles from "../estoque.module.css";
 import s from "./categorias.module.css";
 
@@ -128,6 +129,13 @@ export default function CategoriasPage() {
 
   return (
     <AppShell title="Tipos de Produtos">
+      <Breadcrumb
+        trilha={[
+          { label: "Produtos", href: "/estoque" },
+          { label: "Tipos de Produtos" },
+        ]}
+      />
+
       {erro && <div className={s.alertError} role="alert">{erro}</div>}
 
       {/* Cabeçalho da seção */}

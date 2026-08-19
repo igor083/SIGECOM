@@ -166,13 +166,13 @@
 
 .badgeOk {
   composes: badge;
-  background: #dcfce7;
+  background: var(--color-success-bg);
   color: var(--color-success);
 }
 
 .badgeCritico {
   composes: badge;
-  background: #fee2e2;
+  background: var(--color-error-bg);
   color: var(--color-error);
 }
 
@@ -225,7 +225,7 @@
   margin: 16px;
   padding: 12px 14px;
   border-radius: var(--radius-md);
-  background: #fee2e2;
+  background: var(--color-error-bg);
   color: var(--color-error);
   font-size: 13px;
   display: flex;

@@ -42,7 +42,7 @@ export default function LoginPage() {
     <div
       style={{
         minHeight: "100vh",
-        background: "#f0f2f5",
+        background: "var(--color-bg)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -50,18 +50,19 @@ export default function LoginPage() {
     >
       <div
         style={{
-          background: "#e4e6ea",
+          background: "var(--color-bg-card)",
+          border: "1px solid var(--color-border)",
           borderRadius: "16px",
           padding: "40px 36px",
           width: "100%",
           maxWidth: "360px",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.07)",
+          boxShadow: "var(--shadow-md)",
         }}
       >
         <div style={{ textAlign: "center", marginBottom: "28px" }}>
           <h1
             style={{
-              color: "#2563eb",
+              color: "var(--color-primary)",
               fontSize: "1.6rem",
               fontWeight: 800,
               margin: 0,
@@ -70,7 +71,7 @@ export default function LoginPage() {
           >
             SIGECOM
           </h1>
-          <p style={{ color: "#94a3b8", fontSize: "0.875rem", margin: "6px 0 0" }}>
+          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", margin: "6px 0 0" }}>
             Bem-vindo
           </p>
         </div>

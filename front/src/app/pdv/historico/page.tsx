@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
+import Breadcrumb from "@/components/Breadcrumb";
 import {
   listarVendas,
   type PageVendaResumo,
@@ -110,11 +111,12 @@ export default function HistoricoVendasPage() {
 
   return (
     <AppShell title="PDV — Histórico de vendas">
-      <div className={styles.topo}>
-        <Link href="/pdv" className={styles.voltar}>
-          ← Voltar ao PDV
-        </Link>
-      </div>
+      <Breadcrumb
+        trilha={[
+          { label: "PDV", href: "/pdv" },
+          { label: "Histórico de vendas" },
+        ]}
+      />
 
       {erro && (
         <div className={`${styles.alert} ${styles.alertError}`} role="alert">
@@ -213,7 +215,7 @@ export default function HistoricoVendasPage() {
                     </td>
                     <td style={{ textAlign: "right" }}>{v.qtdItens}</td>
                     <td style={{ textAlign: "right" }}>{formatarPreco(v.subtotal)}</td>
-                    <td style={{ textAlign: "right", color: "#dc2626" }}>
+                    <td className={styles.descontoCell}>
                       {v.descontoTotal > 0 ? `− ${formatarPreco(v.descontoTotal)}` : "—"}
                     </td>
                     <td className={styles.totalCell}>{formatarPreco(v.total)}</td>
