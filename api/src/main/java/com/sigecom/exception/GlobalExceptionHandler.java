@@ -31,7 +31,11 @@ import java.util.List;
 @RestControllerAdvice
 public class GlobalExceptionHandler implements AuthenticationEntryPoint, AccessDeniedHandler {
 
-    private static final String MSG_UNAUTHORIZED = "Autenticação necessária. Informe um token válido.";
+    // Dois 401 diferentes, duas mensagens. Quem erra a senha no login não tem
+    // token nenhum para "informar", e mandá-lo procurar um só confunde; quem
+    // bate numa rota protegida sem token não errou credencial alguma.
+    private static final String MSG_SEM_TOKEN = "Autenticação necessária. Informe um token válido.";
+    private static final String MSG_CREDENCIAIS_INVALIDAS = "Credenciais informadas inválidas.";
     private static final String MSG_FORBIDDEN = "Você não tem permissão para acessar este recurso.";
     private static final String MSG_INTERNAL = "Ocorreu um erro interno. Tente novamente mais tarde.";
     // Não diz se o e-mail existe nem quantas tentativas faltavam: contar isso
@@ -80,7 +84,7 @@ public class GlobalExceptionHandler implements AuthenticationEntryPoint, AccessD
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiError> handleAuthenticationMvc(AuthenticationException ex, HttpServletRequest request) {
-        return respond(HttpStatus.UNAUTHORIZED, MSG_UNAUTHORIZED, ex.getMessage(), request, null);
+        return respond(HttpStatus.UNAUTHORIZED, MSG_CREDENCIAIS_INVALIDAS, ex.getMessage(), request, null);
     }
 
     @ExceptionHandler(Exception.class)
@@ -93,7 +97,7 @@ public class GlobalExceptionHandler implements AuthenticationEntryPoint, AccessD
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException ex) throws IOException {
-        write(response, request, HttpStatus.UNAUTHORIZED, MSG_UNAUTHORIZED, ex.getMessage());
+        write(response, request, HttpStatus.UNAUTHORIZED, MSG_SEM_TOKEN, ex.getMessage());
     }
 
     @Override

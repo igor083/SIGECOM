@@ -98,7 +98,9 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    void handleAuthenticationMvc_DeveDevolver401ComMensagemPadrao() {
+    void handleAuthenticationMvc_DeveDevolver401FalandoDeCredenciais_NaoDeToken() {
+        // Este caminho é o do login com senha errada: quem chega aqui não tem
+        // token nenhum, e mandá-lo "informar um token válido" só confunde.
         BadCredentialsException ex = new BadCredentialsException("Credenciais inválidas");
 
         ResponseEntity<ApiError> response = handler.handleAuthenticationMvc(ex, request);
@@ -107,7 +109,8 @@ class GlobalExceptionHandlerTest {
         ApiError body = response.getBody();
         assertThat(body).isNotNull();
         assertThat(body.status()).isEqualTo(401);
-        assertThat(body.usuarioMensagem()).isEqualTo("Autenticação necessária. Informe um token válido.");
+        assertThat(body.usuarioMensagem()).isEqualTo("Credenciais informadas inválidas.");
+        assertThat(body.usuarioMensagem()).doesNotContain("token");
     }
 
     @Test
