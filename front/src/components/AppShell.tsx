@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
@@ -58,6 +58,7 @@ interface AppShellProps {
 export default function AppShell({ title, children }: AppShellProps) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(() => {
     if (typeof window !== "undefined") {
@@ -88,6 +89,16 @@ export default function AppShell({ title, children }: AppShellProps) {
       return next;
     });
   }
+
+  // Guarda central da senha temporária. Toda tela interna passa pelo AppShell,
+  // então basta aqui: sem isto, quem entra com senha definida por
+  // administrador navega normalmente pelo menu e só descobre o bloqueio
+  // quando cada tela devolve 403, sem dizer o que fazer a respeito.
+  useEffect(() => {
+    if (user?.senhaTemporaria && pathname !== "/trocar-senha") {
+      router.replace("/trocar-senha");
+    }
+  }, [user?.senhaTemporaria, pathname, router]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {

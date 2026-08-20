@@ -21,8 +21,12 @@ public record EditUserRequest(
         @Size(max = 255, message = "O e-mail deve ter no máximo 255 caracteres")
         String email,
 
-        // perfil e ativo em null significam "não alterar", quem trata é o AuthService.editar
-        TipoUsuario perfil,
+        // perfil em null significa "não alterar", quem trata é o AuthService.editar
+        TipoUsuario perfil
 
-        Boolean ativo
+        // `ativo` não entra aqui de propósito. A flag tem um único escritor, o
+        // AuthService.remover, que é onde mora a proteção contra o admin se
+        // remover sozinho. Aceitar ativo=false por aqui seria uma segunda porta
+        // de remoção sem essa guarda - e como a listagem só traz ativos, quem
+        // se desativasse por engano não apareceria mais para ser corrigido.
 ) {}

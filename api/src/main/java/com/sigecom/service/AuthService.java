@@ -83,16 +83,29 @@ public class AuthService {
             usuario.setPerfil(request.perfil());
         }
 
-        if (request.ativo() != null) {
-            usuario.setAtivo(request.ativo());
-        }
-
         Usuario atualizado = usuarioRepository.save(usuario);
         log.info("Usuário atualizado: {}", atualizado.getEmail());
 
         return toResponse(atualizado);
     }
 
+    /**
+     * Remove o usuário desligando a flag `ativo` — a linha continua no banco.
+     *
+     * O DELETE físico não é possível aqui: venda, lancamento_financeiro e
+     * fechamento_caixa referenciam usuario com FK NOT NULL, e são registros
+     * contábeis. Apagar a linha violaria a constraint; apagar em cascata
+     * levaria junto as vendas do operador e o histórico de caixa deixaria de
+     * fechar. A flag resolve sem tocar em nada disso: o usuário some da
+     * listagem, perde o acesso, e a autoria dos registros dele fica intacta.
+     *
+     * Perder o acesso não é efeito colateral de UI: o UserDetailsServiceImpl
+     * passa `ativo` como o flag `enabled` do Spring Security, então o login é
+     * recusado no próprio AuthenticationManager.
+     *
+     * Não há reativação por decisão de produto — uma vez removido, o usuário
+     * não volta a aparecer em lugar nenhum.
+     */
     @Transactional
     public void remover(Long id) {
         Usuario usuario = usuarioRepository.findById(id)
@@ -103,8 +116,10 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Não é permitido remover o próprio usuário");
         }
 
-        usuarioRepository.delete(usuario);
-        log.info("Usuário removido: {}", usuario.getEmail());
+        // Idempotente: remover duas vezes não é erro, o estado final é o mesmo.
+        usuario.setAtivo(false);
+        usuarioRepository.save(usuario);
+        log.info("Usuário removido (desativado): {}", usuario.getEmail());
     }
 
     @Transactional

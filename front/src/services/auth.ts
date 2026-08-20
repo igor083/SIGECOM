@@ -18,12 +18,28 @@ export interface LoginRequest {
   senha: string;
 }
 
-/** Resposta recebida de POST /auth/login. */
+/** Resposta recebida de POST /auth/login e de PATCH /auth/me/senha. */
 export interface LoginResponse {
   /** JWT assinado pelo back-end. */
   token: string;
   /** Duração do token em milissegundos. */
   expiresIn: number;
+  /**
+   * true quando a senha foi definida por um administrador e ainda não foi
+   * trocada pelo dono da conta.
+   *
+   * Não é informativo: enquanto for true, a API responde 403 em todas as
+   * rotas exceto GET /auth/me e PATCH /auth/me/senha (PwdResetRequiredFilter).
+   * Quem ignora este campo prende o usuário numa tela de "sem permissão".
+   */
+  senhaTemporaria: boolean;
+}
+
+/** Payload enviado para PATCH /auth/me/senha. */
+export interface TrocarSenhaRequest {
+  senhaAtual: string;
+  /** Mínimo 6 caracteres. */
+  senhaNova: string;
 }
 
 /** Payload enviado para POST /auth/cadastro (apenas ADMIN). */
@@ -78,5 +94,19 @@ export async function login(email: string, senha: string): Promise<LoginResponse
  */
 export async function cadastro(dados: CadastroRequest): Promise<CadastroResponse> {
   const response = await api.post<CadastroResponse>("/auth/cadastro", dados);
+  return response.data;
+}
+
+/**
+ * Troca a senha do próprio usuário autenticado.
+ *
+ * Devolve um token NOVO, e usá-lo não é opcional: o bloqueio de senha
+ * temporária está gravado como claim no token, então o antigo continua
+ * levando 403 mesmo depois da troca concluída.
+ */
+export async function trocarMinhaSenha(
+  dados: TrocarSenhaRequest
+): Promise<LoginResponse> {
+  const response = await api.patch<LoginResponse>("/auth/me/senha", dados);
   return response.data;
 }
