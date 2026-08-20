@@ -31,7 +31,8 @@ export interface EditUsuarioRequest {
   nome?: string;
   email?: string;
   perfil?: PerfilUsuario;
-  ativo?: boolean;
+  // Sem `ativo`: a API não aceita mais desativar por aqui. A flag tem um dono
+  // só, o DELETE, que é onde mora a guarda contra o admin se remover.
 }
 
 export async function listarUsuarios(params: {

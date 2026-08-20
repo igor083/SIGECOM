@@ -45,7 +45,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
     public List<UsuarioResponse> listarPorPerfil(TipoUsuario perfil) {
-        return usuarioRepository.findByPerfil(perfil).stream()
+        return usuarioRepository.findByPerfilAndAtivoTrue(perfil).stream()
                 .map(UsuarioResponse::toResponse)
                 .toList();
     }

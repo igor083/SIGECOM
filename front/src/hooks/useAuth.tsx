@@ -31,6 +31,12 @@ export interface AuthUser {
   email: string;
   userId: number;
   perfil: TipoUsuario;
+  /**
+   * Senha definida por administrador e ainda não trocada. Vem da claim
+   * `pwd_reset_required`, e não do estado de login, para o bloqueio
+   * sobreviver a um F5 — é do token que a API tira a mesma conclusão.
+   */
+  senhaTemporaria: boolean;
 }
 
 /** Forma do contexto de autenticação. */
@@ -45,6 +51,14 @@ interface AuthContextData {
   isAuthenticated: boolean;
   /** Realiza login e persiste o token. */
   login: (email: string, senha: string) => Promise<LoginResponse>;
+  /**
+   * Substitui o token em uso por um recém-emitido pela API.
+   *
+   * Existe para a troca de senha obrigatória: o PATCH /auth/me/senha devolve
+   * um token sem a claim de bloqueio, e sem trocar o guardado o usuário
+   * continua levando 403 apesar de já ter trocado a senha.
+   */
+  aplicarToken: (token: string) => void;
   /** Limpa token e estado, redireciona para /login. */
   logout: () => void;
 }
@@ -96,7 +110,12 @@ function extractUser(token: string): AuthUser | null {
   if (!email || userId == null || !role) return null;
   if (role !== "ADMIN" && role !== "FUNCIONARIO") return null;
 
-  return { email, userId, perfil: role as TipoUsuario };
+  return {
+    email,
+    userId,
+    perfil: role as TipoUsuario,
+    senhaTemporaria: payload.pwd_reset_required === true,
+  };
 }
 
 // ── Context ──────────────────────────────────────────────────
@@ -150,6 +169,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data;
   }, []);
 
+  const aplicarToken = useCallback((novoToken: string) => {
+    const decoded = extractUser(novoToken);
+    if (!decoded) {
+      throw new Error("Token retornado pela API é inválido.");
+    }
+
+    localStorage.setItem(STORAGE_TOKEN_KEY, novoToken);
+    localStorage.setItem(STORAGE_USER_KEY, JSON.stringify(decoded));
+
+    setToken(novoToken);
+    setUser(decoded);
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_TOKEN_KEY);
     localStorage.removeItem(STORAGE_USER_KEY);
@@ -170,6 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         isAuthenticated: !!user,
         login: loginFn,
+        aplicarToken,
         logout,
       }}
     >

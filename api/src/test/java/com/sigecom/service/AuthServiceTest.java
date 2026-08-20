@@ -117,7 +117,7 @@ class AuthServiceTest {
 
     @Test
     void editar_DeveAtualizarUsuario_QuandoDadosValidos() {
-        EditUserRequest request = new EditUserRequest("Nome Editado", "novo@teste.com", TipoUsuario.FUNCIONARIO, false);
+        EditUserRequest request = new EditUserRequest("Nome Editado", "novo@teste.com", TipoUsuario.FUNCIONARIO);
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
         when(usuarioRepository.existsByEmail("novo@teste.com")).thenReturn(false);
         when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -128,13 +128,26 @@ class AuthServiceTest {
         assertEquals("Nome Editado", response.nome());
         assertEquals("novo@teste.com", response.email());
         assertEquals(TipoUsuario.FUNCIONARIO, response.perfil());
-        assertFalse(response.ativo());
         verify(usuarioRepository).save(usuario);
     }
 
     @Test
+    void editar_NaoDeveDesativarUsuario_PorqueRemocaoSoPassaPeloRemover() {
+        // Editar não pode virar uma segunda porta de remoção: é o remover que
+        // guarda a regra de não deixar o admin se remover sozinho.
+        EditUserRequest request = new EditUserRequest("Nome Editado", null, null);
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UsuarioResponse response = authService.editar(1L, request);
+
+        assertTrue(response.ativo());
+        assertTrue(usuario.isAtivo());
+    }
+
+    @Test
     void editar_DeveTirarOsEspacosDasPontasDoNome() {
-        EditUserRequest request = new EditUserRequest("  Danilo  ", null, null, null);
+        EditUserRequest request = new EditUserRequest("  Danilo  ", null, null);
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
         when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -145,7 +158,7 @@ class AuthServiceTest {
 
     @Test
     void editar_DeveLancarNaoEncontrado_QuandoUsuarioNaoExistir() {
-        EditUserRequest request = new EditUserRequest("Nome", "email@teste.com", null, null);
+        EditUserRequest request = new EditUserRequest("Nome", "email@teste.com", null);
         when(usuarioRepository.findById(2L)).thenReturn(Optional.empty());
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class, () -> {
@@ -158,7 +171,7 @@ class AuthServiceTest {
 
     @Test
     void editar_DeveLancarConflito_QuandoEmailJaEstiverEmUsoPorOutroUsuario() {
-        EditUserRequest request = new EditUserRequest(null, "outro@teste.com", null, null);
+        EditUserRequest request = new EditUserRequest(null, "outro@teste.com", null);
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
         when(usuarioRepository.existsByEmail("outro@teste.com")).thenReturn(true);
 
@@ -171,7 +184,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void remover_DeveRemoverUsuario_QuandoNaoForOProprioUsuarioAutenticado() {
+    void remover_DeveDesativarUsuario_QuandoNaoForOProprioUsuarioAutenticado() {
         Authentication auth = mock(Authentication.class);
         when(auth.getName()).thenReturn("outro_usuario@teste.com");
         SecurityContext securityContext = mock(SecurityContext.class);
@@ -181,7 +194,43 @@ class AuthServiceTest {
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
 
         assertDoesNotThrow(() -> authService.remover(1L));
-        verify(usuarioRepository).delete(usuario);
+
+        assertFalse(usuario.isAtivo());
+        verify(usuarioRepository).save(usuario);
+    }
+
+    @Test
+    void remover_NuncaDeveApagarALinha_PorqueVendasEFinanceiroApontamParaEla() {
+        // A FK de venda/lancamento_financeiro/fechamento_caixa é NOT NULL: um
+        // delete físico estouraria a constraint, e em cascata levaria junto o
+        // histórico contábil do operador. A remoção tem que ser sempre lógica.
+        Authentication auth = mock(Authentication.class);
+        when(auth.getName()).thenReturn("outro_usuario@teste.com");
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(auth);
+        SecurityContextHolder.setContext(securityContext);
+
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+
+        authService.remover(1L);
+
+        verify(usuarioRepository, never()).delete(any(Usuario.class));
+        verify(usuarioRepository, never()).deleteById(anyLong());
+    }
+
+    @Test
+    void remover_DeveSerIdempotente_QuandoUsuarioJaEstiverRemovido() {
+        Authentication auth = mock(Authentication.class);
+        when(auth.getName()).thenReturn("outro_usuario@teste.com");
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(auth);
+        SecurityContextHolder.setContext(securityContext);
+
+        usuario.setAtivo(false);
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+
+        assertDoesNotThrow(() -> authService.remover(1L));
+        assertFalse(usuario.isAtivo());
     }
 
     @Test
@@ -200,7 +249,8 @@ class AuthServiceTest {
 
         assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
         assertEquals("Não é permitido remover o próprio usuário", exception.getReason());
-        verify(usuarioRepository, never()).delete(any(Usuario.class));
+        assertTrue(usuario.isAtivo());
+        verify(usuarioRepository, never()).save(any(Usuario.class));
     }
 
     @Test

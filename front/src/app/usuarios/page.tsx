@@ -53,7 +53,6 @@ export default function UsuariosPage() {
   const [editNome, setEditNome] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editPerfil, setEditPerfil] = useState<PerfilUsuario>("FUNCIONARIO");
-  const [editAtivo, setEditAtivo] = useState(true);
 
   // Form reset senha
   const [novaSenha, setNovaSenha] = useState("");
@@ -103,7 +102,7 @@ export default function UsuariosPage() {
   function abrirEditar(u: Usuario) {
     setSelecionado(u);
     setEditNome(u.nome); setEditEmail(u.email);
-    setEditPerfil(u.perfil); setEditAtivo(u.ativo);
+    setEditPerfil(u.perfil);
     setModalErro(null); setModalSucesso(null);
     setModalAberto("editar");
   }
@@ -140,7 +139,7 @@ export default function UsuariosPage() {
     try {
       await editarUsuario(selecionado.id, {
         nome: editNome.trim(), email: editEmail.trim(),
-        perfil: editPerfil, ativo: editAtivo,
+        perfil: editPerfil,
       });
       setModalSucesso("Usuário atualizado com sucesso!");
       await carregar();
@@ -246,7 +245,6 @@ export default function UsuariosPage() {
                 <tr>
                   <th>Usuário</th>
                   <th>Perfil</th>
-                  <th>Status</th>
                   <th>Cadastrado em</th>
                   <th style={{ width: 110 }}>Ações</th>
                 </tr>
@@ -268,12 +266,8 @@ export default function UsuariosPage() {
                         {u.perfil === "ADMIN" ? "Admin" : "Funcionário"}
                       </span>
                     </td>
-                    <td>
-                      <span className={u.ativo ? s.badgeAtivo : s.badgeInativo}>
-                        <span className={s.statusDot} />
-                        {u.ativo ? "Ativo" : "Inativo"}
-                      </span>
-                    </td>
+                    {/* Sem coluna de status: a API só devolve usuários ativos,
+                        então o valor seria sempre "Ativo". */}
                     <td className={s.dateCell}>
                       {formatarData(u.criadoEm)}
                     </td>
@@ -397,15 +391,11 @@ export default function UsuariosPage() {
                       <option value="ADMIN">Administrador</option>
                     </select>
                   </div>
-                  <div className={s.formGroup} style={{ justifyContent: "flex-end" }}>
-                    <div className={s.toggleRow}>
-                      <span className={s.toggleLabel}>Conta ativa</span>
-                      <label className={s.toggle}>
-                        <input type="checkbox" checked={editAtivo} onChange={(e) => setEditAtivo(e.target.checked)} disabled={mutating} />
-                        <span className={s.toggleSlider} />
-                      </label>
-                    </div>
-                  </div>
+                  {/* O toggle "Conta ativa" saiu daqui: desligá-lo era uma
+                      segunda forma de remover, sem passar pela guarda que
+                      impede o admin de se remover — e, como removido não
+                      aparece mais na lista, não haveria como desfazer.
+                      Remover é só pelo botão de remover. */}
                 </div>
               </div>
               <div className={s.modalFooter}>
@@ -470,7 +460,9 @@ export default function UsuariosPage() {
                 Tem certeza que deseja remover o usuário <strong>{selecionado.nome}</strong>?
               </p>
               <p className={s.confirmHint}>
-                ⚠️ Esta ação é permanente e não pode ser desfeita.
+                ⚠️ Ele perde o acesso ao sistema e sai desta lista. Não há como
+                reativar. As vendas e lançamentos que ele registrou continuam
+                no histórico, no nome dele.
               </p>
             </div>
             <div className={s.modalFooter}>

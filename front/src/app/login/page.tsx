@@ -38,8 +38,12 @@ export default function LoginPage() {
     setErro(null);
     setEnviando(true);
     try {
-      await login(email.trim(), senha);
-      router.replace("/");
+      const resposta = await login(email.trim(), senha);
+
+      // Senha definida por administrador: a API vai responder 403 em todas as
+      // outras rotas até a troca acontecer, então mandar para a raiz aqui
+      // levaria direto a uma tela de "sem permissão".
+      router.replace(resposta.senhaTemporaria ? "/trocar-senha" : "/");
     } catch (err) {
       setErro(mensagemDeErro(err, "E-mail ou senha incorretos."));
       setEnviando(false);
