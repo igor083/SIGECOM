@@ -8,14 +8,18 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -43,6 +47,9 @@ public class GlobalExceptionHandler implements AuthenticationEntryPoint, AccessD
     private static final String MSG_TOO_MANY_REQUESTS =
             "Muitas tentativas de login. Aguarde um minuto e tente novamente.";
     private static final String MSG_INVALID_BODY = "Dados inválidos";
+    private static final String MSG_CORPO_ILEGIVEL = "Corpo da requisição inválido ou mal formatado.";
+    private static final String MSG_METODO_NAO_SUPORTADO = "Método não suportado para este recurso.";
+    private static final String MSG_NAO_ENCONTRADO = "Recurso não encontrado.";
 
     private final ObjectMapper objectMapper;
 
@@ -85,6 +92,44 @@ public class GlobalExceptionHandler implements AuthenticationEntryPoint, AccessD
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiError> handleAuthenticationMvc(AuthenticationException ex, HttpServletRequest request) {
         return respond(HttpStatus.UNAUTHORIZED, MSG_CREDENCIAIS_INVALIDAS, ex.getMessage(), request, null);
+    }
+
+    // ===== Erros do cliente que o dispatcher levanta =====
+    //
+    // Sem estes quatro, tudo aqui cai no handleGeneric e vira 500. O efeito
+    // prático é confundir defeito do cliente com defeito do servidor: um JSON
+    // digitado errado no Swagger reportava "erro interno", mandando procurar
+    // uma falha no back-end que não existe. E, em produção, um 500 é alarme -
+    // enquanto um 400 é só alguém batendo na porta errada.
+
+    /** Corpo que o Jackson não consegue ler: JSON malformado, tipo incompatível. */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiError> handleCorpoIlegivel(HttpMessageNotReadableException ex,
+                                                        HttpServletRequest request) {
+        return respond(HttpStatus.BAD_REQUEST, MSG_CORPO_ILEGIVEL, ex.getMessage(), request, null);
+    }
+
+    /** Parâmetro de rota ou query com tipo errado: /produtos/abc onde se espera um id. */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiError> handleTipoInvalido(MethodArgumentTypeMismatchException ex,
+                                                       HttpServletRequest request) {
+        // Nomear o parâmetro é seguro: é a entrada que o próprio cliente mandou.
+        String mensagem = "Valor inválido para o parâmetro '" + ex.getName() + "'.";
+        return respond(HttpStatus.BAD_REQUEST, mensagem, ex.getMessage(), request, null);
+    }
+
+    /** Verbo que a rota não aceita: DELETE em /auth/login, por exemplo. */
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiError> handleMetodoNaoSuportado(HttpRequestMethodNotSupportedException ex,
+                                                             HttpServletRequest request) {
+        return respond(HttpStatus.METHOD_NOT_ALLOWED, MSG_METODO_NAO_SUPORTADO, ex.getMessage(), request, null);
+    }
+
+    /** URL que não corresponde a rota nenhuma. */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiError> handleRotaInexistente(NoResourceFoundException ex,
+                                                          HttpServletRequest request) {
+        return respond(HttpStatus.NOT_FOUND, MSG_NAO_ENCONTRADO, ex.getMessage(), request, null);
     }
 
     @ExceptionHandler(Exception.class)

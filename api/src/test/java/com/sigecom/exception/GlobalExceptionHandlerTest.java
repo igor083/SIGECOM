@@ -6,8 +6,14 @@ import com.sigecom.model.response.ApiError;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.MethodParameter;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpInputMessage;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.access.AccessDeniedException;
@@ -125,6 +131,75 @@ class GlobalExceptionHandlerTest {
         assertThat(body.status()).isEqualTo(500);
         assertThat(body.usuarioMensagem()).isEqualTo("Ocorreu um erro interno. Tente novamente mais tarde.");
         assertThat(body.usuarioMensagem()).doesNotContain("null", "NullPointer");
+    }
+
+    // ===== Erro do cliente não pode virar 500 =====
+    //
+    // Estes quatro caíam no handleGeneric e voltavam "Ocorreu um erro interno",
+    // acusando o servidor por engano do cliente. Cada teste trava um deles no
+    // status certo.
+
+    @Test
+    void handleCorpoIlegivel_DeveDevolver400_QuandoJsonEstiverMalformado() {
+        HttpMessageNotReadableException ex =
+                new HttpMessageNotReadableException("JSON parse error", mock(HttpInputMessage.class));
+
+        ResponseEntity<ApiError> response = handler.handleCorpoIlegivel(ex, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().usuarioMensagem())
+                .isEqualTo("Corpo da requisição inválido ou mal formatado.");
+    }
+
+    @Test
+    void handleTipoInvalido_DeveDevolver400_ENomearOParametro() {
+        MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException(
+                "abc", Long.class, "categoriaId", mock(MethodParameter.class), new NumberFormatException());
+
+        ResponseEntity<ApiError> response = handler.handleTipoInvalido(ex, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().usuarioMensagem())
+                .isEqualTo("Valor inválido para o parâmetro 'categoriaId'.");
+    }
+
+    @Test
+    void handleMetodoNaoSuportado_DeveDevolver405() {
+        HttpRequestMethodNotSupportedException ex = new HttpRequestMethodNotSupportedException("DELETE");
+
+        ResponseEntity<ApiError> response = handler.handleMetodoNaoSuportado(ex, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.METHOD_NOT_ALLOWED);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().status()).isEqualTo(405);
+    }
+
+    @Test
+    void handleRotaInexistente_DeveDevolver404() {
+        // Mock em vez de instância real: o construtor de NoResourceFoundException
+        // muda entre versões do Spring, e o handler só lê getMessage().
+        NoResourceFoundException ex = mock(NoResourceFoundException.class);
+
+        ResponseEntity<ApiError> response = handler.handleRotaInexistente(ex, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().usuarioMensagem()).isEqualTo("Recurso não encontrado.");
+    }
+
+    @Test
+    void handleTentativasExcedidas_DeveDevolver429ComRetryAfter() {
+        TentativasExcedidasException ex = new TentativasExcedidasException(42);
+
+        ResponseEntity<ApiError> response = handler.handleTentativasExcedidas(ex, request);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(response.getHeaders().getFirst(HttpHeaders.RETRY_AFTER)).isEqualTo("42");
+        assertThat(response.getBody()).isNotNull();
+        // Não conta se o e-mail existe nem quantas tentativas faltavam.
+        assertThat(response.getBody().usuarioMensagem()).doesNotContain("adm", "tentativa restante");
     }
 
     // ===== Filter chain (Spring Security) =====

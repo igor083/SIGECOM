@@ -192,16 +192,17 @@ class ProdutoApiTest {
         verify(produtoService, never()).listar(any(), any(), any(), any());
     }
 
-    // ACHADO: valor de enum invalido na query devolve 500, nao 400. O
-    // GlobalExceptionHandler nao trata MethodArgumentTypeMismatchException e ela cai
-    // no handler generico. O teste registra o que acontece hoje, nao o que devia.
+    // Era o "ACHADO" registrado aqui: enum inválido na query devolvia 500 porque
+    // o GlobalExceptionHandler não tratava MethodArgumentTypeMismatchException e
+    // ela caía no handler genérico. Agora trata, e o teste cobra o certo — o
+    // cliente mandou um valor que não existe, o servidor não quebrou.
     @Test
     @WithMockUser(roles = "ADMIN")
-    void listar_DeveDevolver500_QuandoFiltroDeEstoqueForInvalido() throws Exception {
+    void listar_DeveDevolver400_QuandoFiltroDeEstoqueForInvalido() throws Exception {
         mockMvc.perform(get("/produtos").param("estoque", "MUITO_BAIXO"))
-                .andExpect(status().isInternalServerError())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.usuarioMensagem")
-                        .value("Ocorreu um erro interno. Tente novamente mais tarde."));
+                        .value("Valor inválido para o parâmetro 'estoque'."));
 
         verify(produtoService, never()).listar(any(), any(), any(), any());
     }
