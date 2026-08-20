@@ -4,10 +4,12 @@ import com.sigecom.domain.enums.PeriodoRelatorio;
 import com.sigecom.model.response.relatorio.RelatorioEstoqueResponse;
 import com.sigecom.model.response.relatorio.RelatorioFinanceiroResponse;
 import com.sigecom.model.response.relatorio.RelatorioMovimentacaoResponse;
+import com.sigecom.model.response.relatorio.RelatorioReposicaoResponse;
 import com.sigecom.model.response.relatorio.RelatorioVendasResponse;
 import com.sigecom.service.RelatorioEstoqueService;
 import com.sigecom.service.RelatorioFinanceiroService;
 import com.sigecom.service.RelatorioMovimentacaoService;
+import com.sigecom.service.ReposicaoEstoqueService;
 import com.sigecom.service.RelatorioVendasService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -34,6 +36,7 @@ public class RelatorioController {
     private final RelatorioEstoqueService relatorioEstoqueService;
     private final RelatorioMovimentacaoService relatorioMovimentacaoService;
     private final RelatorioFinanceiroService relatorioFinanceiroService;
+    private final ReposicaoEstoqueService reposicaoEstoqueService;
 
     /**
      * Resumo consolidado de vendas do período: total, quantidade de transações
@@ -76,6 +79,17 @@ public class RelatorioController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dataFim) {
         return ResponseEntity.ok(
                 relatorioMovimentacaoService.gerar(produtoId, categoriaId, periodo, dataInicio, dataFim));
+    }
+
+    // D-2: sugestao de compra expoe giro e valor a investir, so ADMIN
+    @GetMapping("/estoque/reposicao")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<RelatorioReposicaoResponse> reposicao(
+            @RequestParam(required = false) Long categoriaId,
+            @RequestParam(required = false, defaultValue = "30") int janelaDias,
+            @RequestParam(required = false, defaultValue = "15") int coberturaDias) {
+        return ResponseEntity.ok(
+                reposicaoEstoqueService.gerar(categoriaId, janelaDias, coberturaDias));
     }
 
     // D-2: relatório financeiro é visão de gestão, só ADMIN ve o saldo por categoria

@@ -133,6 +133,17 @@ class AuthServiceTest {
     }
 
     @Test
+    void editar_DeveTirarOsEspacosDasPontasDoNome() {
+        EditUserRequest request = new EditUserRequest("  Danilo  ", null, null, null);
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UsuarioResponse response = authService.editar(1L, request);
+
+        assertEquals("Danilo", response.nome());
+    }
+
+    @Test
     void editar_DeveLancarNaoEncontrado_QuandoUsuarioNaoExistir() {
         EditUserRequest request = new EditUserRequest("Nome", "email@teste.com", null, null);
         when(usuarioRepository.findById(2L)).thenReturn(Optional.empty());
