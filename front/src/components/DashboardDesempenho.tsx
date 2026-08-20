@@ -198,7 +198,12 @@ export default function DashboardDesempenho() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr><td colSpan={4} className={styles.placeholderMsg}>Nenhuma venda no período</td></tr>
+                  {/* Sem .placeholderMsg aqui: aquela classe é `position: absolute`
+                      para centralizar a mensagem sobre o gráfico esmaecido, e
+                      numa célula ela tirava o <td> do fluxo da tabela — a
+                      mensagem ia flutuar solta na tela. Quem estiliza esta
+                      célula é `.tabelaVazia td`. */}
+                  <tr><td colSpan={4}>Nenhuma venda no período</td></tr>
                 </tbody>
               </table>
             </div>
