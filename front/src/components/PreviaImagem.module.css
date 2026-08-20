@@ -1,0 +1,52 @@
+/* =============================================================
+   PreviaImagem.module.css
+   =============================================================
+   Prévia do link de imagem do produto, no formulário de cadastro
+   e de edição. Mesma proporção do card do PDV (4/3), para o que
+   se vê aqui ser o que vai aparecer lá.
+   ============================================================= */
+
+.previa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.moldura {
+  flex-shrink: 0;
+  width: 96px;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.imagem {
+  width: 100%;
+  height: 100%;
+  /* Mesmo object-fit do card do PDV: o enquadramento aqui é o de lá. */
+  object-fit: cover;
+  display: block;
+}
+
+.aviso {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.avisoNeutro {
+  color: var(--color-text-muted);
+}
+
+.avisoOk {
+  color: var(--color-success);
+}
+
+.avisoErro {
+  color: var(--color-error);
+}

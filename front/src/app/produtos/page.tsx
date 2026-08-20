@@ -12,6 +12,7 @@ import { precoSugerido, calcularMarkup, type ParametrosFinanceiros } from "@/lib
 import AppShell from "@/components/AppShell";
 import Breadcrumb from "@/components/Breadcrumb";
 import Paginacao from "@/components/Paginacao";
+import PreviaImagem from "@/components/PreviaImagem";
 import styles from "./produtos.module.css";
 
 function formatarPreco(valor: number): string {
@@ -476,7 +477,8 @@ export default function GestaoProdutosPage() {
                   </div>
                   <div className={styles.formGroup}>
                     <label htmlFor="c-imagem">Link da imagem</label>
-                    <input id="c-imagem" type="url" className={styles.formInput} placeholder="https://..." value={formImagemUrl} onChange={(e) => setFormImagemUrl(e.target.value)} disabled={mutating} />
+                    <input id="c-imagem" type="url" className={styles.formInput} placeholder="https://exemplo.com/foto.jpg" value={formImagemUrl} onChange={(e) => setFormImagemUrl(e.target.value)} disabled={mutating} />
+                    <PreviaImagem url={formImagemUrl} />
                   </div>
                 </div>
               </div>
@@ -544,7 +546,8 @@ export default function GestaoProdutosPage() {
                   </div>
                   <div className={styles.formGroup}>
                     <label htmlFor="e-imagem">Link da imagem</label>
-                    <input id="e-imagem" type="url" className={styles.formInput} placeholder="https://..." value={formImagemUrl} onChange={(e) => setFormImagemUrl(e.target.value)} disabled={mutating} />
+                    <input id="e-imagem" type="url" className={styles.formInput} placeholder="https://exemplo.com/foto.jpg" value={formImagemUrl} onChange={(e) => setFormImagemUrl(e.target.value)} disabled={mutating} />
+                    <PreviaImagem url={formImagemUrl} />
                   </div>
                 </div>
               </div>
