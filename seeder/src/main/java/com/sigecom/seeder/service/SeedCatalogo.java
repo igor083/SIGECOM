@@ -4,6 +4,7 @@ import com.sigecom.seeder.domain.enums.TipoLancamento;
 import com.sigecom.seeder.domain.enums.TipoUsuario;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.util.List;
 
 /**
@@ -47,7 +48,8 @@ public final class SeedCatalogo {
             new UsuarioSeed("Rafael Santos",      "rafael"   + DOMINIO_SEED, TipoUsuario.FUNCIONARIO),
             new UsuarioSeed("Juliana Prado",      "juliana"  + DOMINIO_SEED, TipoUsuario.FUNCIONARIO),
             new UsuarioSeed("Marcos Vieira",      "marcos"   + DOMINIO_SEED, TipoUsuario.FUNCIONARIO),
-            new UsuarioSeed("Carla Nogueira",     "carla"    + DOMINIO_SEED, TipoUsuario.FUNCIONARIO)
+            new UsuarioSeed("Carla Nogueira",     "carla"    + DOMINIO_SEED, TipoUsuario.FUNCIONARIO),
+            new UsuarioSeed("Bruno Almeida",      "bruno"    + DOMINIO_SEED, TipoUsuario.FUNCIONARIO)
     );
 
     // ── Categorias de produto ─────────────────────────────────────
@@ -60,7 +62,10 @@ public final class SeedCatalogo {
             "Higiene",
             "Padaria",
             "Frios e Laticinios",
-            "Doces e Snacks"
+            "Doces e Snacks",
+            "Carnes e Peixes",
+            "Casa e Utilidades",
+            "Pet"
     );
 
     // ── Categorias financeiras ────────────────────────────────────
@@ -102,10 +107,15 @@ public final class SeedCatalogo {
     }
 
     /**
+     * Cinquenta produtos, de agua mineral a cafeteira: a faixa de preco vai de
+     * R$ 2,20 a R$ 129,90 para que ticket medio, curva ABC e margem tenham o
+     * que mostrar. Preco medio do catalogo ~R$ 21, o que da um ticket de
+     * ~R$ 150 com a composicao de itens do VendaSeedService.
+     *
      * Estoque inicial folgado de proposito: as vendas geradas dao baixa e o
      * catalogo precisa aguentar a janela inteira sem zerar. Alguns itens tem
-     * estoque baixo de proposito, para a tela de alerta de estoque ter o que
-     * mostrar.
+     * estoque abaixo do minimo de proposito, para a tela de alerta de estoque
+     * ter o que mostrar.
      */
     public static final List<ProdutoSeed> PRODUTOS = List.of(
             // Bebidas
@@ -114,6 +124,8 @@ public final class SeedCatalogo {
             new ProdutoSeed("Suco de Laranja 1L",        "Bebidas",   "7.50",   400,  40),
             new ProdutoSeed("Cerveja Lata 350ml",        "Bebidas",  "4.20",  1500, 150),
             new ProdutoSeed("Energetico 250ml",          "Bebidas",  "8.90",    90,  30),
+            new ProdutoSeed("Vinho Tinto Seco 750ml",    "Bebidas",  "42.90",   90,  15),
+            new ProdutoSeed("Whisky Nacional 1L",        "Bebidas",  "69.90",   55,   8),
 
             // Mercearia
             new ProdutoSeed("Arroz Branco 5kg",          "Mercearia", "24.90",  500,  50),
@@ -122,6 +134,8 @@ public final class SeedCatalogo {
             new ProdutoSeed("Acucar Refinado 1kg",       "Mercearia", "4.80",   500,  50),
             new ProdutoSeed("Cafe Torrado 500g",         "Mercearia", "18.90",  350,  40),
             new ProdutoSeed("Macarrao Espaguete 500g",   "Mercearia", "4.20",   400,  40),
+            new ProdutoSeed("Azeite Extra Virgem 500ml", "Mercearia", "34.90",   90,  20),
+            new ProdutoSeed("Leite em Po 400g",          "Mercearia", "21.90",  140,  30),
 
             // Hortifruti
             new ProdutoSeed("Banana Prata kg",           "Hortifruti", "6.90",  300,  40),
@@ -157,7 +171,24 @@ public final class SeedCatalogo {
             new ProdutoSeed("Chocolate ao Leite 90g",    "Doces e Snacks", "7.90",  400,  40),
             new ProdutoSeed("Biscoito Recheado 130g",    "Doces e Snacks", "3.50",  600,  60),
             new ProdutoSeed("Batata Chips 100g",         "Doces e Snacks", "9.90",  250,  30),
-            new ProdutoSeed("Bala Sortida 500g",         "Doces e Snacks", "15.90",  70,  25)
+            new ProdutoSeed("Bala Sortida 500g",         "Doces e Snacks", "15.90",  70,  25),
+
+            // Carnes e Peixes - o topo da faixa de preco do catalogo
+            new ProdutoSeed("Picanha Bovina kg",         "Carnes e Peixes", "79.90",  80,  10),
+            new ProdutoSeed("File de Frango kg",         "Carnes e Peixes", "22.90", 180,  30),
+            new ProdutoSeed("Carne Moida kg",            "Carnes e Peixes", "36.90", 120,  25),
+            new ProdutoSeed("Costela Suina kg",          "Carnes e Peixes", "28.90",  90,  15),
+            new ProdutoSeed("File de Tilapia kg",        "Carnes e Peixes", "44.90",  75,  12),
+
+            // Casa e Utilidades - giro baixo, valor alto
+            new ProdutoSeed("Cafeteira Eletrica",        "Casa e Utilidades", "129.90", 60,   5),
+            new ProdutoSeed("Panela Antiaderente 24cm",  "Casa e Utilidades",  "89.90", 70,   5),
+            new ProdutoSeed("Jogo de Copos 6un",         "Casa e Utilidades",  "39.90", 80,  10),
+            new ProdutoSeed("Lampada LED 9W",            "Casa e Utilidades",  "12.90", 200, 40),
+
+            // Pet
+            new ProdutoSeed("Racao Cao Adulto 10kg",     "Pet", "119.90", 70,   8),
+            new ProdutoSeed("Areia Sanitaria Gato 4kg",  "Pet",  "24.90", 85,  12)
     );
 
     // ── Despesas recorrentes ──────────────────────────────────────
@@ -174,14 +205,25 @@ public final class SeedCatalogo {
         }
     }
 
+    /**
+     * Os valores sao dimensionados para o volume de vendas que o
+     * VendaSeedService gera (~67 vendas/mes a um ticket de ~R$ 170, ou seja
+     * ~R$ 11.400/mes de receita). Somadas a compra semanal e aos avulsos, as
+     * despesas dao ~R$ 10.600/mes: o mes fecha positivo, com margem estreita o
+     * bastante para que um mes fraco possa fechar no vermelho.
+     *
+     * Mexer aqui sem mexer no volume de vendas desequilibra o DRE - foi o que
+     * acontecia antes, com despesa fixa de R$ 18.350/mes contra R$ 5.000 de
+     * receita, e todo mes fechando fundo no negativo.
+     */
     public static final List<DespesaSeed> DESPESAS_MENSAIS = List.of(
-            new DespesaSeed("Aluguel",             "Aluguel",              "4500.00", 5),
-            new DespesaSeed("Salario",             "Folha de pagamento",   "9800.00", 5),
-            new DespesaSeed("Conta de Luz",        "Energia eletrica",      "870.00", 10),
-            new DespesaSeed("Conta de Agua",       "Agua e esgoto",         "240.00", 12),
-            new DespesaSeed("Internet e Telefone", "Internet e telefone",   "310.00", 15),
-            new DespesaSeed("Impostos",            "Impostos do mes",      "2150.00", 20),
-            new DespesaSeed("Manutencao",          "Manutencao predial",    "480.00", 22)
+            new DespesaSeed("Aluguel",             "Aluguel",              "2400.00", 5),
+            new DespesaSeed("Salario",             "Folha de pagamento",   "2600.00", 5),
+            new DespesaSeed("Conta de Luz",        "Energia eletrica",      "380.00", 10),
+            new DespesaSeed("Conta de Agua",       "Agua e esgoto",         "130.00", 12),
+            new DespesaSeed("Internet e Telefone", "Internet e telefone",   "190.00", 15),
+            new DespesaSeed("Impostos",            "Impostos do mes",       "520.00", 20),
+            new DespesaSeed("Manutencao",          "Manutencao predial",    "180.00", 22)
     );
 
     /**
@@ -189,5 +231,37 @@ public final class SeedCatalogo {
      * (1 = segunda). Descricao carrega a data, garantindo unicidade semanal.
      */
     public static final DespesaSeed COMPRA_SEMANAL =
-            new DespesaSeed("Compra de Mercadoria", "Reposicao de estoque", "3200.00", 1);
+            new DespesaSeed("Compra de Mercadoria", "Reposicao de estoque", "850.00", 1);
+
+    // ── Movimentos avulsos ────────────────────────────────────────
+
+    /**
+     * Lancamento que cai num dia da semana fixo, com valor sorteado dentro de
+     * uma faixa. Existe para o financeiro nao ser so a despesa mensal
+     * carimbada no mesmo dia mais a receita das vendas: espalha movimento por
+     * todas as semanas da janela e da uso as categorias de receita que nao
+     * vem de venda ("Recebimento de Divida", "Outra Receita"), que ate entao
+     * eram criadas e nunca usadas.
+     *
+     * A descricao gerada carrega a data ("[seed] Recebimento de fiado
+     * 2026-08-14"), o que a torna unica por dia e serve de chave de
+     * idempotencia - mesma regra da compra semanal.
+     */
+    public record AvulsoSeed(String categoria,
+                             String rotulo,
+                             TipoLancamento tipo,
+                             DayOfWeek diaDaSemana,
+                             int valorMinimo,
+                             int valorMaximo) {}
+
+    public static final List<AvulsoSeed> MOVIMENTOS_AVULSOS = List.of(
+            new AvulsoSeed("Recebimento de Divida", "Recebimento de fiado",
+                    TipoLancamento.RECEITA, DayOfWeek.TUESDAY, 40, 120),
+            new AvulsoSeed("Outra Receita", "Venda de embalagem retornavel",
+                    TipoLancamento.RECEITA, DayOfWeek.FRIDAY, 30, 90),
+            new AvulsoSeed("Fornecedores", "Frete de fornecedor",
+                    TipoLancamento.DESPESA, DayOfWeek.WEDNESDAY, 40, 140),
+            new AvulsoSeed("Outra Despesa", "Material de expediente",
+                    TipoLancamento.DESPESA, DayOfWeek.SATURDAY, 20, 60)
+    );
 }

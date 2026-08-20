@@ -26,17 +26,28 @@ Aguarde alguns segundos até o container estar pronto.
 
 ## 2. Configurar variáveis de ambiente
 
-Crie um arquivo `.env` na raiz da pasta `api/` baseado no `.env.local`:
-
-```bash
-cp .env.local .env
-```
+**Para rodar em desenvolvimento não é preciso configurar nada.** As duas
+variáveis abaixo já têm valor padrão no `application.properties`, e a aplicação
+sobe sem elas.
 
 | Variável | Descrição | Padrão |
 |---|---|---|
 | `JWT_SECRET` | Chave Base64 (≥ 256 bits) para assinar tokens JWT | valor de exemplo (dev only) |
 | `JWT_EXPIRATION_MS` | Validade do token em milissegundos | `3600000` (1 hora) |
-| `REQUIRE_ADMIN_CADASTRO` | `true` exige perfil ADMIN para cadastrar usuários | `true` |
+
+Para sobrescrever, exporte-as como variáveis de ambiente de verdade antes de
+subir a aplicação:
+
+```bash
+export JWT_SECRET='sua-chave-base64'   # Windows: $env:JWT_SECRET='...'
+./mvnw spring-boot:run
+```
+
+> O arquivo `.env.local` desta pasta serve só de referência dos nomes e
+> formatos. **O Spring Boot não lê arquivos `.env`** — não há
+> `spring.config.import` nem biblioteca dotenv no projeto, então copiá-lo para
+> `.env` não tem efeito nenhum. Quem quiser esse comportamento precisa
+> adicionar o import explicitamente.
 
 > **Nunca** comite a chave JWT de produção no repositório.
 

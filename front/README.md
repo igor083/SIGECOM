@@ -13,7 +13,8 @@ Projeto acadêmico — Gerência de Projetos, UEPB.
 
 ## Pré-requisitos
 
-- **Node.js** ≥ 18
+- **Node.js** ≥ 20.9 — exigido pelo Next 16 (`engines: node >=20.9.0`); no 18 o
+  `npm install` falha
 - **npm** ≥ 9
 - **API** rodando em `http://localhost:8080` (ver `../api/README.md`)
 

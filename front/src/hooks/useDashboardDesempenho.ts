@@ -37,6 +37,13 @@ export function useDashboardDesempenho(
   }, []);
 
   useEffect(() => {
+    // `buscar` liga o spinner (setCarregando(true)) antes do primeiro await, e
+    // a regra react-hooks/set-state-in-effect reclama disso. É intencional: o
+    // spinner tem que aparecer no mesmo commit em que o período muda, senão a
+    // tela mostra o dado do período anterior como se fosse o novo.
+    // useProdutos e usePainelFuncionario fazem exatamente o mesmo — a regra só
+    // não os detecta de forma consistente.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     buscar(periodo);
   }, [periodo, buscar]);
 

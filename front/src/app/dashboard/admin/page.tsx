@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import AppShell from "@/components/AppShell";
-import MetaVendaDiaria from "@/components/MetaVendaDiaria";
 import DashboardDesempenho from "@/components/DashboardDesempenho";
 import styles from "../dashboard.module.css";
 

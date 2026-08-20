@@ -17,6 +17,7 @@ import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -34,6 +35,10 @@ import java.util.Random;
  * e o vendedor e sempre um usuario de teste, entao a checagem
  * (dataHora, usuario) identifica com seguranca uma venda ja gerada. Rodar de
  * novo o mesmo dia e no-op; rodar amanha acrescenta so o dia novo.
+ *
+ * O que sustenta essa idempotencia e o gerador pseudoaleatorio ser isolado por
+ * slot (ver randomDoSlot): a composicao de uma venda depende so do par
+ * (dia, slot), nunca de quantos slots o seeder processou antes dela.
  */
 @Slf4j
 @Service
@@ -42,6 +47,14 @@ public class VendaSeedService {
 
     private static final int MAX_ITENS_POR_VENDA = 5;
     private static final int MAX_QTD_POR_ITEM = 4;
+
+    /**
+     * Grade de horarios do dia: 9h em diante, de 70 em 70 minutos. Cobre ate
+     * 19h30 no dia mais movimentado, entao o historico gerado se espalha pelo
+     * expediente inteiro em vez de amontoar tudo na primeira hora.
+     */
+    private static final LocalTime ABERTURA = LocalTime.of(9, 0);
+    private static final int MINUTOS_ENTRE_SLOTS = 70;
 
     private final VendaRepository vendaRepository;
     private final LancamentoFinanceiroRepository lancamentoFinanceiroRepository;
@@ -78,43 +91,50 @@ public class VendaSeedService {
         LocalDate hoje = LocalDate.now();
         LocalDateTime agora = LocalDateTime.now();
         int criadas = 0;
-        int ignoradas = 0;
+        int jaExistiam = 0;
+        int semEstoque = 0;
 
         for (int offset = props.getDias() - 1; offset >= 0; offset--) {
             LocalDate dia = hoje.minusDays(offset);
 
-            // Random derivado do dia: a composicao de um dia nao muda quando a
-            // janela (sigecom.seed.dias) aumenta ou diminui.
-            Random rnd = randomDoDia(dia);
-
-            int vendasDoDia = quantidadeDeVendas(dia, rnd);
-            for (int i = 0; i < vendasDoDia; i++) {
-                LocalDateTime instante = instanteDaVenda(dia, i);
+            int vendasDoDia = quantidadeDeVendas(dia, offset);
+            for (int slot = 0; slot < vendasDoDia; slot++) {
+                LocalDateTime instante = instanteDaVenda(dia, slot);
 
                 // Nunca gera venda no futuro: no dia corrente, para no horario atual.
                 if (instante.isAfter(agora)) {
                     break;
                 }
 
-                Usuario vendedor = vendedores.get((int) (Math.abs(dia.toEpochDay() + i) % vendedores.size()));
+                Usuario vendedor = vendedores.get((int) (Math.abs(dia.toEpochDay() + slot) % vendedores.size()));
 
                 if (vendaRepository.existsByDataHoraAndUsuarioId(instante, vendedor.getId())) {
-                    ignoradas++;
+                    jaExistiam++;
                     continue;
                 }
 
-                if (registrarVenda(instante, vendedor, produtos, categoriaVenda, rnd)) {
+                if (registrarVenda(instante, vendedor, produtos, categoriaVenda, randomDoSlot(dia, slot))) {
                     criadas++;
                 } else {
-                    ignoradas++;
+                    semEstoque++;
                 }
             }
         }
 
-        log.info("Vendas: {} criadas, {} ja existiam (janela de {} dias).",
-                criadas, ignoradas, props.getDias());
-        return SeedResult.de("vendas", criadas, ignoradas,
-                "cada venda gerada tambem deu baixa no estoque e lancou a receita no financeiro");
+        // semEstoque fica FORA de `ignorados` de proposito. Os dois casos ja
+        // foram contados juntos, e o resultado era uma segunda execucao
+        // reportando "ignorados: 34" num banco que estava vazio - numero
+        // impossivel, que dava a idempotencia como provada quando ela nao
+        // estava. `ignorados` agora significa uma coisa so: ja existia.
+        String observacao = "cada venda gerada tambem deu baixa no estoque e lancou a receita no financeiro";
+        if (semEstoque > 0) {
+            observacao += "; " + semEstoque + " horario(s) ficaram sem venda por falta de estoque "
+                    + "no catalogo - aumente o estoque inicial em SeedCatalogo ou reduza sigecom.seed.dias";
+        }
+
+        log.info("Vendas: {} criadas, {} ja existiam, {} sem estoque (janela de {} dias).",
+                criadas, jaExistiam, semEstoque, props.getDias());
+        return SeedResult.de("vendas", criadas, jaExistiam, observacao);
     }
 
     /**
@@ -209,28 +229,66 @@ public class VendaSeedService {
         return true;
     }
 
-    private Random randomDoDia(LocalDate dia) {
-        return new Random(props.getRandomSeed() * 31L + dia.toEpochDay());
-    }
-
-    /** Domingo fechado; sabado move mais; dias uteis com volume medio. */
-    private int quantidadeDeVendas(LocalDate dia, Random rnd) {
-        return switch (dia.getDayOfWeek()) {
-            case SUNDAY -> 0;
-            case SATURDAY -> 18 + rnd.nextInt(9);
-            case FRIDAY -> 14 + rnd.nextInt(8);
-            default -> 8 + rnd.nextInt(8);
-        };
+    /**
+     * Gerador exclusivo do par (dia, slot).
+     *
+     * Precisa ser por slot, e nao um Random por dia compartilhado entre eles.
+     * Com o gerador compartilhado, o slot que ja existia saia pelo `continue`
+     * sem consumir sorteio nenhum, enquanto montar uma venda consome varios:
+     * a composicao de um slot passava a depender de quantos slots antes dele
+     * ja estavam no banco. Na segunda execucao o fluxo chegava dessincronizado
+     * nos slots que a primeira tinha deixado vazios por falta de estoque, eles
+     * sorteavam outros produtos, achavam estoque, e nasciam vendas novas -
+     * `POST /seed` duas vezes seguidas criava 916 e depois mais 29.
+     *
+     * Isolado por slot, o mesmo par (dia, slot) sorteia sempre os mesmos
+     * produtos. Como o estoque so diminui de uma execucao para a outra, o slot
+     * que nao teve estoque continua sem ter, e a segunda execucao e no-op.
+     */
+    private Random randomDoSlot(LocalDate dia, int slot) {
+        return new Random(props.getRandomSeed() * 31L + dia.toEpochDay() * 97L + slot);
     }
 
     /**
-     * Instante deterministico do slot i do dia: 9h em diante, de 20 em 20
-     * minutos. Sem componente aleatorio de proposito - e este valor que serve
-     * de chave de idempotencia.
+     * Quantas vendas o dia teve. Domingo fechado, sabado move mais.
+     *
+     * O volume cresce conforme o dia se aproxima de hoje: a janela inteira
+     * tem historico, mas a semana corrente concentra dado o bastante para as
+     * telas de hoje e dos ultimos 7 dias nao ficarem vazias. Os patamares
+     * somados dao ~200 vendas numa janela de 90 dias.
+     *
+     * Depende da distancia ate hoje, nao so da data, entao o volume de um dia
+     * so vale na primeira vez que ele e semeado - depois disso o dia envelhece
+     * e cai de patamar. Nao duplica nada: patamar so encolhe com o tempo, e
+     * venda que ja existe e reconhecida pelo instante.
+     */
+    private int quantidadeDeVendas(LocalDate dia, int diasAtras) {
+        if (dia.getDayOfWeek() == DayOfWeek.SUNDAY) {
+            return 0;
+        }
+
+        Random rnd = new Random(props.getRandomSeed() * 13L + dia.toEpochDay());
+
+        int base;
+        if (diasAtras <= 6) {
+            base = 4 + rnd.nextInt(4);          // hoje e a semana corrente
+        } else if (diasAtras <= 29) {
+            base = 2 + rnd.nextInt(3);          // resto do mes corrente
+        } else if (diasAtras <= 59) {
+            base = 1 + rnd.nextInt(3);          // mes passado
+        } else {
+            base = 1 + rnd.nextInt(2);          // mes retrasado e antes
+        }
+
+        return dia.getDayOfWeek() == DayOfWeek.SATURDAY ? base + 2 : base;
+    }
+
+    /**
+     * Instante deterministico do slot do dia. Sem componente aleatorio de
+     * proposito - e este valor que serve de chave de idempotencia.
      */
     private LocalDateTime instanteDaVenda(LocalDate dia, int slot) {
-        int minutosDesdeAbertura = slot * 20;
-        return dia.atTime(9, 0).plusMinutes(minutosDesdeAbertura);
+        return dia.atTime(ABERTURA).plusMinutes((long) slot * MINUTOS_ENTRE_SLOTS);
     }
 
     private TipoPagamento formaPagamento(Random rnd) {
@@ -239,10 +297,5 @@ public class VendaSeedService {
         if (sorteio < 66) return TipoPagamento.DEBITO;
         if (sorteio < 87) return TipoPagamento.CREDITO;
         return TipoPagamento.DINHEIRO;
-    }
-
-    /** Dias uteis com venda usados pelo fechamento de caixa. */
-    public boolean diaTemVenda(LocalDate dia) {
-        return dia.getDayOfWeek() != DayOfWeek.SUNDAY;
     }
 }

@@ -31,7 +31,7 @@ verdade, só de `api/` + `front/`.
 |---|---|---|
 | [Docker](https://www.docker.com/) | qualquer recente | banco PostgreSQL |
 | [JDK](https://adoptium.net/) | 21 | `api/`, `seeder/` |
-| [Node.js](https://nodejs.org/) | ≥ 18 (npm ≥ 9) | `front/` |
+| [Node.js](https://nodejs.org/) | ≥ 20.9 (npm ≥ 9) | `front/` |
 
 Maven não precisa ser instalado — use o wrapper `./mvnw` (ou `mvnw.cmd` no
 Windows) que já vem em `api/` e `seeder/`.
@@ -56,12 +56,16 @@ Nas próximas vezes, `docker start sigecom-db` já basta.
 
 ```bash
 cd api
-cp .env.local .env      # ajuste JWT_SECRET se quiser
 ./mvnw spring-boot:run
 ```
 
 Sobe em `http://localhost:8080`. **Rode esta etapa antes das outras**: é a `api/`
 que cria as tabelas (`ddl-auto=update`).
+
+Não há nada para configurar antes: os valores de desenvolvimento (segredo do
+JWT, expiração do token) já vêm como padrão no `application.properties`. Para
+trocá-los, exporte as variáveis de ambiente antes de subir — detalhes em
+[`api/README.md`](api/README.md).
 
 ### 3. Front-end
 
@@ -127,10 +131,12 @@ também servem para login e são úteis para testar o perfil FUNCIONARIO.
 ## Testes
 
 ```bash
-cd api && ./mvnw test       # 200 testes; JaCoCo em target/site/jacoco após ./mvnw verify
-cd front && npm run lint
+cd api && ./mvnw test       # 288 testes; JaCoCo em target/site/jacoco após ./mvnw verify
 cd front && npm run build   # também roda o type-check
+cd front && npm run lint
 ```
+
+Os três passam limpos.
 
 ## Avisos
 

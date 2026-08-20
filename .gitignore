@@ -1,7 +1,34 @@
+# Regras da raiz. Cada aplicação tem o seu .gitignore próprio:
+#   api/.gitignore     e  seeder/.gitignore  -> target/, *.iws, out/ (Spring Initializr)
+#   front/.gitignore                         -> node_modules/, .next/, .env* (create-next-app)
+# Aqui fica só o que é do repositório inteiro.
+
+# ── IDE e ferramentas ──
 .claude/
-/.metadata/
+.idea/
 .vscode/
+/.metadata/
+api/.settings/
+
+# ── Dependências ──
 **/node_modules/
 
+# ── Configuração local e segredos ──
+# api/.env.local é versionado de propósito: é a referência dos nomes das
+# variáveis e não tem segredo real (ver api/README.md). Qualquer outro arquivo
+# .env fica de fora — é onde entraria uma chave JWT de verdade.
+.env
+.env.*
+!api/.env.local
+!front/.env.example
 api/src/main/resources/application-local.properties
-api/.settings/
+
+# ── Ferramenta de desenvolvimento, não faz parte da aplicação ──
+# Banco descartável para testar o seeder. Depende de containers da máquina de
+# quem escreveu e não serve para quem só quer rodar o sistema.
+devtest/
+
+# ── Sistema operacional e logs ──
+.DS_Store
+Thumbs.db
+*.log

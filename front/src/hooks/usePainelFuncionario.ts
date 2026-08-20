@@ -130,6 +130,10 @@ export function usePainelFuncionario(funcionarioId: number | undefined): PainelF
   }, [funcionarioId]);
 
   useEffect(() => {
+    // Mesmo caso de useDashboardDesempenho: `carregar` liga o spinner antes do
+    // primeiro await, de propósito, para o painel não exibir os números do
+    // funcionário anterior enquanto recarrega.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     carregar();
   }, [carregar]);
 

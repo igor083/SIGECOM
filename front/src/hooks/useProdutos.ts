@@ -138,9 +138,7 @@ export function useProdutos(initialSize = 10, habilitado = true): UseProdutosRes
 
   // Recarrega sempre que filtros ou paginação mudarem
   useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect */
     carregarProdutos();
-    /* eslint-enable react-hooks/set-state-in-effect */
   }, [carregarProdutos]);
 
   const criar = useCallback(async (dados: CadastroProdutoRequest) => {
