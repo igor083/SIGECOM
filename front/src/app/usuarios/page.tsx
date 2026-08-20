@@ -9,6 +9,7 @@ import {
 } from "@/services/usuarios";
 import { mensagemDeErro } from "@/lib/apiError";
 import AppShell from "@/components/AppShell";
+import Paginacao from "@/components/Paginacao";
 import s from "./usuarios.module.css";
 
 const X_ICON = (
@@ -303,18 +304,13 @@ export default function UsuariosPage() {
             </table>
           </div>
 
-          <div className={s.pagination}>
-            <span className={s.pageInfo}>
-              Página <strong>{page + 1}</strong> de <strong>{totalPages}</strong> ({totalElements} usuários)
-            </span>
-            <div className={s.pageBtns}>
-              <button className={s.pageBtn} disabled={page === 0} onClick={() => setPage(page - 1)}>Anterior</button>
-              {Array.from({ length: totalPages }, (_, i) => (
-                <button key={i} className={`${s.pageBtn} ${page === i ? s.pageBtnActive : ""}`} onClick={() => setPage(i)}>{i + 1}</button>
-              ))}
-              <button className={s.pageBtn} disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>Próxima</button>
-            </div>
-          </div>
+          <Paginacao
+            page={page}
+            totalPages={totalPages}
+            totalElements={totalElements}
+            rotulo="usuários"
+            onPageChange={setPage}
+          />
         </>
       )}
 

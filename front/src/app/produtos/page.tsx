@@ -11,6 +11,7 @@ import { obterParametrosFinanceiros } from "@/services/parametrosFinanceiros";
 import { precoSugerido, calcularMarkup, type ParametrosFinanceiros } from "@/lib/markup";
 import AppShell from "@/components/AppShell";
 import Breadcrumb from "@/components/Breadcrumb";
+import Paginacao from "@/components/Paginacao";
 import styles from "./produtos.module.css";
 
 function formatarPreco(valor: number): string {
@@ -365,18 +366,13 @@ export default function GestaoProdutosPage() {
             </table>
           </div>
 
-          <div className={styles.pagination}>
-            <span className={styles.pageInfo}>
-              Página <strong>{page + 1}</strong> de <strong>{totalPages}</strong> ({produtosPage?.totalElements} itens)
-            </span>
-            <div className={styles.pageBtns}>
-              <button className={styles.pageBtn} disabled={page === 0} onClick={() => setPage(page - 1)}>Anterior</button>
-              {Array.from({ length: totalPages }, (_, i) => (
-                <button key={i} className={`${styles.pageBtn} ${page === i ? styles.pageBtnActive : ""}`} onClick={() => setPage(i)}>{i + 1}</button>
-              ))}
-              <button className={styles.pageBtn} disabled={page >= totalPages - 1} onClick={() => setPage(page + 1)}>Próxima</button>
-            </div>
-          </div>
+          <Paginacao
+            page={page}
+            totalPages={totalPages}
+            totalElements={produtosPage?.totalElements ?? 0}
+            rotulo="itens"
+            onPageChange={setPage}
+          />
         </>
       )}
 

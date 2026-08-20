@@ -1,0 +1,72 @@
+/* =============================================================
+   Paginacao.module.css
+   =============================================================
+   Extraído das três telas que repetiam estes estilos
+   (usuarios, produtos, pdv/historico). Mesmos tokens, mesma
+   aparência — só deixou de estar copiado em três lugares.
+   ============================================================= */
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.pageInfo {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.pageBtns {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.pageBtn {
+  min-width: 38px;
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border-hover);
+  color: var(--color-text-secondary);
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pageBtn:hover:not(:disabled) {
+  background-color: var(--color-bg);
+  border-color: var(--color-text-muted);
+}
+
+.pageBtnActive {
+  background-color: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+.pageBtnActive:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.pageBtn:disabled {
+  color: var(--color-text-muted);
+  background-color: var(--color-surface-subtle);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+}
+
+/* Reticências: marca um trecho pulado, não é botão. Ocupa a mesma
+   altura dos botões para a linha não desalinhar. */
+.reticencias {
+  padding: 0.375rem 0.25rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  user-select: none;
+}
