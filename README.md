@@ -131,11 +131,3 @@ cd api && ./mvnw test       # 200 testes; JaCoCo em target/site/jacoco após ./m
 cd front && npm run lint
 cd front && npm run build   # também roda o type-check
 ```
-
-## Avisos
-
-- O `seeder/` é ferramenta de desenvolvimento: escuta só em loopback, não tem
-  autenticação e escreve direto no banco. **Nunca suba em produção.**
-- O projeto usa `ddl-auto=update` **sem migrations**. Mudança de tipo ou
-  constraint em banco já populado pode exigir `ALTER TABLE` manual.
-- Não comite `.env`, `.env.local`, secrets ou `node_modules`.
