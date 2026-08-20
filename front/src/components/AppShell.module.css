@@ -43,13 +43,32 @@
   border-bottom: 1px solid var(--color-border);
 }
 
+/* O padding e a borda ficam na .brandRow — aqui é só o texto da marca. */
 .brand {
-  padding: 20px 16px 16px;
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--color-text);
   letter-spacing: -0.01em;
-  border-bottom: 1px solid var(--color-surface-subtle);
+}
+
+/* Botão de recolher/expandir a sidebar. Segue o mesmo padrão dos botões de
+   ícone do resto do app: sem fundo, cinza secundário, realce no hover. */
+.toggleBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.toggleBtn:hover {
+  background: var(--color-surface-subtle);
+  color: var(--color-text);
 }
 
 .nav {
@@ -62,7 +81,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   font-size: 0.8rem;
   font-weight: 500;
   text-decoration: none;
@@ -71,7 +90,7 @@
 }
 
 .navItem:hover {
-  color: var(--color-text-secondary);
+  color: var(--color-text);
   background: var(--color-bg);
 }
 
@@ -124,21 +143,6 @@
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.iconBtn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 6px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  transition: background 0.15s;
-}
-
-.iconBtn:hover {
-  background: var(--color-surface-subtle);
 }
 
 .userMenuWrapper {
@@ -213,7 +217,7 @@
 
 .userMenuDivider {
   height: 1px;
-  background: var(--color-surface-subtle);
+  background: var(--color-border);
   margin: 0;
 }
 

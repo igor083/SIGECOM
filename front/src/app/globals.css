@@ -174,6 +174,43 @@ a:hover {
   color: var(--color-primary-light);
 }
 
+/* ── Placeholders ────────────────────────────────────────
+   O cinza padrão do navegador não vem da paleta e, com a opacidade que
+   Firefox e MUI aplicam por cima, cai abaixo do contraste mínimo. Fixamos
+   o texto secundário com opacidade cheia. */
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 1;
+}
+
+/* ── Campos de data ──────────────────────────────────────
+   O ícone de calendário do input[type=date] é um glifo nativo de cor fixa:
+   fica quase preto sobre o card claro e some no escuro, além de destoar do
+   chevron dos selects. Trocamos pelo mesmo cinza de texto secundário
+   (#94a3b8), que é o valor do token nos dois temas e vale para ambos. */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator,
+input[type="month"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 16px 16px;
+  width: 16px;
+  height: 16px;
+  opacity: 1;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover,
+input[type="month"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 0.65;
+}
+
 /* ── Utilitários reutilizáveis ───────────────────────────── */
 .visually-hidden {
   position: absolute;

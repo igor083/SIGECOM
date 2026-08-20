@@ -16,6 +16,16 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: { root: { textTransform: "none", fontWeight: 600 } },
     },
+    // O padrão do MUI é pintar o placeholder com 42% de opacidade sobre a cor
+    // do texto, o que sobre o campo branco fica em ~2.8:1 e mal se lê. Cor
+    // cheia no mesmo cinza de texto secundário da paleta (#475569 -> 7:1).
+    MuiInputBase: {
+      styleOverrides: {
+        input: {
+          "&::placeholder": { color: "#475569", opacity: 1 },
+        },
+      },
+    },
   },
 });
 
