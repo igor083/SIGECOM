@@ -9,12 +9,15 @@ import com.sigecom.model.request.auth.TrocarSenhaRequest;
 import com.sigecom.model.response.auth.LoginResponse;
 import com.sigecom.model.response.auth.UsuarioResponse;
 import com.sigecom.service.AuthService;
+import com.sigecom.service.ControleTentativasLogin;
 import com.sigecom.service.UserDetailsServiceImpl;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -36,15 +39,39 @@ public class AuthController {
 
     private final AuthService authService;
     private final UserDetailsServiceImpl userDetailsService;
+    private final ControleTentativasLogin controleTentativas;
 
-    public AuthController(AuthService authService, UserDetailsServiceImpl userDetailsService) {
+    public AuthController(AuthService authService,
+                          UserDetailsServiceImpl userDetailsService,
+                          ControleTentativasLogin controleTentativas) {
         this.authService = authService;
         this.userDetailsService = userDetailsService;
+        this.controleTentativas = controleTentativas;
     }
 
+    /**
+     * O freio de força bruta mora aqui, e não no AuthService, por dois motivos:
+     * é aqui que o IP do cliente existe, e assim o serviço continua sem
+     * depender da camada web (o AuthServiceTest não precisa saber que HTTP
+     * existe).
+     */
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request,
+                                               HttpServletRequest http) {
+        String chave = controleTentativas.chave(request.email(), http.getRemoteAddr());
+        controleTentativas.verificar(chave);
+
+        try {
+            LoginResponse resposta = authService.login(request);
+            controleTentativas.registrarSucesso(chave);
+            return ResponseEntity.ok(resposta);
+        } catch (AuthenticationException e) {
+            // Só credencial errada alimenta o contador. Erro de infra (banco
+            // fora, por exemplo) não é tentativa de invasão e não pode
+            // bloquear quem sabe a senha.
+            controleTentativas.registrarFalha(chave);
+            throw e;
+        }
     }
 
     @GetMapping("/me")
