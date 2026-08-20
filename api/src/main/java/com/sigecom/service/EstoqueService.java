@@ -1,6 +1,7 @@
 package com.sigecom.service;
 
 import com.sigecom.domain.Produto;
+import com.sigecom.model.response.produto.ProdutoResponse;
 import com.sigecom.repository.ProdutoRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +20,16 @@ public class EstoqueService {
     /**
      * Define a quantidade absoluta de estoque para um produto.
      * Restrito e validado.
+     *
+     * Devolve ProdutoResponse, e não a entidade: `Produto.categoria` é LAZY e a
+     * aplicação roda com `spring.jpa.open-in-view=false`, então a sessão fecha
+     * ao sair daqui. Entregar a entidade ao controller fazia o Jackson tocar no
+     * proxy já sem sessão, e a resposta virava 500 ("Could not initialize proxy
+     * [CategoriaProduto] - no session"). Montar o DTO aqui dentro resolve
+     * porque a categoria é lida enquanto a transação ainda está aberta.
      */
     @Transactional
-    public Produto ajustarEstoque(Long id, int quantidade) {
+    public ProdutoResponse ajustarEstoque(Long id, int quantidade) {
         if (quantidade < 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quantidade não pode ser negativa");
         }
@@ -32,7 +40,7 @@ public class EstoqueService {
         produto.setQtdEstoque(quantidade);
         Produto salvo = produtoRepository.save(produto);
         log.info("Estoque do produto {} ajustado para {}", id, quantidade);
-        return salvo;
+        return ProdutoResponse.toResponse(salvo);
     }
 
     /**

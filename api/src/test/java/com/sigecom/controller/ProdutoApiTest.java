@@ -245,7 +245,7 @@ class ProdutoApiTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void ajustarEstoque_DeveDevolver200_QuandoUsuarioForAdmin() throws Exception {
-        when(estoqueService.ajustarEstoque(1L, 30)).thenReturn(produtoEntidade());
+        when(estoqueService.ajustarEstoque(1L, 30)).thenReturn(produtoResponse(30));
 
         mockMvc.perform(post("/produtos/1/ajustar-estoque")
                         .contentType("application/json")
@@ -429,13 +429,17 @@ class ProdutoApiTest {
     // ---------- helpers ----------
 
     private ProdutoResponse produtoResponse() {
+        return produtoResponse(10);
+    }
+
+    private ProdutoResponse produtoResponse(int qtdEstoque) {
         return ProdutoResponse.builder()
                 .id(1L)
                 .nome("Caneta azul")
                 .descricao("Caixa com 50")
                 .preco(new BigDecimal("2.50"))
                 .categoria(new ProdutoResponse.CategoriaInfo(1L, "Papelaria"))
-                .qtdEstoque(10)
+                .qtdEstoque(qtdEstoque)
                 .estoqueMinimo(2)
                 .ativo(true)
                 .build();
@@ -446,13 +450,4 @@ class ProdutoApiTest {
     }
 
     // o endpoint de ajuste devolve a entidade, nao DTO, entao o teste tem que montar Produto
-    private Produto produtoEntidade() {
-        return Produto.builder()
-                .id(1L)
-                .nome("Caneta azul")
-                .preco(new BigDecimal("2.50"))
-                .qtdEstoque(30)
-                .estoqueMinimo(2)
-                .build();
-    }
 }
