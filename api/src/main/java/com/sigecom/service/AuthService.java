@@ -68,7 +68,8 @@ public class AuthService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuário não encontrado"));
 
         if (request.nome() != null) {
-            usuario.setNome(request.nome());
+            // trim igual ao ProdutoService, senao "  Danilo  " grava com os espacos
+            usuario.setNome(request.nome().trim());
         }
 
         if (request.email() != null && !request.email().equalsIgnoreCase(usuario.getEmail())) {
