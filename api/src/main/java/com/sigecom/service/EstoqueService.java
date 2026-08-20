@@ -5,6 +5,7 @@ import com.sigecom.repository.ProdutoRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -31,6 +32,7 @@ public class EstoqueService {
 
         produto.setQtdEstoque(quantidade);
         Produto salvo = produtoRepository.save(produto);
+        Hibernate.initialize(salvo.getCategoria());
         log.info("Estoque do produto {} ajustado para {}", id, quantidade);
         return salvo;
     }
