@@ -9,8 +9,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -32,6 +34,7 @@ import java.util.List;
  *  - AuthenticationEntryPoint.commence() → 401 do filter chain (sem token, token inválido)
  *  - AccessDeniedHandler.handle() → 403 do filter chain (autenticado mas sem permissão)
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler implements AuthenticationEntryPoint, AccessDeniedHandler {
 
@@ -70,11 +73,17 @@ public class GlobalExceptionHandler implements AuthenticationEntryPoint, AccessD
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ApiError> handleResponseStatus(ResponseStatusException ex, HttpServletRequest request) {
         HttpStatus status = HttpStatus.valueOf(ex.getStatusCode().value());
+        if (status == HttpStatus.FORBIDDEN) {
+            log.warn("Acesso negado (status): user={} method={} path={} motivo={}",
+                    currentUser(), request.getMethod(), request.getRequestURI(), ex.getReason());
+        }
         return respond(status, ex.getReason(), ex.getMessage(), request, null);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiError> handleAccessDeniedMvc(AccessDeniedException ex, HttpServletRequest request) {
+        log.warn("Acesso negado (MVC): user={} method={} path={} motivo={}",
+                currentUser(), request.getMethod(), request.getRequestURI(), ex.getMessage());
         return respond(HttpStatus.FORBIDDEN, MSG_FORBIDDEN, ex.getMessage(), request, null);
     }
 
@@ -148,7 +157,15 @@ public class GlobalExceptionHandler implements AuthenticationEntryPoint, AccessD
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response,
                        AccessDeniedException ex) throws IOException {
+        log.warn("Acesso negado (filter): user={} method={} path={} motivo={}",
+                currentUser(), request.getMethod(), request.getRequestURI(), ex.getMessage());
         write(response, request, HttpStatus.FORBIDDEN, MSG_FORBIDDEN, ex.getMessage());
+    }
+
+    /** Usuario autenticado atual, ou "anonimo" se o contexto ainda nao tem auth. */
+    private String currentUser() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        return (auth != null && auth.isAuthenticated()) ? auth.getName() : "anonimo";
     }
 
     // ===== Helpers =====
