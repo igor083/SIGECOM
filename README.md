@@ -67,9 +67,22 @@ trocá-los, exporte as variáveis de ambiente antes de subir — detalhes em
 ```bash
 cd front
 npm install
-cp .env.example .env.local
+cp .env.example .env.local   # obrigatório — veja abaixo
 npm run dev
 ```
+
+> **⚠️ O `.env.local` é obrigatório.** O front **não** sobe configurado sozinho:
+> ele lê a URL da API de `NEXT_PUBLIC_API_URL`, e essa variável só existe se você
+> criar o arquivo. O `.env.example` é o modelo — copie-o para `.env.local` (ele é
+> ignorado pelo git, então cada pessoa cria o seu) e ajuste os valores se
+> precisar:
+>
+> ```bash
+> # front/.env.local
+> NEXT_PUBLIC_API_URL=http://localhost:8080
+> ```
+>
+> Sem esse arquivo, as telas carregam mas nenhuma chamada à API funciona.
 
 Acesse `http://localhost:3000`.
 
