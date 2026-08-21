@@ -1,5 +1,6 @@
 package com.sigecom.domain;
 
+import com.sigecom.domain.enums.FormaPagamentoLancamento;
 import com.sigecom.domain.enums.TipoLancamento;
 import jakarta.persistence.*;
 import lombok.*;
@@ -38,6 +39,12 @@ public class LancamentoFinanceiro {
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal valor;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "forma_pagamento", nullable = false, length = 20,
+            columnDefinition = "VARCHAR(20) NOT NULL DEFAULT 'OUTRO'")
+    @Builder.Default
+    private FormaPagamentoLancamento formaPagamento = FormaPagamentoLancamento.OUTRO;
 
     @Builder.Default
     @Column(name = "data_hora", nullable = false, updatable = false)

@@ -6,6 +6,7 @@ import com.sigecom.domain.LancamentoFinanceiro;
 import com.sigecom.domain.Produto;
 import com.sigecom.domain.Usuario;
 import com.sigecom.domain.Venda;
+import com.sigecom.domain.enums.FormaPagamentoLancamento;
 import com.sigecom.domain.enums.TipoDesconto;
 import com.sigecom.domain.enums.TipoLancamento;
 import com.sigecom.model.request.venda.ItemVendaRequest;
@@ -201,6 +202,7 @@ public class VendaService {
                 .tipo(TipoLancamento.RECEITA)
                 .descricao("Venda #" + venda.getId())
                 .valor(venda.getTotal())
+                .formaPagamento(FormaPagamentoLancamento.fromTipoPagamento(venda.getTipoPagamento()))
                 .dataHora(venda.getDataHora())
                 .build();
 

@@ -13,6 +13,9 @@ public record FechamentoResponse(
         BigDecimal totalVendas,
         BigDecimal totalReceitas,
         BigDecimal totalDespesas,
+        // breakdown em dinheiro (SCRUM-162): explica de onde vem o saldoEsperado
+        BigDecimal totalReceitasDinheiro,
+        BigDecimal totalDespesasDinheiro,
         // resultado financeiro do dia (receitas - despesas). NAO e dinheiro na gaveta.
         BigDecimal saldoCalculado,
         // fundo de troco e o que se espera contar na gaveta (SCRUM-161)
@@ -30,6 +33,8 @@ public record FechamentoResponse(
                 f.getTotalVendas(),
                 f.getTotalReceitas(),
                 f.getTotalDespesas(),
+                f.getTotalReceitasDinheiro(),
+                f.getTotalDespesasDinheiro(),
                 f.getSaldoCalculado(),
                 f.getFundoTroco(),
                 f.getSaldoEsperado(),

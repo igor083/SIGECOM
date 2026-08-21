@@ -44,8 +44,11 @@ function calcularDivergencia(valorContado: number, saldoEsperado: number): {
 
 // O campo de fundo e editavel, entao o esperado tem que ser recalculado na tela.
 // Nao da pra usar o saldoEsperado da API direto: ele veio com o fundo padrao.
+// SCRUM-162: usa so os totais em dinheiro. PIX/cartao/transferencia nao vao pra gaveta.
 function calcularEsperado(dados: Fechamento, fundoInformado: number): number {
-  return Number((fundoInformado + dados.totalReceitas - dados.totalDespesas).toFixed(2));
+  return Number(
+    (fundoInformado + dados.totalReceitasDinheiro - dados.totalDespesasDinheiro).toFixed(2)
+  );
 }
 
 function LinhaResumo({ rotulo, valor, destaque = false }: {
@@ -66,13 +69,21 @@ function ResumoDoDia({ dados, esperado }: { dados: Fechamento; esperado: number 
     <div className={styles.resumo}>
       <LinhaResumo rotulo="Total de vendas" valor={dados.totalVendas} />
       <LinhaResumo rotulo="Total de receitas" valor={dados.totalReceitas} />
+      <LinhaResumo rotulo="   ↳ em dinheiro" valor={dados.totalReceitasDinheiro} />
       <LinhaResumo rotulo="Total de despesas" valor={dados.totalDespesas} />
+      <LinhaResumo rotulo="   ↳ em dinheiro" valor={dados.totalDespesasDinheiro} />
       {/* "Saldo calculado" grudado num numero negativo foi o que fez o bug passar */}
       <LinhaResumo rotulo="Resultado do dia" valor={dados.saldoCalculado} />
       {/* Sem fundo valido nao da pra saber o esperado. Melhor nao mostrar do que
           mostrar receitas - despesas, que e justamente o numero enganoso. */}
       {esperado !== null && (
-        <LinhaResumo rotulo="Esperado em caixa" valor={esperado} destaque />
+        <>
+          <p className={styles.nota} style={{ fontSize: "12px", margin: "4px 0 0 0" }}>
+            O esperado em caixa considera só o fundo + movimentações em dinheiro.
+            PIX, cartão e transferência não entram na gaveta.
+          </p>
+          <LinhaResumo rotulo="Esperado em caixa" valor={esperado} destaque />
+        </>
       )}
     </div>
   );

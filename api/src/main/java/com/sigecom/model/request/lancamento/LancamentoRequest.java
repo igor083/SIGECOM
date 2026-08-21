@@ -1,5 +1,6 @@
 package com.sigecom.model.request.lancamento;
 
+import com.sigecom.domain.enums.FormaPagamentoLancamento;
 import com.sigecom.domain.enums.TipoLancamento;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -28,5 +29,8 @@ public record LancamentoRequest(
         String descricao,
 
         @NotNull(message = "O tipo é obrigatório")
-        TipoLancamento tipo
+        TipoLancamento tipo,
+
+        @NotNull(message = "A forma de pagamento é obrigatória")
+        FormaPagamentoLancamento formaPagamento
 ) {}

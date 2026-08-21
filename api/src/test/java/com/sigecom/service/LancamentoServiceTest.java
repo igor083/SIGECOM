@@ -3,6 +3,7 @@ package com.sigecom.service;
 import com.sigecom.domain.CategoriaFinanceira;
 import com.sigecom.domain.LancamentoFinanceiro;
 import com.sigecom.domain.Usuario;
+import com.sigecom.domain.enums.FormaPagamentoLancamento;
 import com.sigecom.domain.enums.TipoLancamento;
 import com.sigecom.domain.enums.TipoUsuario;
 import com.sigecom.model.request.lancamento.LancamentoRequest;
@@ -83,7 +84,8 @@ class LancamentoServiceTest {
                 LocalDate.now(),
                 categoriaReceita.getId(),
                 "Venda de mercadoria",
-                TipoLancamento.RECEITA
+                TipoLancamento.RECEITA,
+                FormaPagamentoLancamento.DINHEIRO
         );
     }
 
@@ -156,7 +158,8 @@ class LancamentoServiceTest {
                 LocalDate.now(),
                 categoriaReceita.getId(),
                 "   Venda do balcão   ",
-                TipoLancamento.RECEITA
+                TipoLancamento.RECEITA,
+                FormaPagamentoLancamento.DINHEIRO
         );
 
         lancamentoService.registrar(request);
@@ -173,7 +176,8 @@ class LancamentoServiceTest {
         when(lancamentoFinanceiroRepository.save(any(LancamentoFinanceiro.class))).thenAnswer(inv -> inv.getArgument(0));
 
         LancamentoRequest request = new LancamentoRequest(
-                new BigDecimal("150.00"), ontem, 10L, "Venda de mercadoria", TipoLancamento.RECEITA);
+                new BigDecimal("150.00"), ontem, 10L, "Venda de mercadoria",
+                TipoLancamento.RECEITA, FormaPagamentoLancamento.DINHEIRO);
 
         lancamentoService.registrar(request);
 
