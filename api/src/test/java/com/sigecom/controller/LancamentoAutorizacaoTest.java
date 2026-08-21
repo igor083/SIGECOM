@@ -36,6 +36,10 @@ class LancamentoAutorizacaoTest {
     @MockitoBean
     private LancamentoService lancamentoService;
 
+    // De proposito sem formaPagamento, que o SCRUM-162 tornou obrigatorio:
+    // corpo incompleto de quem nao tem permissao tem que morrer em 403, nunca
+    // em 400. Se alguem "consertar" este corpo adicionando o campo, o teste
+    // para de cobrir justamente o caso que importa.
     private static final String CORPO = """
             {"valor":100.00,"data":"2026-07-26","categoriaId":1,
              "descricao":"Conta de luz","tipo":"DESPESA"}
@@ -61,6 +65,22 @@ class LancamentoAutorizacaoTest {
                         .contentType("application/json")
                         .content(CORPO))
                 .andExpect(status().isUnauthorized());
+
+        verify(lancamentoService, never()).registrar(any());
+    }
+
+    // A autorizacao precisa acontecer antes da validacao do corpo. Com o
+    // @PreAuthorize sozinho nao acontecia: o Spring desserializa e valida
+    // primeiro, entao um corpo vazio devolvia 400 com a lista de campos
+    // obrigatorios para quem nao tinha permissao nenhuma. A regra de URL no
+    // SecurityConfig barra no filter chain, antes do dispatcher.
+    @Test
+    @WithMockUser(roles = "FUNCIONARIO")
+    void registrar_DeveDevolver403_MesmoComCorpoVazio_SemVazarOsCamposExigidos() throws Exception {
+        mockMvc.perform(post("/lancamentos")
+                        .contentType("application/json")
+                        .content("{}"))
+                .andExpect(status().isForbidden());
 
         verify(lancamentoService, never()).registrar(any());
     }

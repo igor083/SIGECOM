@@ -2,6 +2,7 @@ package com.sigecom.service;
 
 import com.sigecom.domain.FechamentoCaixa;
 import com.sigecom.domain.Usuario;
+import com.sigecom.domain.enums.FormaPagamentoLancamento;
 import com.sigecom.domain.enums.TipoLancamento;
 import com.sigecom.domain.enums.TipoUsuario;
 import com.sigecom.model.request.fechamento.FechamentoRequest;
@@ -89,6 +90,13 @@ class FechamentoCaixaServiceTest {
                 .thenReturn(new BigDecimal("100.00"));
         when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.DESPESA), any(), any()))
                 .thenReturn(new BigDecimal("30.00"));
+        // tudo em especie: cenario anterior ao SCRUM-162, quando nao havia distincao
+        when(lancamentoFinanceiroRepository.somarPorTipoEForma(
+                eq(TipoLancamento.RECEITA), eq(FormaPagamentoLancamento.DINHEIRO), any(), any()))
+                .thenReturn(new BigDecimal("100.00"));
+        when(lancamentoFinanceiroRepository.somarPorTipoEForma(
+                eq(TipoLancamento.DESPESA), eq(FormaPagamentoLancamento.DINHEIRO), any(), any()))
+                .thenReturn(new BigDecimal("30.00"));
 
         FechamentoResponse preview = fechamentoCaixaService.calcularPreview(hoje);
 
@@ -106,6 +114,8 @@ class FechamentoCaixaServiceTest {
         LocalDate hoje = LocalDate.now();
         when(vendaRepository.somarTotalPorPeriodo(any(), any())).thenReturn(BigDecimal.ZERO);
         when(lancamentoFinanceiroRepository.somarPorTipo(any(), any(), any())).thenReturn(BigDecimal.ZERO);
+        when(lancamentoFinanceiroRepository.somarPorTipoEForma(any(), any(), any(), any()))
+                .thenReturn(BigDecimal.ZERO);
 
         fechamentoCaixaService.calcularPreview(hoje);
 
@@ -124,6 +134,12 @@ class FechamentoCaixaServiceTest {
         when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.RECEITA), any(), any()))
                 .thenReturn(new BigDecimal("100.00"));
         when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.DESPESA), any(), any()))
+                .thenReturn(new BigDecimal("30.00"));
+        when(lancamentoFinanceiroRepository.somarPorTipoEForma(
+                eq(TipoLancamento.RECEITA), eq(FormaPagamentoLancamento.DINHEIRO), any(), any()))
+                .thenReturn(new BigDecimal("100.00"));
+        when(lancamentoFinanceiroRepository.somarPorTipoEForma(
+                eq(TipoLancamento.DESPESA), eq(FormaPagamentoLancamento.DINHEIRO), any(), any()))
                 .thenReturn(new BigDecimal("30.00"));
         when(fechamentoCaixaRepository.save(any(FechamentoCaixa.class))).thenAnswer(inv -> {
             FechamentoCaixa f = inv.getArgument(0);
@@ -166,6 +182,8 @@ class FechamentoCaixaServiceTest {
         // quando tem cem reais de troco dentro da gaveta.
         when(vendaRepository.somarTotalPorPeriodo(any(), any())).thenReturn(BigDecimal.ZERO);
         when(lancamentoFinanceiroRepository.somarPorTipo(any(), any(), any())).thenReturn(BigDecimal.ZERO);
+        when(lancamentoFinanceiroRepository.somarPorTipoEForma(any(), any(), any(), any()))
+                .thenReturn(BigDecimal.ZERO);
 
         FechamentoResponse preview = fechamentoCaixaService.calcularPreview(LocalDate.now());
 
@@ -180,6 +198,12 @@ class FechamentoCaixaServiceTest {
         when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.RECEITA), any(), any()))
                 .thenReturn(new BigDecimal("100.00"));
         when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.DESPESA), any(), any()))
+                .thenReturn(new BigDecimal("30.00"));
+        when(lancamentoFinanceiroRepository.somarPorTipoEForma(
+                eq(TipoLancamento.RECEITA), eq(FormaPagamentoLancamento.DINHEIRO), any(), any()))
+                .thenReturn(new BigDecimal("100.00"));
+        when(lancamentoFinanceiroRepository.somarPorTipoEForma(
+                eq(TipoLancamento.DESPESA), eq(FormaPagamentoLancamento.DINHEIRO), any(), any()))
                 .thenReturn(new BigDecimal("30.00"));
 
         FechamentoResponse preview = fechamentoCaixaService.calcularPreview(LocalDate.now());
@@ -197,6 +221,12 @@ class FechamentoCaixaServiceTest {
         when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.RECEITA), any(), any()))
                 .thenReturn(new BigDecimal("17.01"));
         when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.DESPESA), any(), any()))
+                .thenReturn(new BigDecimal("100.00"));
+        when(lancamentoFinanceiroRepository.somarPorTipoEForma(
+                eq(TipoLancamento.RECEITA), eq(FormaPagamentoLancamento.DINHEIRO), any(), any()))
+                .thenReturn(new BigDecimal("17.01"));
+        when(lancamentoFinanceiroRepository.somarPorTipoEForma(
+                eq(TipoLancamento.DESPESA), eq(FormaPagamentoLancamento.DINHEIRO), any(), any()))
                 .thenReturn(new BigDecimal("100.00"));
 
         FechamentoResponse preview = fechamentoCaixaService.calcularPreview(LocalDate.now());
@@ -216,6 +246,8 @@ class FechamentoCaixaServiceTest {
         when(usuarioRepository.findByEmail("func@sigecom.com")).thenReturn(Optional.of(funcionario));
         when(vendaRepository.somarTotalPorPeriodo(any(), any())).thenReturn(BigDecimal.ZERO);
         when(lancamentoFinanceiroRepository.somarPorTipo(any(), any(), any())).thenReturn(BigDecimal.ZERO);
+        when(lancamentoFinanceiroRepository.somarPorTipoEForma(any(), any(), any(), any()))
+                .thenReturn(BigDecimal.ZERO);
         when(fechamentoCaixaRepository.save(any(FechamentoCaixa.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // operador abriu a gaveta com 50, nao com os 100 do padrao
@@ -233,6 +265,8 @@ class FechamentoCaixaServiceTest {
         when(usuarioRepository.findByEmail("func@sigecom.com")).thenReturn(Optional.of(funcionario));
         when(vendaRepository.somarTotalPorPeriodo(any(), any())).thenReturn(BigDecimal.ZERO);
         when(lancamentoFinanceiroRepository.somarPorTipo(any(), any(), any())).thenReturn(BigDecimal.ZERO);
+        when(lancamentoFinanceiroRepository.somarPorTipoEForma(any(), any(), any(), any()))
+                .thenReturn(BigDecimal.ZERO);
         when(fechamentoCaixaRepository.save(any(FechamentoCaixa.class))).thenAnswer(inv -> inv.getArgument(0));
 
         FechamentoResponse response = fechamentoCaixaService.confirmar(
@@ -251,6 +285,12 @@ class FechamentoCaixaServiceTest {
                 .thenReturn(new BigDecimal("80.00"));
         when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.DESPESA), any(), any()))
                 .thenReturn(new BigDecimal("20.00"));
+        when(lancamentoFinanceiroRepository.somarPorTipoEForma(
+                eq(TipoLancamento.RECEITA), eq(FormaPagamentoLancamento.DINHEIRO), any(), any()))
+                .thenReturn(new BigDecimal("80.00"));
+        when(lancamentoFinanceiroRepository.somarPorTipoEForma(
+                eq(TipoLancamento.DESPESA), eq(FormaPagamentoLancamento.DINHEIRO), any(), any()))
+                .thenReturn(new BigDecimal("20.00"));
         when(fechamentoCaixaRepository.save(any(FechamentoCaixa.class))).thenAnswer(inv -> inv.getArgument(0));
 
         fechamentoCaixaService.confirmar(
@@ -264,5 +304,36 @@ class FechamentoCaixaServiceTest {
         assertEquals(0, new BigDecimal("100.00").compareTo(salvo.getFundoTroco()));
         assertEquals(0, new BigDecimal("160.00").compareTo(salvo.getSaldoEsperado()));
         assertEquals(0, new BigDecimal("60.00").compareTo(salvo.getSaldoCalculado()));
+    }
+
+    // ── SCRUM-162: forma de pagamento ──────────────────────────────────────
+
+    @Test
+    void calcularPreview_ComFormasMistas_DeveEsperarNaGavetaSoOQueFoiEmEspecie() {
+        // O caso que abriu o card: 500 no cartao + 100 em dinheiro. A gaveta
+        // so recebeu os 100. Antes o sistema esperava os 600 e acusava falta
+        // de 500 numa conferencia que estava certa.
+        when(vendaRepository.somarTotalPorPeriodo(any(), any())).thenReturn(new BigDecimal("600.00"));
+        when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.RECEITA), any(), any()))
+                .thenReturn(new BigDecimal("600.00"));
+        when(lancamentoFinanceiroRepository.somarPorTipo(eq(TipoLancamento.DESPESA), any(), any()))
+                .thenReturn(new BigDecimal("80.00"));
+        when(lancamentoFinanceiroRepository.somarPorTipoEForma(
+                eq(TipoLancamento.RECEITA), eq(FormaPagamentoLancamento.DINHEIRO), any(), any()))
+                .thenReturn(new BigDecimal("100.00"));
+        // aluguel de 80 pago por transferencia: nao saiu da gaveta
+        when(lancamentoFinanceiroRepository.somarPorTipoEForma(
+                eq(TipoLancamento.DESPESA), eq(FormaPagamentoLancamento.DINHEIRO), any(), any()))
+                .thenReturn(BigDecimal.ZERO);
+
+        FechamentoResponse preview = fechamentoCaixaService.calcularPreview(LocalDate.now());
+
+        // contabil: 600 - 80, independente da forma
+        assertEquals(0, new BigDecimal("520.00").compareTo(preview.saldoCalculado()));
+        // gaveta: 100 de fundo + 100 em especie - 0 de despesa em especie
+        assertEquals(0, new BigDecimal("200.00").compareTo(preview.saldoEsperado()));
+        // o bug antigo daria 100 + 600 - 80 = 620, e acusaria falta de 420
+        assertEquals(0, new BigDecimal("100.00").compareTo(preview.totalReceitasDinheiro()));
+        assertEquals(0, BigDecimal.ZERO.compareTo(preview.totalDespesasDinheiro()));
     }
 }
