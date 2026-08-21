@@ -22,11 +22,17 @@ export type FormaPagamentoLancamento =
   | "BOLETO"
   | "OUTRO";
 
-export interface CategoriaFinanceira {
-  id: number;
-  nome: string;
-  tipo: TipoLancamento;
-}
+// Categoria financeira tem uma definição só, em categoriasFinanceiras.ts.
+// Havia uma cópia aqui, e ela estava incompleta: faltava `protegida`, que a API
+// devolve tanto no GET /categorias-financeiras quanto aninhada no lançamento.
+// Quem lia a categoria por este módulo não enxergava o campo e não tinha como
+// saber que aquela categoria é de sistema.
+//
+// Importado para uso local (LancamentoResponse.categoria) e reexportado para os
+// imports existentes continuarem valendo. `import type` some na compilação,
+// então não cria ciclo em runtime com categoriasFinanceiras.ts.
+import type { CategoriaFinanceira } from "./categoriasFinanceiras";
+export type { CategoriaFinanceira };
 
 export interface LancamentoResponse {
   id: number;
@@ -89,16 +95,13 @@ export async function listarLancamentos(params: {
 /**
  * Lista as categorias financeiras, com filtro opcional por tipo.
  * Usada para popular o select do formulário de lançamento.
+ *
+ * Implementação em categoriasFinanceiras.ts — este módulo tinha uma segunda
+ * cópia, chamando o mesmo endpoint e devolvendo um tipo sem `protegida`. Duas
+ * funções com o mesmo nome para o mesmo recurso é como o campo se perdeu:
+ * corrigir uma delas não corrigia a outra.
  */
-export async function listarCategoriasFinanceiras(
-  tipo?: TipoLancamento
-): Promise<CategoriaFinanceira[]> {
-  const response = await api.get<CategoriaFinanceira[]>(
-    "/categorias-financeiras",
-    { params: tipo ? { tipo } : {} }
-  );
-  return response.data;
-}
+export { listarCategoriasFinanceiras } from "./categoriasFinanceiras";
 
 export interface Saldo {
   totalReceitas: number;
