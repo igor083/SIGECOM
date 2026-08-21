@@ -52,6 +52,7 @@ public class LancamentoService {
                 .tipo(request.tipo())
                 .descricao(request.descricao().trim())
                 .valor(request.valor())
+                .formaPagamento(request.formaPagamento())
                 .dataHora(resolverDataHora(request.data()))
                 .build();
 

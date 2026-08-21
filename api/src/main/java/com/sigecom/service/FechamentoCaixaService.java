@@ -2,6 +2,7 @@ package com.sigecom.service;
 
 import com.sigecom.domain.FechamentoCaixa;
 import com.sigecom.domain.Usuario;
+import com.sigecom.domain.enums.FormaPagamentoLancamento;
 import com.sigecom.domain.enums.TipoLancamento;
 import com.sigecom.model.request.fechamento.FechamentoRequest;
 import com.sigecom.model.response.fechamento.FechamentoResponse;
@@ -53,15 +54,25 @@ public class FechamentoCaixaService {
         LocalDateTime fim = data.atTime(LocalTime.MAX);
 
         BigDecimal totalVendas = vendaRepository.somarTotalPorPeriodo(inicio, fim);
+
+        // Totais contábeis: somam TUDO, independente da forma de pagamento
         BigDecimal totalReceitas = lancamentoFinanceiroRepository.somarPorTipo(TipoLancamento.RECEITA, inicio, fim);
         BigDecimal totalDespesas = lancamentoFinanceiroRepository.somarPorTipo(TipoLancamento.DESPESA, inicio, fim);
 
-        // resultado do dia: continua existindo, mas nao e dinheiro na gaveta
-        BigDecimal saldoCalculado = totalReceitas.subtract(totalDespesas);
-        // o que se espera contar na gaveta: nunca fica negativo por causa do fundo
-        BigDecimal saldoEsperado = fundoTroco.add(totalReceitas).subtract(totalDespesas);
+        // Totais em dinheiro: só os que afetam caixa físico (SCRUM-162)
+        BigDecimal receitasDinheiro = lancamentoFinanceiroRepository
+                .somarPorTipoEForma(TipoLancamento.RECEITA, FormaPagamentoLancamento.DINHEIRO, inicio, fim);
+        BigDecimal despesasDinheiro = lancamentoFinanceiroRepository
+                .somarPorTipoEForma(TipoLancamento.DESPESA, FormaPagamentoLancamento.DINHEIRO, inicio, fim);
 
-        return new FechamentoResponse(null, data, totalVendas, totalReceitas, totalDespesas,
+        // Resultado do dia (contábil): receitas totais − despesas totais
+        BigDecimal saldoCalculado = totalReceitas.subtract(totalDespesas);
+        // Esperado na gaveta: só movimentações em dinheiro contam
+        BigDecimal saldoEsperado = fundoTroco.add(receitasDinheiro).subtract(despesasDinheiro);
+
+        return new FechamentoResponse(null, data, totalVendas,
+                totalReceitas, totalDespesas,
+                receitasDinheiro, despesasDinheiro,
                 saldoCalculado, fundoTroco, saldoEsperado, null, null, null);
     }
 
@@ -94,6 +105,8 @@ public class FechamentoCaixaService {
                 .totalVendas(preview.totalVendas())
                 .totalReceitas(preview.totalReceitas())
                 .totalDespesas(preview.totalDespesas())
+                .totalReceitasDinheiro(preview.totalReceitasDinheiro())
+                .totalDespesasDinheiro(preview.totalDespesasDinheiro())
                 .saldoCalculado(preview.saldoCalculado())
                 .fundoTroco(preview.fundoTroco())
                 .saldoEsperado(preview.saldoEsperado())

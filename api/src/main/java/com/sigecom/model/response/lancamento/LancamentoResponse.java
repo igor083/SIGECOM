@@ -1,6 +1,7 @@
 package com.sigecom.model.response.lancamento;
 
 import com.sigecom.domain.LancamentoFinanceiro;
+import com.sigecom.domain.enums.FormaPagamentoLancamento;
 import com.sigecom.domain.enums.TipoLancamento;
 
 import java.math.BigDecimal;
@@ -13,7 +14,8 @@ public record LancamentoResponse(
         LocalDateTime dataHora,
         TipoLancamento tipo,
         String descricao,
-        CategoriaFinanceiraResponse categoria
+        CategoriaFinanceiraResponse categoria,
+        FormaPagamentoLancamento formaPagamento
 ) {
 
     public static LancamentoResponse toResponse(LancamentoFinanceiro entidade) {
@@ -23,7 +25,8 @@ public record LancamentoResponse(
                 entidade.getDataHora(),
                 entidade.getTipo(),
                 entidade.getDescricao(),
-                CategoriaFinanceiraResponse.toResponse(entidade.getCategoria())
+                CategoriaFinanceiraResponse.toResponse(entidade.getCategoria()),
+                entidade.getFormaPagamento()
         );
     }
 }

@@ -3,6 +3,7 @@ package com.sigecom.config;
 import com.sigecom.domain.CategoriaFinanceira;
 import com.sigecom.domain.LancamentoFinanceiro;
 import com.sigecom.domain.Venda;
+import com.sigecom.domain.enums.FormaPagamentoLancamento;
 import com.sigecom.domain.enums.TipoLancamento;
 import com.sigecom.repository.CategoriaFinanceiraRepository;
 import com.sigecom.repository.LancamentoFinanceiroRepository;
@@ -68,6 +69,7 @@ public class VendaFinanceiroBackfillRunner implements CommandLineRunner {
                         .tipo(TipoLancamento.RECEITA)
                         .descricao(descricao)
                         .valor(venda.getTotal())
+                        .formaPagamento(FormaPagamentoLancamento.fromTipoPagamento(venda.getTipoPagamento()))
                         .dataHora(venda.getDataHora())
                         .build();
 

@@ -43,6 +43,16 @@ public class FechamentoCaixa {
     @Column(name = "total_despesas", precision = 12, scale = 2)
     private BigDecimal totalDespesas = BigDecimal.ZERO;
 
+    // Movimentacoes em dinheiro no dia (SCRUM-162): usadas pra calcular
+    // o saldoEsperado (caixa fisico).
+    @Builder.Default
+    @Column(name = "total_receitas_dinheiro", precision = 12, scale = 2)
+    private BigDecimal totalReceitasDinheiro = BigDecimal.ZERO;
+
+    @Builder.Default
+    @Column(name = "total_despesas_dinheiro", precision = 12, scale = 2)
+    private BigDecimal totalDespesasDinheiro = BigDecimal.ZERO;
+
     @NotNull
     @Builder.Default
     @Column(name = "saldo_calculado", precision = 12, scale = 2)

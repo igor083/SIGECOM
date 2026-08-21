@@ -7,6 +7,9 @@ export interface Fechamento {
   totalVendas: number;
   totalReceitas: number;
   totalDespesas: number;
+  // SCRUM-162: movimentacoes em dinheiro no dia (nao movimentam banco/cartao)
+  totalReceitasDinheiro: number;
+  totalDespesasDinheiro: number;
   // resultado financeiro do dia (receitas - despesas). Nao e dinheiro na gaveta.
   saldoCalculado: number;
   // SCRUM-161: fundo de troco e o que se espera contar na gaveta.

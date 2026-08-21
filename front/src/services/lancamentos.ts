@@ -12,6 +12,16 @@ import api from "./api"; // D-5: instância centralizada com interceptor de auth
 
 export type TipoLancamento = "RECEITA" | "DESPESA";
 
+// SCRUM-162: forma de pagamento afeta o fechamento de caixa (so DINHEIRO conta na gaveta)
+export type FormaPagamentoLancamento =
+  | "DINHEIRO"
+  | "PIX"
+  | "DEBITO"
+  | "CREDITO"
+  | "TRANSFERENCIA"
+  | "BOLETO"
+  | "OUTRO";
+
 export interface CategoriaFinanceira {
   id: number;
   nome: string;
@@ -25,6 +35,7 @@ export interface LancamentoResponse {
   tipo: TipoLancamento;
   descricao: string;
   categoria: CategoriaFinanceira;
+  formaPagamento: FormaPagamentoLancamento;
 }
 
 /** Payload enviado ao POST /lancamentos */
@@ -34,6 +45,7 @@ export interface LancamentoRequest {
   categoriaId: number;
   descricao: string;
   tipo: TipoLancamento;
+  formaPagamento: FormaPagamentoLancamento; // obrigatorio (SCRUM-162)
 }
 
 /** Estrutura de paginação compatível com Page<T> do Spring Boot */

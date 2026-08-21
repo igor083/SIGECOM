@@ -7,6 +7,7 @@
 import { useState, useEffect, useMemo, type FormEvent } from "react";
 import type {
   TipoLancamento,
+  FormaPagamentoLancamento,
   CategoriaFinanceira,
   LancamentoRequest,
   LancamentoResponse,
@@ -40,6 +41,7 @@ export default function FormLancamento({
   const [data,      setData]      = useState(hoje);
   const [catId,     setCatId]     = useState("");
   const [descricao, setDescricao] = useState("");
+  const [forma,     setForma]     = useState<FormaPagamentoLancamento>("DINHEIRO");
 
   const [erroLocal, setErroLocal] = useState<string | null>(null);
   const [sucesso,   setSucesso]   = useState(false);
@@ -87,6 +89,7 @@ export default function FormLancamento({
       categoriaId: Number(catId),
       descricao: descricao.trim(),
       tipo,
+      formaPagamento: forma,
     };
 
     try {
@@ -95,6 +98,7 @@ export default function FormLancamento({
       setData(hoje());
       setCatId("");
       setDescricao("");
+      setForma("DINHEIRO");
       setSucesso(true);
     } catch (err) {
       setErroLocal(err instanceof Error ? err.message : "Falha ao registrar o lançamento.");
@@ -173,6 +177,26 @@ export default function FormLancamento({
             ))}
           </select>
         )}
+      </div>
+
+      <div className={styles.field}>
+        <label className={styles.label} htmlFor="lanc-forma">Forma de pagamento</label>
+        <select
+          id="lanc-forma"
+          className={styles.select}
+          value={forma}
+          onChange={(e) => setForma(e.target.value as FormaPagamentoLancamento)}
+          disabled={desabilitado}
+          required
+        >
+          <option value="DINHEIRO">Dinheiro (sai/entra do caixa)</option>
+          <option value="PIX">PIX</option>
+          <option value="DEBITO">Cartão de débito</option>
+          <option value="CREDITO">Cartão de crédito</option>
+          <option value="TRANSFERENCIA">Transferência bancária</option>
+          <option value="BOLETO">Boleto</option>
+          <option value="OUTRO">Outro</option>
+        </select>
       </div>
 
       <div className={styles.field}>
