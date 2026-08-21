@@ -42,6 +42,14 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                        // D-2: financeiro e so de ADMIN, e a checagem precisa acontecer aqui,
+                        // no filter chain. O @PreAuthorize do controller roda depois que o
+                        // Spring ja desserializou e validou o corpo, entao um FUNCIONARIO
+                        // mandando corpo incompleto recebia 400 com a lista de campos
+                        // obrigatorios em vez de 403 — enumeracao do contrato da API por
+                        // quem nao tem permissao. A anotacao continua no controller como
+                        // segunda barreira, caso este matcher mude.
+                        .requestMatchers("/lancamentos/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
