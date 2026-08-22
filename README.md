@@ -1,68 +1,117 @@
 # SIGECOM
 
-**Sistema Inteligente de Gestão Comercial** — controle de estoque, PDV, financeiro,
+Sistema Inteligente de Gestão Comercial. Controle de estoque, PDV, financeiro,
 fechamento de caixa e relatórios para pequenos comércios.
 
-Projeto acadêmico — Gerência de Projetos, UEPB.
+Projeto acadêmico de Gerência de Projetos, UEPB.
 
-## Pastas
+## Estrutura
 
-O repositório reúne três aplicações independentes. Não há build na raiz: cada uma
-sobe e é versionada por conta própria.
+O repositório reúne três aplicações independentes. Cada uma sobe por conta
+própria, não há build na raiz.
 
 | Pasta | O que é | Porta |
 |---|---|---|
-| [`api/`](api/README.md) | API REST principal — regra de negócio, autenticação JWT, dona do schema do banco | `8080` |
+| [`api/`](api/README.md) | API REST principal. Regra de negócio, autenticação JWT, dona do schema do banco | `8080` |
 | [`front/`](front/README.md) | Interface web em Next.js, consome a `api/` | `3000` |
 | [`seeder/`](seeder/README.md) | API de geração de dados de teste, sob demanda | `8081` |
 
-**Por que o seeder é separado.** A `api/` não cria dados de demonstração no boot:
-sobe limpa, com um único usuário administrador. Todo o volume de dados de teste
-(catálogo, vendas, financeiro, caixa) vem do `seeder/`, que roda só quando você
-pede e sabe desfazer o que criou. Assim ninguém carrega mock para produção sem
-querer, e o start da aplicação não depende de nada disso.
+A `api/` sobe limpa, com um único usuário administrador. Os dados de teste
+vêm do `seeder/`, que roda só quando você pede e sabe desfazer o que criou.
 
-Para desenvolver e testar as telas você precisa das três; para rodar o sistema de
-verdade, só de `api/` + `front/`.
+Para rodar o sistema você precisa de `api/` e `front/`. O `seeder/` é opcional.
 
 ## Pré-requisitos
 
-| Ferramenta | Versão | Usado por |
-|---|---|---|
-| [Docker](https://www.docker.com/) | qualquer recente | banco PostgreSQL |
-| [JDK](https://adoptium.net/) | 21 | `api/`, `seeder/` |
-| [Node.js](https://nodejs.org/) | ≥ 20.9 (npm ≥ 9) | `front/` |
+- [PostgreSQL 15](https://www.postgresql.org/download/) ou
+  [Docker](https://www.docker.com/) instalado e em execução
+- [Java 21](https://adoptium.net/) (JDK)
+- [Node.js 20.9](https://nodejs.org/) ou superior, com npm 9 ou superior
+- [Maven](https://maven.apache.org/) (ou use o wrapper `./mvnw`)
 
-Maven não precisa ser instalado — use o wrapper `./mvnw` (ou `mvnw.cmd` no
-Windows) que já vem em `api/` e `seeder/`.
+## 1. Criar o banco de dados PostgreSQL
 
-## Executando
+A aplicação espera um PostgreSQL em `localhost:5432`, banco `sigecom`,
+usuário e senha `postgres`.
 
-### 1. Banco de dados
+Use o PostgreSQL instalado na máquina ou um container Docker. Os dois
+entregam a mesma coisa.
+
+### PostgreSQL instalado na máquina
+
+Instale o PostgreSQL 15 ou superior. No Windows, use `postgres` como senha do
+superusuário quando o instalador pedir.
+
+Crie a base de dados:
+
+```bash
+psql -U postgres -c "CREATE DATABASE sigecom;"
+```
+
+Pelo pgAdmin: botão direito em Databases, Create, Database, nome `sigecom`.
+
+Confira que ela existe:
+
+```bash
+psql -U postgres -l
+```
+
+### PostgreSQL em container Docker
+
+Execute o container com as credenciais esperadas pela aplicação:
 
 ```bash
 docker run -d --name sigecom-db -e POSTGRES_DB=sigecom -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:15
 
 ```
 
-Nas próximas vezes, `docker start sigecom-db` já basta.
+Aguarde alguns segundos até o container estar pronto. Nas próximas vezes,
+`docker start sigecom-db` já basta.
 
-### 2. API
+O container e o PostgreSQL instalado disputam a porta 5432. Use um dos dois.
+
+## 2. Ajustar as credenciais do banco
+
+Este passo só é necessário se o usuário ou a senha do seu PostgreSQL não forem
+`postgres`. São dois arquivos porque a API e o seeder conectam separadamente.
+
+Em `api/src/main/resources/application.properties`:
+
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/sigecom
+spring.datasource.username=postgres
+spring.datasource.password=postgres
+```
+
+Em `seeder/src/main/resources/application.properties`:
+
+```properties
+spring.datasource.url=${SEEDER_DB_URL:jdbc:postgresql://localhost:5432/sigecom}
+spring.datasource.username=${SEEDER_DB_USER:postgres}
+spring.datasource.password=${SEEDER_DB_PASS:postgres}
+```
+
+Nada mais precisa ser alterado nesses arquivos.
+
+## 3. Executar a API
+
+Execute antes das outras aplicações. É a `api/` que cria as tabelas.
 
 ```bash
 cd api
 ./mvnw spring-boot:run
 ```
 
-Sobe em `http://localhost:8080`. **Rode esta etapa antes das outras**: é a `api/`
-que cria as tabelas (`ddl-auto=update`).
+Ou, no Windows:
 
-Não há nada para configurar antes: os valores de desenvolvimento (segredo do
-JWT, expiração do token) já vêm como padrão no `application.properties`. Para
-trocá-los, exporte as variáveis de ambiente antes de subir — detalhes em
-[`api/README.md`](api/README.md).
+```cmd
+cd api
+mvnw.cmd spring-boot:run
+```
 
-### 3. Front-end
+A API estará disponível em `http://localhost:8080`.
+
+## 4. Executar o front-end
 
 ```bash
 cd front
@@ -86,44 +135,39 @@ npm run dev
 
 Acesse `http://localhost:3000`.
 
-### 4. Dados de teste (opcional)
+## 5. Gerar dados de teste (opcional)
 
 ```bash
 cd seeder
 ./mvnw spring-boot:run
 ```
 
-Com ele no ar em `http://localhost:8081`:
+Com o seeder no ar em `http://localhost:8081`:
 
 ```bash
-curl -X POST   http://localhost:8081/seed    # gera tudo
+curl -X POST   http://localhost:8081/seed
 curl           http://localhost:8081/seed/status
-curl -X DELETE http://localhost:8081/seed    # remove só o que ele criou
+curl -X DELETE http://localhost:8081/seed
 ```
 
-Rodar duas vezes não duplica nada, e a limpeza devolve o banco ao estado
-anterior. Detalhes em [`seeder/README.md`](seeder/README.md).
+Rodar duas vezes não duplica nada. A remoção apaga só o que ele criou.
 
 ## Primeiro acesso
 
-A `api/` cria **um único** registro no primeiro start contra um banco vazio:
+A `api/` cria um único registro no primeiro start contra um banco vazio:
 
 | E-mail | Senha | Perfil |
 |---|---|---|
 | `adm@adm.com` | `senha123` | ADMIN |
 
-Ele existe porque o cadastro de usuário exige um ADMIN autenticado — sem ele, um
-banco novo não teria como criar o primeiro login. É idempotente: trocar a senha
-pela aplicação não é desfeito no próximo start.
+Ele existe porque o cadastro de usuário exige um ADMIN autenticado.
 
-> **Antes de usar o PDV:** cadastre a categoria financeira **`Venda`** do tipo
-> *Receita*, em **Financeiro › Gerenciar categorias**. Toda venda confirmada é
-> lançada no financeiro nessa categoria, e sem ela o registro de venda falha. A
-> tela avisa e oferece o atalho de criação enquanto ela não existir. Se você
-> rodar o seeder, ele já cria essa categoria.
+Antes de usar o PDV, cadastre a categoria financeira `Venda` do tipo Receita
+em Financeiro, Gerenciar categorias. Toda venda confirmada é lançada nessa
+categoria e sem ela o registro de venda falha. O seeder já cria essa categoria.
 
 Os usuários gerados pelo seeder (`*@seed.sigecom.local`, senha `senha123`)
-também servem para login e são úteis para testar o perfil FUNCIONARIO.
+também servem para login e testam o perfil FUNCIONARIO.
 
 ## Portas
 
@@ -132,24 +176,38 @@ também servem para login e são úteis para testar o perfil FUNCIONARIO.
 | Front-end | `http://localhost:3000` |
 | API | `http://localhost:8080` |
 | Swagger da API | `http://localhost:8080/swagger-ui/index.html` |
-| Seeder | `http://localhost:8081` (só loopback) |
+| Seeder | `http://localhost:8081` |
 | Swagger do seeder | `http://localhost:8081/swagger-ui.html` |
 | PostgreSQL | `localhost:5432` |
 
-## Testes
+## Executar os testes
 
 ```bash
-cd api && ./mvnw test       # 288 testes; JaCoCo em target/site/jacoco após ./mvnw verify
-cd front && npm run build   # também roda o type-check
+cd api && ./mvnw test
+cd front && npm run build
 cd front && npm run lint
 ```
 
-Os três passam limpos.
+Os testes da `api/` usam H2 em memória e rodam com o PostgreSQL desligado.
+São 288 testes. O relatório do JaCoCo fica em `target/site/jacoco` após
+`./mvnw verify`.
+
+## Remover o banco de dados
+
+```bash
+dropdb -U postgres sigecom
+```
+
+Ou, se você usou o container:
+
+```bash
+docker stop sigecom-db
+docker rm sigecom-db
+```
 
 ## Avisos
 
-- O `seeder/` é ferramenta de desenvolvimento: escuta só em loopback, não tem
-  autenticação e escreve direto no banco. **Nunca suba em produção.**
-- O projeto usa `ddl-auto=update` **sem migrations**. Mudança de tipo ou
-  constraint em banco já populado pode exigir `ALTER TABLE` manual.
+- O `seeder/` escuta só em loopback e não tem autenticação. Não suba em produção.
+- O projeto usa `ddl-auto=update` sem migrations. Mudança de tipo ou constraint
+  em banco já populado pode exigir `ALTER TABLE` manual.
 - Não comite `.env`, `.env.local`, secrets ou `node_modules`.

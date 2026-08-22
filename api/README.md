@@ -4,13 +4,34 @@ API REST do sistema SIGECOM, desenvolvida com Spring Boot 4.0.6 e Java 21.
 
 ## Pré-requisitos
 
-- [Docker](https://www.docker.com/) instalado e em execução
+- [PostgreSQL 15](https://www.postgresql.org/download/) ou
+  [Docker](https://www.docker.com/) instalado e em execução
 - [Java 21](https://adoptium.net/) (JDK)
 - [Maven](https://maven.apache.org/) (ou use o wrapper `./mvnw`)
 
-## 1. Subir o banco de dados PostgreSQL
+## 1. Criar o banco de dados PostgreSQL
 
-Execute o container do PostgreSQL com as credenciais esperadas pela aplicação:
+A aplicação espera um PostgreSQL em `localhost:5432`, banco `sigecom`,
+usuário e senha `postgres`. Use o PostgreSQL instalado na máquina ou um
+container Docker.
+
+### PostgreSQL instalado na máquina
+
+Crie a base de dados:
+
+```bash
+psql -U postgres -c "CREATE DATABASE sigecom;"
+```
+
+Pelo pgAdmin: botão direito em Databases, Create, Database, nome `sigecom`.
+
+Se o usuário ou a senha do seu PostgreSQL não forem `postgres`, ajuste
+`spring.datasource.username` e `spring.datasource.password` em
+`src/main/resources/application.properties` (tabela no fim deste arquivo).
+
+### PostgreSQL em container Docker
+
+Execute o container com as credenciais esperadas pela aplicação:
 
 ```bash
 docker run -d \
@@ -23,6 +44,8 @@ docker run -d \
 ```
 
 Aguarde alguns segundos até o container estar pronto.
+
+O container e o PostgreSQL instalado disputam a porta 5432. Use um dos dois.
 
 ## 2. Configurar variáveis de ambiente
 
@@ -148,7 +171,13 @@ O projeto usa **JaCoCo** para cobertura. Um relatório HTML é gerado em `target
 | `sigecom.admin-inicial.senha` | `senha123` |
 | `sigecom.admin-inicial.nome` | `Administrador` |
 
-## Parar e remover o container
+## Remover o banco de dados
+
+```bash
+dropdb -U postgres sigecom
+```
+
+Ou, se você usou o container:
 
 ```bash
 docker stop sigecom-db
