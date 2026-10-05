@@ -10,6 +10,7 @@ import {
 import { mensagemDeErro } from "@/lib/apiError";
 import AppShell from "@/components/AppShell";
 import Paginacao from "@/components/Paginacao";
+import LegendaObrigatorios from "@/components/LegendaObrigatorios";
 import s from "./usuarios.module.css";
 
 const X_ICON = (
@@ -328,22 +329,23 @@ export default function UsuariosPage() {
               <div className={s.modalBody}>
                 {modalErro && <div className={`${s.alert} ${s.alertError}`}>{modalErro}</div>}
                 {modalSucesso && <div className={`${s.alert} ${s.alertSuccess}`}>{modalSucesso}</div>}
+                <LegendaObrigatorios />
                 <div className={s.formGrid}>
                   <div className={s.formGroupFull}>
                     <label htmlFor="c-nome">Nome *</label>
-                    <input id="c-nome" className={s.formInput} type="text" placeholder="Nome completo" value={formNome} onChange={(e) => setFormNome(e.target.value)} disabled={mutating} required />
+                    <input id="c-nome" className={s.formInput} type="text" placeholder="Nome completo" value={formNome} onChange={(e) => setFormNome(e.target.value)} disabled={mutating} required aria-required="true" />
                   </div>
                   <div className={s.formGroupFull}>
                     <label htmlFor="c-email">E-mail *</label>
-                    <input id="c-email" className={s.formInput} type="email" placeholder="email@exemplo.com" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} disabled={mutating} required />
+                    <input id="c-email" className={s.formInput} type="email" placeholder="email@exemplo.com" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} disabled={mutating} required aria-required="true" />
                   </div>
                   <div className={s.formGroup}>
                     <label htmlFor="c-senha">Senha *</label>
-                    <input id="c-senha" className={s.formInput} type="password" placeholder="Mínimo 6 caracteres" value={formSenha} onChange={(e) => setFormSenha(e.target.value)} disabled={mutating} required minLength={6} />
+                    <input id="c-senha" className={s.formInput} type="password" placeholder="Mínimo 6 caracteres" value={formSenha} onChange={(e) => setFormSenha(e.target.value)} disabled={mutating} required aria-required="true" minLength={6} />
                   </div>
                   <div className={s.formGroup}>
-                    <label>Perfil *</label>
-                    <div style={{ display: "flex", gap: "16px", marginTop: "8px", alignItems: "center" }}>
+                    <label id="c-perfil-rotulo">Perfil *</label>
+                    <div role="radiogroup" aria-labelledby="c-perfil-rotulo" aria-required="true" style={{ display: "flex", gap: "16px", marginTop: "8px", alignItems: "center" }}>
                       <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "0.875rem" }}>
                         <input
                           type="radio"
@@ -352,6 +354,7 @@ export default function UsuariosPage() {
                           checked={formPerfil === "FUNCIONARIO"}
                           onChange={() => setFormPerfil("FUNCIONARIO")}
                           disabled={mutating}
+                          required
                         />
                         Funcionário
                       </label>
@@ -363,6 +366,7 @@ export default function UsuariosPage() {
                           checked={formPerfil === "ADMIN"}
                           onChange={() => setFormPerfil("ADMIN")}
                           disabled={mutating}
+                          required
                         />
                         Administrador
                       </label>

@@ -13,6 +13,7 @@ import AppShell from "@/components/AppShell";
 import Breadcrumb from "@/components/Breadcrumb";
 import Paginacao from "@/components/Paginacao";
 import PreviaImagem from "@/components/PreviaImagem";
+import LegendaObrigatorios from "@/components/LegendaObrigatorios";
 import styles from "./produtos.module.css";
 
 function formatarPreco(valor: number): string {
@@ -392,15 +393,16 @@ export default function GestaoProdutosPage() {
                 {modalErro && <div className={`${styles.alert} ${styles.alertError}`}>{modalErro}</div>}
                 {modalSucesso && <div className={`${styles.alert} ${styles.alertSuccess}`}>{modalSucesso}</div>}
                 <div className={styles.form}>
+                  <LegendaObrigatorios />
                   <div className={styles.formGroup}>
                     <label htmlFor="c-nome">Nome *</label>
-                    <input id="c-nome" className={styles.formInput} type="text" placeholder="Ex: Arroz 1kg" value={formNome} onChange={(e) => setFormNome(e.target.value)} disabled={mutating} required />
+                    <input id="c-nome" className={styles.formInput} type="text" placeholder="Ex: Arroz 1kg" value={formNome} onChange={(e) => setFormNome(e.target.value)} disabled={mutating} required aria-required="true" />
                   </div>
                   <div className={styles.formGroup}>
                     <label htmlFor="c-cat">Categoria *</label>
                     {!criandoCat ? (
                       <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                        <select id="c-cat" className={styles.formSelect} style={{ flex: 1 }} value={formCategoriaId} onChange={(e) => setFormCategoriaId(e.target.value)} disabled={mutating} required>
+                        <select id="c-cat" className={styles.formSelect} style={{ flex: 1 }} value={formCategoriaId} onChange={(e) => setFormCategoriaId(e.target.value)} disabled={mutating} required aria-required="true">
                           {categoriasTodas.map((cat) => <option key={cat.id} value={cat.id}>{cat.nome}</option>)}
                         </select>
                         <button type="button" className={styles.secondaryBtn} style={{ whiteSpace: "nowrap", padding: "8px 12px" }} onClick={() => { setCriandoCat(true); setCatErro(null); setNovaCatNome(""); }} disabled={mutating}>+ Nova</button>
@@ -460,11 +462,11 @@ export default function GestaoProdutosPage() {
                   <div className={styles.row}>
                     <div className={styles.formGroup}>
                       <label htmlFor="c-preco">Preço de Venda (R$) *</label>
-                      <input id="c-preco" className={styles.formInput} type="number" step="0.01" min="0" placeholder="0,00" value={formPreco} onChange={(e) => setFormPreco(e.target.value)} disabled={mutating} required />
+                      <input id="c-preco" className={styles.formInput} type="number" step="0.01" min="0" placeholder="0,00" value={formPreco} onChange={(e) => setFormPreco(e.target.value)} disabled={mutating} required aria-required="true" />
                     </div>
                     <div className={styles.formGroup}>
                       <label htmlFor="c-estmin">Estoque Mínimo *</label>
-                      <input id="c-estmin" className={styles.formInput} type="number" min="0" placeholder="5" value={formEstoqueMinimo} onChange={(e) => setFormEstoqueMinimo(e.target.value)} disabled={mutating} required />
+                      <input id="c-estmin" className={styles.formInput} type="number" min="0" placeholder="5" value={formEstoqueMinimo} onChange={(e) => setFormEstoqueMinimo(e.target.value)} disabled={mutating} required aria-required="true" />
                     </div>
                   </div>
                   <div className={styles.formGroup}>

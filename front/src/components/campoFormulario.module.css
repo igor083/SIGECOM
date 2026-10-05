@@ -1,0 +1,13 @@
+/* =============================================================
+   campoFormulario.module.css — peças comuns aos formulários
+   =============================================================
+   Compartilhado por Produto, Lançamento e Usuário para que a
+   legenda de obrigatórios e as mensagens de erro tenham o mesmo
+   lugar e o mesmo estilo nas três telas (ISO 9241-17, 5.3.2/7.3).
+   ============================================================= */
+
+.legenda {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}

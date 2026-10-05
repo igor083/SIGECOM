@@ -12,6 +12,7 @@ import type {
   LancamentoRequest,
   LancamentoResponse,
 } from "@/services/lancamentos";
+import LegendaObrigatorios from "./LegendaObrigatorios";
 import styles from "./forms.module.css";
 
 // o input date so aceita yyyy-MM-dd
@@ -113,14 +114,18 @@ export default function FormLancamento({
         Novo lançamento
       </h2>
 
+      <LegendaObrigatorios />
+
       <div className={styles.field}>
-        <label className={styles.label} htmlFor="lanc-tipo">Tipo</label>
+        <label className={styles.label} htmlFor="lanc-tipo">Tipo *</label>
         <select
           id="lanc-tipo"
           className={styles.select}
           value={tipo}
           onChange={(e) => handleTipoChange(e.target.value as TipoLancamento)}
           disabled={desabilitado}
+          required
+          aria-required="true"
         >
           <option value="RECEITA">Receita</option>
           <option value="DESPESA">Despesa</option>
@@ -128,7 +133,7 @@ export default function FormLancamento({
       </div>
 
       <div className={styles.field}>
-        <label className={styles.label} htmlFor="lanc-valor">Valor (R$)</label>
+        <label className={styles.label} htmlFor="lanc-valor">Valor (R$) *</label>
         <input
           id="lanc-valor"
           className={styles.input}
@@ -140,11 +145,12 @@ export default function FormLancamento({
           onChange={(e) => setValor(e.target.value)}
           disabled={desabilitado}
           required
+          aria-required="true"
         />
       </div>
 
       <div className={styles.field}>
-        <label className={styles.label} htmlFor="lanc-data">Data</label>
+        <label className={styles.label} htmlFor="lanc-data">Data *</label>
         <input
           id="lanc-data"
           className={styles.input}
@@ -153,11 +159,12 @@ export default function FormLancamento({
           onChange={(e) => setData(e.target.value)}
           disabled={desabilitado}
           required
+          aria-required="true"
         />
       </div>
 
       <div className={styles.field}>
-        <label className={styles.label} htmlFor="lanc-categoria">Categoria</label>
+        <label className={styles.label} htmlFor="lanc-categoria">Categoria *</label>
         {erroCategorias ? (
           <p className={`${styles.alert} ${styles.alertError}`} style={{ margin: 0 }}>
             {erroCategorias}
@@ -170,6 +177,7 @@ export default function FormLancamento({
             onChange={(e) => setCatId(e.target.value)}
             disabled={mutando}
             required
+            aria-required="true"
           >
             <option value="">Selecione...</option>
             {categoriasDoTipo.map((c) => (
@@ -180,7 +188,7 @@ export default function FormLancamento({
       </div>
 
       <div className={styles.field}>
-        <label className={styles.label} htmlFor="lanc-forma">Forma de pagamento</label>
+        <label className={styles.label} htmlFor="lanc-forma">Forma de pagamento *</label>
         <select
           id="lanc-forma"
           className={styles.select}
@@ -188,6 +196,7 @@ export default function FormLancamento({
           onChange={(e) => setForma(e.target.value as FormaPagamentoLancamento)}
           disabled={desabilitado}
           required
+          aria-required="true"
         >
           <option value="DINHEIRO">Dinheiro (sai/entra do caixa)</option>
           <option value="PIX">PIX</option>
@@ -200,7 +209,7 @@ export default function FormLancamento({
       </div>
 
       <div className={styles.field}>
-        <label className={styles.label} htmlFor="lanc-descricao">Descrição</label>
+        <label className={styles.label} htmlFor="lanc-descricao">Descrição *</label>
         <input
           id="lanc-descricao"
           className={styles.input}
@@ -211,6 +220,7 @@ export default function FormLancamento({
           onChange={(e) => setDescricao(e.target.value)}
           disabled={desabilitado}
           required
+          aria-required="true"
         />
       </div>
 
