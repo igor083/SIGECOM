@@ -491,6 +491,19 @@
   flex: 1;
 }
 
+/* ISO 9241-17 5.3.1: a largura do campo indica o tamanho do dado esperado.
+   max-width (e não width) para nunca estourar a coluna em tela estreita. */
+
+/* Valores em R$ até "9.999.999,99" + padding + setas do input number */
+.campoMonetario {
+  max-width: calc(12ch + 3rem);
+}
+
+/* Quantidades inteiras de 1 a 4 dígitos + padding + setas do input number */
+.campoQuantidade {
+  max-width: calc(4ch + 3.5rem);
+}
+
 .inputHint {
   font-size: 0.75rem;
   color: var(--color-text-secondary);

@@ -421,7 +421,7 @@ export default function GestaoProdutosPage() {
                   <div className={styles.row}>
                     <div className={styles.formGroup}>
                       <label htmlFor="c-cmv">Custo (CMV) R$</label>
-                      <input id="c-cmv" className={styles.formInput} type="number" step="0.01" min="0" placeholder="0,00" value={formCmv} onChange={(e) => setFormCmv(e.target.value)} disabled={mutating} />
+                      <input id="c-cmv" className={`${styles.formInput} ${styles.campoMonetario}`} type="number" step="0.01" min="0" placeholder="0,00" value={formCmv} onChange={(e) => setFormCmv(e.target.value)} disabled={mutating} />
                     </div>
                     <div className={styles.formGroup} style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
                       {financeParams && parseFloat(formCmv) > 0 && (
@@ -459,19 +459,19 @@ export default function GestaoProdutosPage() {
                       })()}
                     </div>
                   )}
+                  <div className={styles.formGroup}>
+                    <label htmlFor="c-preco">Preço de Venda (R$) *</label>
+                    <input id="c-preco" className={`${styles.formInput} ${styles.campoMonetario}`} type="number" step="0.01" min="0" placeholder="0,00" value={formPreco} onChange={(e) => setFormPreco(e.target.value)} disabled={mutating} required aria-required="true" />
+                  </div>
                   <div className={styles.row}>
                     <div className={styles.formGroup}>
-                      <label htmlFor="c-preco">Preço de Venda (R$) *</label>
-                      <input id="c-preco" className={styles.formInput} type="number" step="0.01" min="0" placeholder="0,00" value={formPreco} onChange={(e) => setFormPreco(e.target.value)} disabled={mutating} required aria-required="true" />
+                      <label htmlFor="c-estmin">Estoque Mínimo *</label>
+                      <input id="c-estmin" className={`${styles.formInput} ${styles.campoQuantidade}`} type="number" min="0" placeholder="5" value={formEstoqueMinimo} onChange={(e) => setFormEstoqueMinimo(e.target.value)} disabled={mutating} required aria-required="true" />
                     </div>
                     <div className={styles.formGroup}>
-                      <label htmlFor="c-estmin">Estoque Mínimo *</label>
-                      <input id="c-estmin" className={styles.formInput} type="number" min="0" placeholder="5" value={formEstoqueMinimo} onChange={(e) => setFormEstoqueMinimo(e.target.value)} disabled={mutating} required aria-required="true" />
+                      <label htmlFor="c-qtdinicial">Quantidade em Estoque</label>
+                      <input id="c-qtdinicial" className={`${styles.formInput} ${styles.campoQuantidade}`} type="number" min="0" placeholder="0" value={formQtdInicial} onChange={(e) => setFormQtdInicial(e.target.value)} disabled={mutating} />
                     </div>
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label htmlFor="c-qtdinicial">Quantidade em Estoque</label>
-                    <input id="c-qtdinicial" className={styles.formInput} type="number" min="0" placeholder="0" value={formQtdInicial} onChange={(e) => setFormQtdInicial(e.target.value)} disabled={mutating} />
                   </div>
                   <div className={styles.formGroup}>
                     <label htmlFor="c-desc">Descrição</label>
