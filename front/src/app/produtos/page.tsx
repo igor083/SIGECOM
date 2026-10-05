@@ -13,6 +13,7 @@ import AppShell from "@/components/AppShell";
 import Breadcrumb from "@/components/Breadcrumb";
 import Paginacao from "@/components/Paginacao";
 import PreviaImagem from "@/components/PreviaImagem";
+import { mascararMoeda, numeroParaMoeda } from "@/lib/moeda";
 import LegendaObrigatorios from "@/components/LegendaObrigatorios";
 import ErroCampo from "@/components/ErroCampo";
 import { useValidacaoFormulario } from "@/hooks/useValidacaoFormulario";
@@ -457,26 +458,26 @@ export default function GestaoProdutosPage() {
                   <div className={styles.row}>
                     <div className={styles.formGroup}>
                       <label htmlFor="c-cmv">Custo (CMV) R$</label>
-                      <input id="c-cmv" className={`${styles.formInput} ${styles.campoMonetario}`} type="number" step="0.01" min="0" placeholder="0,00" value={formCmv} onChange={(e) => setFormCmv(e.target.value)} disabled={mutating} {...propsCampo("cmv")} />
+                      <input id="c-cmv" className={`${styles.formInput} ${styles.campoMonetario}`} type="text" inputMode="decimal" placeholder="0,00" value={formCmv} onChange={(e) => setFormCmv(mascararMoeda(e.target.value))} disabled={mutating} {...propsCampo("cmv")} />
                       <ErroCampo idCampo="c-cmv" mensagem={mensagem("cmv")} />
                     </div>
                     <div className={styles.formGroup} style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-                      {financeParams && parseFloat(formCmv) > 0 && (
+                      {financeParams && paraNumero(formCmv) > 0 && (
                         <div style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)" }}>
-                          Sugerido: <strong>R$ {precoSugerido(parseFloat(formCmv), financeParams).toFixed(2)}</strong>
-                          <button type="button" style={{ marginLeft: "6px", background: "var(--color-primary-50)", color: "var(--color-primary)", border: "1px solid var(--color-primary-100)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }} onClick={() => setFormPreco(precoSugerido(parseFloat(formCmv), financeParams!).toFixed(2))}>Aplicar</button>
+                          Sugerido: <strong>R$ {precoSugerido(paraNumero(formCmv), financeParams).toFixed(2)}</strong>
+                          <button type="button" style={{ marginLeft: "6px", background: "var(--color-primary-50)", color: "var(--color-primary)", border: "1px solid var(--color-primary-100)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }} onClick={() => setFormPreco(numeroParaMoeda(precoSugerido(paraNumero(formCmv), financeParams!)))}>Aplicar</button>
                         </div>
                       )}
                     </div>
                   </div>
-                  {financeParams && parseFloat(formCmv) > 0 && (
+                  {financeParams && paraNumero(formCmv) > 0 && (
                     <div>
                       <button type="button" style={{ background: "none", border: "none", color: "var(--color-primary)", textDecoration: "underline", cursor: "pointer", fontSize: "0.75rem", padding: 0 }} onClick={() => setMostrarComposicao(!mostrarComposicao)}>
                         {mostrarComposicao ? "Ocultar composição" : "Ver composição do preço"}
                       </button>
                       {mostrarComposicao && (() => {
                         const params = financeParams!;
-                        const cmvNum = parseFloat(formCmv);
+                        const cmvNum = paraNumero(formCmv);
                         const precoP = precoSugerido(cmvNum, params);
                         const emReais = (pct: number) => formatarPreco((pct / 100) * precoP);
                         return (
@@ -498,7 +499,7 @@ export default function GestaoProdutosPage() {
                   )}
                   <div className={styles.formGroup}>
                     <label htmlFor="c-preco">Preço de Venda (R$) *</label>
-                    <input id="c-preco" className={`${styles.formInput} ${styles.campoMonetario}`} type="number" step="0.01" min="0" placeholder="0,00" value={formPreco} onChange={(e) => setFormPreco(e.target.value)} disabled={mutating} required aria-required="true" {...propsCampo("preco")} />
+                    <input id="c-preco" className={`${styles.formInput} ${styles.campoMonetario}`} type="text" inputMode="decimal" placeholder="0,00" value={formPreco} onChange={(e) => setFormPreco(mascararMoeda(e.target.value))} disabled={mutating} required aria-required="true" {...propsCampo("preco")} />
                     <ErroCampo idCampo="c-preco" mensagem={mensagem("preco")} />
                   </div>
                   <div className={styles.row}>
@@ -565,10 +566,10 @@ export default function GestaoProdutosPage() {
                       <input id="e-cmv" className={styles.formInput} type="number" step="0.01" min="0" placeholder="0,00" value={formCmv} onChange={(e) => setFormCmv(e.target.value)} disabled={mutating} />
                     </div>
                     <div className={styles.formGroup} style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-                      {financeParams && parseFloat(formCmv) > 0 && (
+                      {financeParams && paraNumero(formCmv) > 0 && (
                         <div style={{ fontSize: "0.8rem", color: "var(--color-text-secondary)" }}>
-                          Sugerido: <strong>R$ {precoSugerido(parseFloat(formCmv), financeParams).toFixed(2)}</strong>
-                          <button type="button" style={{ marginLeft: "6px", background: "var(--color-primary-50)", color: "var(--color-primary)", border: "1px solid var(--color-primary-100)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }} onClick={() => setFormPreco(precoSugerido(parseFloat(formCmv), financeParams!).toFixed(2))}>Aplicar</button>
+                          Sugerido: <strong>R$ {precoSugerido(paraNumero(formCmv), financeParams).toFixed(2)}</strong>
+                          <button type="button" style={{ marginLeft: "6px", background: "var(--color-primary-50)", color: "var(--color-primary)", border: "1px solid var(--color-primary-100)", borderRadius: "4px", padding: "2px 6px", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }} onClick={() => setFormPreco(precoSugerido(paraNumero(formCmv), financeParams!).toFixed(2))}>Aplicar</button>
                         </div>
                       )}
                     </div>

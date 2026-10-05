@@ -53,10 +53,15 @@ export function urlHttp(mensagem: string): Regra {
   };
 }
 
-/** Converte o texto do campo em número; NaN se não for numérico. */
+/**
+ * Converte o texto do campo em número; NaN se não for numérico.
+ * Aceita o padrão brasileiro dos campos em R$ ("1.234,56") e o do
+ * input number ("1234.56").
+ */
 export function paraNumero(valor: string): number {
   const limpo = valor.trim();
-  return limpo ? Number(limpo) : NaN;
+  if (!limpo) return NaN;
+  return Number(limpo.includes(",") ? limpo.replace(/\./g, "").replace(",", ".") : limpo);
 }
 
 export function monetario(mensagens: { negativo: string; zero?: string }): Regra {

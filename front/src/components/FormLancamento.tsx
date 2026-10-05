@@ -16,6 +16,7 @@ import { useValidacaoFormulario } from "@/hooks/useValidacaoFormulario";
 import {
   regras, obrigatorio, monetario, dataValida, paraNumero,
 } from "@/lib/validacao";
+import { mascararMoeda } from "@/lib/moeda";
 import LegendaObrigatorios from "./LegendaObrigatorios";
 import ErroCampo from "./ErroCampo";
 import styles from "./forms.module.css";
@@ -154,12 +155,11 @@ export default function FormLancamento({
         <input
           id="lanc-valor"
           className={styles.input}
-          type="number"
-          step="0.01"
-          min="0.01"
+          type="text"
+          inputMode="decimal"
           placeholder="0,00"
           value={valor}
-          onChange={(e) => setValor(e.target.value)}
+          onChange={(e) => setValor(mascararMoeda(e.target.value))}
           disabled={desabilitado}
           required
           aria-required="true"
