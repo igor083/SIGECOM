@@ -12,7 +12,12 @@ import type {
   LancamentoRequest,
   LancamentoResponse,
 } from "@/services/lancamentos";
+import { useValidacaoFormulario } from "@/hooks/useValidacaoFormulario";
+import {
+  regras, obrigatorio, monetario, dataValida, paraNumero,
+} from "@/lib/validacao";
 import LegendaObrigatorios from "./LegendaObrigatorios";
+import ErroCampo from "./ErroCampo";
 import styles from "./forms.module.css";
 
 // o input date so aceita yyyy-MM-dd
@@ -23,6 +28,23 @@ function hoje(): string {
   const dd = String(d.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 }
+
+// mesmas regras do LancamentoRequest no back (@NotNull, @Positive, @NotBlank)
+const CAMPOS = {
+  tipo:      { id: "lanc-tipo",      regra: obrigatorio("Selecione o tipo.") },
+  valor:     { id: "lanc-valor",     regra: regras(
+    obrigatorio("Informe o valor."),
+    monetario({ negativo: "O valor não pode ser negativo.", zero: "O valor deve ser maior que zero." }),
+  ) },
+  // o input date devolve "" para data incompleta, por isso a mesma mensagem
+  data:      { id: "lanc-data",      regra: regras(
+    obrigatorio("Informe uma data válida."),
+    dataValida("Informe uma data válida."),
+  ) },
+  categoria: { id: "lanc-categoria", regra: obrigatorio("Selecione uma categoria.") },
+  forma:     { id: "lanc-forma",     regra: obrigatorio("Selecione a forma de pagamento.") },
+  descricao: { id: "lanc-descricao", regra: obrigatorio("Informe uma descrição.") },
+};
 
 interface FormLancamentoProps {
   categorias: CategoriaFinanceira[]; // todas (receita e despesa); filtramos pelo tipo aqui
@@ -47,6 +69,10 @@ export default function FormLancamento({
   const [erroLocal, setErroLocal] = useState<string | null>(null);
   const [sucesso,   setSucesso]   = useState(false);
 
+  const { mensagem, propsCampo, validarTudo, limpar } = useValidacaoFormulario(CAMPOS, {
+    tipo, valor, data, categoria: catId, forma, descricao,
+  });
+
   // categorias do tipo selecionado — cada categoria ja carrega o proprio tipo
   const categoriasDoTipo = useMemo(
     () => categorias.filter((c) => c.tipo === tipo),
@@ -69,23 +95,11 @@ export default function FormLancamento({
     e.preventDefault();
     setErroLocal(null);
 
-    // criterio 3 do card, nao pode zero nem negativo
-    const valorNum = parseFloat(valor);
-    if (!valor || isNaN(valorNum) || valorNum <= 0) {
-      setErroLocal("O valor deve ser maior que zero.");
-      return;
-    }
-    if (!catId) {
-      setErroLocal("Selecione uma categoria.");
-      return;
-    }
-    if (!descricao.trim()) {
-      setErroLocal("Informe uma descrição.");
-      return;
-    }
+    // criterio 3 do card (valor nao pode zero nem negativo) esta em CAMPOS
+    if (!validarTudo()) return;
 
     const req: LancamentoRequest = {
-      valor: valorNum,
+      valor: paraNumero(valor),
       data,
       categoriaId: Number(catId),
       descricao: descricao.trim(),
@@ -100,6 +114,7 @@ export default function FormLancamento({
       setCatId("");
       setDescricao("");
       setForma("DINHEIRO");
+      limpar();
       setSucesso(true);
     } catch (err) {
       setErroLocal(err instanceof Error ? err.message : "Falha ao registrar o lançamento.");
@@ -126,10 +141,12 @@ export default function FormLancamento({
           disabled={desabilitado}
           required
           aria-required="true"
+          {...propsCampo("tipo")}
         >
           <option value="RECEITA">Receita</option>
           <option value="DESPESA">Despesa</option>
         </select>
+        <ErroCampo idCampo="lanc-tipo" mensagem={mensagem("tipo")} />
       </div>
 
       <div className={styles.field}>
@@ -146,7 +163,9 @@ export default function FormLancamento({
           disabled={desabilitado}
           required
           aria-required="true"
+          {...propsCampo("valor")}
         />
+        <ErroCampo idCampo="lanc-valor" mensagem={mensagem("valor")} />
       </div>
 
       <div className={styles.field}>
@@ -160,7 +179,9 @@ export default function FormLancamento({
           disabled={desabilitado}
           required
           aria-required="true"
+          {...propsCampo("data")}
         />
+        <ErroCampo idCampo="lanc-data" mensagem={mensagem("data")} />
       </div>
 
       <div className={styles.field}>
@@ -178,6 +199,7 @@ export default function FormLancamento({
             disabled={mutando}
             required
             aria-required="true"
+            {...propsCampo("categoria")}
           >
             <option value="">Selecione...</option>
             {categoriasDoTipo.map((c) => (
@@ -185,6 +207,7 @@ export default function FormLancamento({
             ))}
           </select>
         )}
+        <ErroCampo idCampo="lanc-categoria" mensagem={mensagem("categoria")} />
       </div>
 
       <div className={styles.field}>
@@ -197,6 +220,7 @@ export default function FormLancamento({
           disabled={desabilitado}
           required
           aria-required="true"
+          {...propsCampo("forma")}
         >
           <option value="DINHEIRO">Dinheiro (sai/entra do caixa)</option>
           <option value="PIX">PIX</option>
@@ -206,6 +230,7 @@ export default function FormLancamento({
           <option value="BOLETO">Boleto</option>
           <option value="OUTRO">Outro</option>
         </select>
+        <ErroCampo idCampo="lanc-forma" mensagem={mensagem("forma")} />
       </div>
 
       <div className={styles.field}>
@@ -221,7 +246,9 @@ export default function FormLancamento({
           disabled={desabilitado}
           required
           aria-required="true"
+          {...propsCampo("descricao")}
         />
+        <ErroCampo idCampo="lanc-descricao" mensagem={mensagem("descricao")} />
       </div>
 
       {erroLocal && (

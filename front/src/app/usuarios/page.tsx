@@ -11,6 +11,9 @@ import { mensagemDeErro } from "@/lib/apiError";
 import AppShell from "@/components/AppShell";
 import Paginacao from "@/components/Paginacao";
 import LegendaObrigatorios from "@/components/LegendaObrigatorios";
+import ErroCampo from "@/components/ErroCampo";
+import { useValidacaoFormulario } from "@/hooks/useValidacaoFormulario";
+import { regras, obrigatorio, email, tamanhoMinimo } from "@/lib/validacao";
 import s from "./usuarios.module.css";
 
 const X_ICON = (
@@ -22,6 +25,17 @@ const X_ICON = (
 function formatarData(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
+
+// Novo usuário, na ordem da tela. Regras do CadastroRequest no back
+// (@NotBlank, @Email, @Size(min = 6)). Perfil é rádio e sempre tem valor.
+const CAMPOS_CRIAR = {
+  nome:  { id: "c-nome",  regra: obrigatorio("Informe o nome do usuário.") },
+  email: { id: "c-email", regra: regras(obrigatorio("Informe o e-mail."), email) },
+  senha: { id: "c-senha", regra: regras(
+    obrigatorio("Informe a senha."),
+    tamanhoMinimo(6, "A senha deve ter no mínimo 6 caracteres."),
+  ) },
+};
 
 export default function UsuariosPage() {
   const router = useRouter();
@@ -51,6 +65,10 @@ export default function UsuariosPage() {
   const [formSenha, setFormSenha] = useState("");
   const [formPerfil, setFormPerfil] = useState<PerfilUsuario>("FUNCIONARIO");
   const [confirmouPermissoes, setConfirmouPermissoes] = useState(false);
+  const validacaoCriar = useValidacaoFormulario(CAMPOS_CRIAR, {
+    nome: formNome, email: formEmail, senha: formSenha,
+  });
+  const { mensagem, propsCampo } = validacaoCriar;
 
   // Form editar
   const [editNome, setEditNome] = useState("");
@@ -99,6 +117,7 @@ export default function UsuariosPage() {
   function abrirCriar() {
     setFormNome(""); setFormEmail(""); setFormSenha(""); setFormPerfil("FUNCIONARIO");
     setConfirmouPermissoes(false);
+    validacaoCriar.limpar();
     setModalErro(null); setModalSucesso(null);
     setModalAberto("criar");
   }
@@ -124,7 +143,7 @@ export default function UsuariosPage() {
 
   async function handleCriar(e: FormEvent) {
     e.preventDefault();
-    if (formSenha.length < 6) { setModalErro("A senha deve ter no mínimo 6 caracteres."); return; }
+    if (!validacaoCriar.validarTudo()) return;
     setMutating(true); setModalErro(null);
     try {
       await criarUsuario({ nome: formNome.trim(), email: formEmail.trim(), senha: formSenha, perfil: formPerfil });
@@ -325,7 +344,7 @@ export default function UsuariosPage() {
               <h2>Novo Usuário</h2>
               <button className={s.closeBtn} onClick={fecharModal} disabled={mutating}>{X_ICON}</button>
             </div>
-            <form onSubmit={handleCriar}>
+            <form onSubmit={handleCriar} noValidate>
               <div className={s.modalBody}>
                 {modalErro && <div className={`${s.alert} ${s.alertError}`}>{modalErro}</div>}
                 {modalSucesso && <div className={`${s.alert} ${s.alertSuccess}`}>{modalSucesso}</div>}
@@ -333,15 +352,18 @@ export default function UsuariosPage() {
                 <div className={s.formGrid}>
                   <div className={s.formGroupFull}>
                     <label htmlFor="c-nome">Nome *</label>
-                    <input id="c-nome" className={s.formInput} type="text" placeholder="Nome completo" value={formNome} onChange={(e) => setFormNome(e.target.value)} disabled={mutating} required aria-required="true" />
+                    <input id="c-nome" className={s.formInput} type="text" placeholder="Nome completo" value={formNome} onChange={(e) => setFormNome(e.target.value)} disabled={mutating} required aria-required="true" {...propsCampo("nome")} />
+                    <ErroCampo idCampo="c-nome" mensagem={mensagem("nome")} />
                   </div>
                   <div className={s.formGroupFull}>
                     <label htmlFor="c-email">E-mail *</label>
-                    <input id="c-email" className={s.formInput} type="email" placeholder="email@exemplo.com" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} disabled={mutating} required aria-required="true" />
+                    <input id="c-email" className={s.formInput} type="email" placeholder="email@exemplo.com" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} disabled={mutating} required aria-required="true" {...propsCampo("email")} />
+                    <ErroCampo idCampo="c-email" mensagem={mensagem("email")} />
                   </div>
                   <div className={s.formGroup}>
                     <label htmlFor="c-senha">Senha *</label>
-                    <input id="c-senha" className={s.formInput} type="password" placeholder="Mínimo 6 caracteres" value={formSenha} onChange={(e) => setFormSenha(e.target.value)} disabled={mutating} required aria-required="true" minLength={6} />
+                    <input id="c-senha" className={s.formInput} type="password" placeholder="Mínimo 6 caracteres" value={formSenha} onChange={(e) => setFormSenha(e.target.value)} disabled={mutating} required aria-required="true" minLength={6} {...propsCampo("senha")} />
+                    <ErroCampo idCampo="c-senha" mensagem={mensagem("senha")} />
                   </div>
                   <div className={s.formGroup}>
                     <label id="c-perfil-rotulo">Perfil *</label>
@@ -387,7 +409,7 @@ export default function UsuariosPage() {
                   </div>
               <div className={s.modalFooter}>
                 <button type="button" className={s.secondaryBtn} onClick={fecharModal} disabled={mutating}>Cancelar</button>
-                <button type="submit" className={s.primaryBtn} disabled={mutating || !formNome.trim() || !formEmail.trim() || !formSenha || !confirmouPermissoes}>
+                <button type="submit" className={s.primaryBtn} disabled={mutating || !confirmouPermissoes}>
                   {mutating ? "Salvando..." : "Criar Usuário"}
                 </button>
               </div>

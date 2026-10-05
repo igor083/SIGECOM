@@ -14,6 +14,11 @@ import Breadcrumb from "@/components/Breadcrumb";
 import Paginacao from "@/components/Paginacao";
 import PreviaImagem from "@/components/PreviaImagem";
 import LegendaObrigatorios from "@/components/LegendaObrigatorios";
+import ErroCampo from "@/components/ErroCampo";
+import { useValidacaoFormulario } from "@/hooks/useValidacaoFormulario";
+import {
+  regras, obrigatorio, monetario, inteiroNaoNegativo, urlHttp, paraNumero,
+} from "@/lib/validacao";
 import styles from "./produtos.module.css";
 
 function formatarPreco(valor: number): string {
@@ -35,6 +40,23 @@ function getStatus(prod: Produto): { label: string; color: string } {
   if (prod.qtdEstoque <= prod.estoqueMinimo) return { label: "Estoque baixo", color: "var(--color-error)" };
   return { label: "Em estoque", color: "var(--color-success)" };
 }
+
+// Cadastro de produto, na ordem da tela. Regras do CadastroProdutoRequest
+// (@NotBlank, @NotNull, @DecimalMin, @Min, @Pattern); preço zero também é
+// barrado aqui (ISO 9241-17, auditoria do formulário).
+const MSG_INTEIRO = "Use um número inteiro igual ou maior que zero.";
+const CAMPOS_CRIAR = {
+  nome:          { id: "c-nome",       regra: obrigatorio("Informe o nome do produto.") },
+  categoria:     { id: "c-cat",        regra: obrigatorio("Selecione uma categoria.") },
+  cmv:           { id: "c-cmv",        regra: monetario({ negativo: "O custo não pode ser negativo." }) },
+  preco:         { id: "c-preco",      regra: regras(
+    obrigatorio("Informe o preço de venda."),
+    monetario({ negativo: "O preço não pode ser negativo.", zero: "O preço de venda deve ser maior que zero." }),
+  ) },
+  estoqueMinimo: { id: "c-estmin",     regra: regras(obrigatorio("Informe o estoque mínimo."), inteiroNaoNegativo(MSG_INTEIRO)) },
+  qtdInicial:    { id: "c-qtdinicial", regra: inteiroNaoNegativo(MSG_INTEIRO) },
+  imagemUrl:     { id: "c-imagem",     regra: urlHttp("Digite um link válido, ex.: https://exemplo.com/foto.jpg") },
+};
 
 export default function GestaoProdutosPage() {
   const router = useRouter();
@@ -75,6 +97,12 @@ export default function GestaoProdutosPage() {
   const [novaCatNome, setNovaCatNome] = useState("");
   const [catSalvando, setCatSalvando] = useState(false);
   const [catErro, setCatErro] = useState<string | null>(null);
+
+  const validacaoCriar = useValidacaoFormulario(CAMPOS_CRIAR, {
+    nome: formNome, categoria: formCategoriaId, cmv: formCmv, preco: formPreco,
+    estoqueMinimo: formEstoqueMinimo, qtdInicial: formQtdInicial, imagemUrl: formImagemUrl,
+  });
+  const { mensagem, propsCampo } = validacaoCriar;
 
   // FUNCIONARIO entra, mas só consulta: ele precisa conferir preço e estoque
   // para vender. Quem cadastra, edita, ajusta estoque e exclui é o ADMIN.
@@ -125,6 +153,7 @@ export default function GestaoProdutosPage() {
     setModalErro(null); setModalSucesso(null);
     setFinanceParams(obterParametrosFinanceiros()); setFormCmv(""); setMostrarComposicao(false);
     setCriandoCat(false); setNovaCatNome(""); setCatErro(null);
+    validacaoCriar.limpar();
     setModalAberto("criar");
   };
 
@@ -159,15 +188,10 @@ export default function GestaoProdutosPage() {
   async function handleCriar(e: FormEvent) {
     e.preventDefault();
     setModalErro(null); setModalSucesso(null);
-    if (!formNome.trim() || !formCategoriaId || !formPreco || !formEstoqueMinimo) {
-      setModalErro("Todos os campos obrigatórios devem ser preenchidos."); return;
-    }
-    const precoNum = parseFloat(formPreco);
+    if (!validacaoCriar.validarTudo()) return;
+    const precoNum = paraNumero(formPreco);
     const estMinNum = parseInt(formEstoqueMinimo);
-    if (isNaN(precoNum) || precoNum < 0) { setModalErro("Preço inválido."); return; }
-    if (isNaN(estMinNum) || estMinNum < 0) { setModalErro("Estoque mínimo inválido."); return; }
     const qtdInicialNum = formQtdInicial.trim() === "" ? 0 : parseInt(formQtdInicial);
-    if (isNaN(qtdInicialNum) || qtdInicialNum < 0) { setModalErro("Quantidade inicial inválida."); return; }
     try {
       await criar({ nome: formNome.trim(), descricao: formDescricao.trim(), imagemUrl: formImagemUrl.trim(), preco: precoNum, estoqueMinimo: estMinNum, categoriaId: parseInt(formCategoriaId), qtdEstoqueInicial: qtdInicialNum });
       setModalSucesso("Produto cadastrado com sucesso!");
@@ -388,7 +412,7 @@ export default function GestaoProdutosPage() {
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            <form onSubmit={handleCriar}>
+            <form onSubmit={handleCriar} noValidate>
               <div className={styles.modalBody}>
                 {modalErro && <div className={`${styles.alert} ${styles.alertError}`}>{modalErro}</div>}
                 {modalSucesso && <div className={`${styles.alert} ${styles.alertSuccess}`}>{modalSucesso}</div>}
@@ -396,13 +420,14 @@ export default function GestaoProdutosPage() {
                   <LegendaObrigatorios />
                   <div className={styles.formGroup}>
                     <label htmlFor="c-nome">Nome *</label>
-                    <input id="c-nome" className={styles.formInput} type="text" placeholder="Ex: Arroz 1kg" value={formNome} onChange={(e) => setFormNome(e.target.value)} disabled={mutating} required aria-required="true" />
+                    <input id="c-nome" className={styles.formInput} type="text" placeholder="Ex: Arroz 1kg" value={formNome} onChange={(e) => setFormNome(e.target.value)} disabled={mutating} required aria-required="true" {...propsCampo("nome")} />
+                    <ErroCampo idCampo="c-nome" mensagem={mensagem("nome")} />
                   </div>
                   <div className={styles.formGroup}>
                     <label htmlFor="c-cat">Categoria *</label>
                     {!criandoCat ? (
                       <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                        <select id="c-cat" className={styles.formSelect} style={{ flex: 1 }} value={formCategoriaId} onChange={(e) => setFormCategoriaId(e.target.value)} disabled={mutating} required aria-required="true">
+                        <select id="c-cat" className={styles.formSelect} style={{ flex: 1 }} value={formCategoriaId} onChange={(e) => setFormCategoriaId(e.target.value)} disabled={mutating} required aria-required="true" {...propsCampo("categoria")}>
                           {categoriasTodas.map((cat) => <option key={cat.id} value={cat.id}>{cat.nome}</option>)}
                         </select>
                         <button type="button" className={styles.secondaryBtn} style={{ whiteSpace: "nowrap", padding: "8px 12px" }} onClick={() => { setCriandoCat(true); setCatErro(null); setNovaCatNome(""); }} disabled={mutating}>+ Nova</button>
@@ -417,11 +442,13 @@ export default function GestaoProdutosPage() {
                         {catErro && <span style={{ color: "var(--color-error)", fontSize: "0.78rem" }}>{catErro}</span>}
                       </div>
                     )}
+                    <ErroCampo idCampo="c-cat" mensagem={mensagem("categoria")} />
                   </div>
                   <div className={styles.row}>
                     <div className={styles.formGroup}>
                       <label htmlFor="c-cmv">Custo (CMV) R$</label>
-                      <input id="c-cmv" className={`${styles.formInput} ${styles.campoMonetario}`} type="number" step="0.01" min="0" placeholder="0,00" value={formCmv} onChange={(e) => setFormCmv(e.target.value)} disabled={mutating} />
+                      <input id="c-cmv" className={`${styles.formInput} ${styles.campoMonetario}`} type="number" step="0.01" min="0" placeholder="0,00" value={formCmv} onChange={(e) => setFormCmv(e.target.value)} disabled={mutating} {...propsCampo("cmv")} />
+                      <ErroCampo idCampo="c-cmv" mensagem={mensagem("cmv")} />
                     </div>
                     <div className={styles.formGroup} style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
                       {financeParams && parseFloat(formCmv) > 0 && (
@@ -461,16 +488,19 @@ export default function GestaoProdutosPage() {
                   )}
                   <div className={styles.formGroup}>
                     <label htmlFor="c-preco">Preço de Venda (R$) *</label>
-                    <input id="c-preco" className={`${styles.formInput} ${styles.campoMonetario}`} type="number" step="0.01" min="0" placeholder="0,00" value={formPreco} onChange={(e) => setFormPreco(e.target.value)} disabled={mutating} required aria-required="true" />
+                    <input id="c-preco" className={`${styles.formInput} ${styles.campoMonetario}`} type="number" step="0.01" min="0" placeholder="0,00" value={formPreco} onChange={(e) => setFormPreco(e.target.value)} disabled={mutating} required aria-required="true" {...propsCampo("preco")} />
+                    <ErroCampo idCampo="c-preco" mensagem={mensagem("preco")} />
                   </div>
                   <div className={styles.row}>
                     <div className={styles.formGroup}>
                       <label htmlFor="c-estmin">Estoque Mínimo *</label>
-                      <input id="c-estmin" className={`${styles.formInput} ${styles.campoQuantidade}`} type="number" min="0" placeholder="5" value={formEstoqueMinimo} onChange={(e) => setFormEstoqueMinimo(e.target.value)} disabled={mutating} required aria-required="true" />
+                      <input id="c-estmin" className={`${styles.formInput} ${styles.campoQuantidade}`} type="number" min="0" placeholder="5" value={formEstoqueMinimo} onChange={(e) => setFormEstoqueMinimo(e.target.value)} disabled={mutating} required aria-required="true" {...propsCampo("estoqueMinimo")} />
+                      <ErroCampo idCampo="c-estmin" mensagem={mensagem("estoqueMinimo")} />
                     </div>
                     <div className={styles.formGroup}>
                       <label htmlFor="c-qtdinicial">Quantidade em Estoque</label>
-                      <input id="c-qtdinicial" className={`${styles.formInput} ${styles.campoQuantidade}`} type="number" min="0" placeholder="0" value={formQtdInicial} onChange={(e) => setFormQtdInicial(e.target.value)} disabled={mutating} />
+                      <input id="c-qtdinicial" className={`${styles.formInput} ${styles.campoQuantidade}`} type="number" min="0" placeholder="0" value={formQtdInicial} onChange={(e) => setFormQtdInicial(e.target.value)} disabled={mutating} {...propsCampo("qtdInicial")} />
+                      <ErroCampo idCampo="c-qtdinicial" mensagem={mensagem("qtdInicial")} />
                     </div>
                   </div>
                   <div className={styles.formGroup}>
@@ -479,14 +509,15 @@ export default function GestaoProdutosPage() {
                   </div>
                   <div className={styles.formGroup}>
                     <label htmlFor="c-imagem">Link da imagem</label>
-                    <input id="c-imagem" type="url" className={styles.formInput} placeholder="https://exemplo.com/foto.jpg" value={formImagemUrl} onChange={(e) => setFormImagemUrl(e.target.value)} disabled={mutating} />
+                    <input id="c-imagem" type="url" className={styles.formInput} placeholder="https://exemplo.com/foto.jpg" value={formImagemUrl} onChange={(e) => setFormImagemUrl(e.target.value)} disabled={mutating} {...propsCampo("imagemUrl")} />
+                    <ErroCampo idCampo="c-imagem" mensagem={mensagem("imagemUrl")} />
                     <PreviaImagem url={formImagemUrl} />
                   </div>
                 </div>
               </div>
               <div className={styles.modalFooter}>
                 <button type="button" className={styles.secondaryBtn} onClick={fecharModal} disabled={mutating}>Cancelar</button>
-                <button type="submit" className={styles.primaryBtn} disabled={mutating || !formNome.trim() || !formPreco || !formEstoqueMinimo}>{mutating ? "Salvando..." : "Salvar Produto"}</button>
+                <button type="submit" className={styles.primaryBtn} disabled={mutating}>{mutating ? "Salvando..." : "Salvar Produto"}</button>
               </div>
             </form>
           </div>
