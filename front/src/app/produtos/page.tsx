@@ -457,7 +457,7 @@ export default function GestaoProdutosPage() {
                   </div>
                   <div className={styles.row}>
                     <div className={styles.formGroup}>
-                      <label htmlFor="c-cmv">Custo (CMV) R$</label>
+                      <label htmlFor="c-cmv">Custo (CMV) (R$)</label>
                       <input id="c-cmv" className={`${styles.formInput} ${styles.campoMonetario}`} type="text" inputMode="decimal" placeholder="0,00" value={formCmv} onChange={(e) => setFormCmv(mascararMoeda(e.target.value))} disabled={mutating} {...propsCampo("cmv")} />
                       <ErroCampo idCampo="c-cmv" mensagem={mensagem("cmv")} />
                     </div>
@@ -562,7 +562,7 @@ export default function GestaoProdutosPage() {
                   </div>
                   <div className={styles.row}>
                     <div className={styles.formGroup}>
-                      <label htmlFor="e-cmv">Custo (CMV) R$</label>
+                      <label htmlFor="e-cmv">Custo (CMV) (R$)</label>
                       <input id="e-cmv" className={styles.formInput} type="number" step="0.01" min="0" placeholder="0,00" value={formCmv} onChange={(e) => setFormCmv(e.target.value)} disabled={mutating} />
                     </div>
                     <div className={styles.formGroup} style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
