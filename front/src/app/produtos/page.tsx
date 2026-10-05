@@ -16,6 +16,7 @@ import PreviaImagem from "@/components/PreviaImagem";
 import LegendaObrigatorios from "@/components/LegendaObrigatorios";
 import ErroCampo from "@/components/ErroCampo";
 import { useValidacaoFormulario } from "@/hooks/useValidacaoFormulario";
+import { useFocoNoModal } from "@/hooks/useFocoNoModal";
 import {
   regras, obrigatorio, monetario, inteiroNaoNegativo, urlHttp, paraNumero,
 } from "@/lib/validacao";
@@ -103,6 +104,14 @@ export default function GestaoProdutosPage() {
     estoqueMinimo: formEstoqueMinimo, qtdInicial: formQtdInicial, imagemUrl: formImagemUrl,
   });
   const { mensagem, propsCampo } = validacaoCriar;
+  const modalCriarRef = useFocoNoModal<HTMLDivElement>(modalAberto === "criar");
+
+  // Ao sair do modo "nova categoria" o input e os botões Criar/Cancelar
+  // somem com o foco junto; devolve o foco ao select para o Tab seguir
+  // de onde parou (ISO 9241-17, 8.2). rAF: o select só existe após o commit.
+  function voltarFocoCategoria() {
+    requestAnimationFrame(() => document.getElementById("c-cat")?.focus());
+  }
 
   // FUNCIONARIO entra, mas só consulta: ele precisa conferir preço e estoque
   // para vender. Quem cadastra, edita, ajusta estoque e exclui é o ADMIN.
@@ -139,6 +148,7 @@ export default function GestaoProdutosPage() {
       setCategoriasExtras((prev) => [...prev, nova]);
       setFormCategoriaId(nova.id.toString());
       setCriandoCat(false); setNovaCatNome("");
+      voltarFocoCategoria();
     } catch (err) {
       setCatErro(mensagemDeErro(err, "Não foi possível criar a categoria."));
     } finally {
@@ -405,10 +415,10 @@ export default function GestaoProdutosPage() {
       {/* ── MODAL: CRIAR ── */}
       {modalAberto === "criar" && (
         <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
+          <div className={styles.modal} ref={modalCriarRef} role="dialog" aria-modal="true" aria-labelledby="c-titulo">
             <div className={styles.modalHeader}>
-              <h2>Novo Produto</h2>
-              <button className={styles.closeBtn} onClick={fecharModal} disabled={mutating}>
+              <h2 id="c-titulo">Novo Produto</h2>
+              <button type="button" className={styles.closeBtn} onClick={fecharModal} disabled={mutating} aria-label="Fechar">
                 <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -437,7 +447,7 @@ export default function GestaoProdutosPage() {
                         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                           <input className={styles.formInput} style={{ flex: 1 }} type="text" placeholder="Nome da nova categoria" value={novaCatNome} onChange={(e) => setNovaCatNome(e.target.value)} disabled={catSalvando} autoFocus onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleCriarCategoria(); } }} />
                           <button type="button" className={styles.primaryBtn} style={{ padding: "8px 12px" }} onClick={handleCriarCategoria} disabled={catSalvando || !novaCatNome.trim()}>{catSalvando ? "..." : "Criar"}</button>
-                          <button type="button" className={styles.secondaryBtn} style={{ padding: "8px 12px" }} onClick={() => { setCriandoCat(false); setCatErro(null); }} disabled={catSalvando}>Cancelar</button>
+                          <button type="button" className={styles.secondaryBtn} style={{ padding: "8px 12px" }} onClick={() => { setCriandoCat(false); setCatErro(null); voltarFocoCategoria(); }} disabled={catSalvando}>Cancelar</button>
                         </div>
                         {catErro && <span style={{ color: "var(--color-error)", fontSize: "0.78rem" }}>{catErro}</span>}
                       </div>

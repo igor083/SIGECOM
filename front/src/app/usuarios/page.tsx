@@ -13,6 +13,7 @@ import Paginacao from "@/components/Paginacao";
 import LegendaObrigatorios from "@/components/LegendaObrigatorios";
 import ErroCampo from "@/components/ErroCampo";
 import { useValidacaoFormulario } from "@/hooks/useValidacaoFormulario";
+import { useFocoNoModal } from "@/hooks/useFocoNoModal";
 import { regras, obrigatorio, email, tamanhoMinimo } from "@/lib/validacao";
 import s from "./usuarios.module.css";
 
@@ -69,6 +70,7 @@ export default function UsuariosPage() {
     nome: formNome, email: formEmail, senha: formSenha,
   });
   const { mensagem, propsCampo } = validacaoCriar;
+  const modalCriarRef = useFocoNoModal<HTMLDivElement>(modalAberto === "criar");
 
   // Form editar
   const [editNome, setEditNome] = useState("");
@@ -339,10 +341,10 @@ export default function UsuariosPage() {
       {/* ── MODAL CRIAR ── */}
       {modalAberto === "criar" && (
         <div className={s.modalOverlay}>
-          <div className={s.modal}>
+          <div className={s.modal} ref={modalCriarRef} role="dialog" aria-modal="true" aria-labelledby="c-titulo">
             <div className={s.modalHeader}>
-              <h2>Novo Usuário</h2>
-              <button className={s.closeBtn} onClick={fecharModal} disabled={mutating}>{X_ICON}</button>
+              <h2 id="c-titulo">Novo Usuário</h2>
+              <button type="button" className={s.closeBtn} onClick={fecharModal} disabled={mutating} aria-label="Fechar">{X_ICON}</button>
             </div>
             <form onSubmit={handleCriar} noValidate>
               <div className={s.modalBody}>
