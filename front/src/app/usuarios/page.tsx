@@ -49,6 +49,7 @@ export default function UsuariosPage() {
   const [formEmail, setFormEmail] = useState("");
   const [formSenha, setFormSenha] = useState("");
   const [formPerfil, setFormPerfil] = useState<PerfilUsuario>("FUNCIONARIO");
+  const [confirmouPermissoes, setConfirmouPermissoes] = useState(false);
 
   // Form editar
   const [editNome, setEditNome] = useState("");
@@ -96,6 +97,7 @@ export default function UsuariosPage() {
 
   function abrirCriar() {
     setFormNome(""); setFormEmail(""); setFormSenha(""); setFormPerfil("FUNCIONARIO");
+    setConfirmouPermissoes(false);
     setModalErro(null); setModalSucesso(null);
     setModalAberto("criar");
   }
@@ -340,17 +342,48 @@ export default function UsuariosPage() {
                     <input id="c-senha" className={s.formInput} type="password" placeholder="Mínimo 6 caracteres" value={formSenha} onChange={(e) => setFormSenha(e.target.value)} disabled={mutating} required minLength={6} />
                   </div>
                   <div className={s.formGroup}>
-                    <label htmlFor="c-perfil">Perfil *</label>
-                    <select id="c-perfil" className={s.formSelect} value={formPerfil} onChange={(e) => setFormPerfil(e.target.value as PerfilUsuario)} disabled={mutating} required>
-                      <option value="FUNCIONARIO">Funcionário</option>
-                      <option value="ADMIN">Administrador</option>
-                    </select>
+                    <label>Perfil *</label>
+                    <div style={{ display: "flex", gap: "16px", marginTop: "8px", alignItems: "center" }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "0.875rem" }}>
+                        <input
+                          type="radio"
+                          name="formPerfil"
+                          value="FUNCIONARIO"
+                          checked={formPerfil === "FUNCIONARIO"}
+                          onChange={() => setFormPerfil("FUNCIONARIO")}
+                          disabled={mutating}
+                        />
+                        Funcionário
+                      </label>
+                      <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "0.875rem" }}>
+                        <input
+                          type="radio"
+                          name="formPerfil"
+                          value="ADMIN"
+                          checked={formPerfil === "ADMIN"}
+                          onChange={() => setFormPerfil("ADMIN")}
+                          disabled={mutating}
+                        />
+                        Administrador
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
+              <div className={s.formGroupFull} style={{ marginTop: "10px" }}>
+                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.85rem", userSelect: "none" }}>
+                      <input
+                        type="checkbox"
+                        checked={confirmouPermissoes}
+                        onChange={(e) => setConfirmouPermissoes(e.target.checked)}
+                        disabled={mutating}
+                      />
+                      Confirmo a veracidade dos dados e a permissão de acesso deste perfil
+                    </label>
+                  </div>
               <div className={s.modalFooter}>
                 <button type="button" className={s.secondaryBtn} onClick={fecharModal} disabled={mutating}>Cancelar</button>
-                <button type="submit" className={s.primaryBtn} disabled={mutating || !formNome.trim() || !formEmail.trim() || !formSenha}>
+                <button type="submit" className={s.primaryBtn} disabled={mutating || !formNome.trim() || !formEmail.trim() || !formSenha || !confirmouPermissoes}>
                   {mutating ? "Salvando..." : "Criar Usuário"}
                 </button>
               </div>
@@ -382,10 +415,30 @@ export default function UsuariosPage() {
                   </div>
                   <div className={s.formGroup}>
                     <label htmlFor="e-perfil">Perfil *</label>
-                    <select id="e-perfil" className={s.formSelect} value={editPerfil} onChange={(e) => setEditPerfil(e.target.value as PerfilUsuario)} disabled={mutating}>
-                      <option value="FUNCIONARIO">Funcionário</option>
-                      <option value="ADMIN">Administrador</option>
-                    </select>
+                    <div style={{ display: "flex", gap: "16px", marginTop: "8px", alignItems: "center" }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "0.875rem" }}>
+                        <input
+                          type="radio"
+                          name="editPerfil"
+                          value="FUNCIONARIO"
+                          checked={editPerfil === "FUNCIONARIO"}
+                          onChange={() => setEditPerfil("FUNCIONARIO")}
+                          disabled={mutating}
+                        />
+                        Funcionário
+                      </label>
+                      <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "0.875rem" }}>
+                        <input
+                          type="radio"
+                          name="editPerfil"
+                          value="ADMIN"
+                          checked={editPerfil === "ADMIN"}
+                          onChange={() => setEditPerfil("ADMIN")}
+                          disabled={mutating}
+                        />
+                        Administrador
+                      </label>
+                    </div>
                   </div>
                   {/* O toggle "Conta ativa" saiu daqui: desligá-lo era uma
                       segunda forma de remover, sem passar pela guarda que
