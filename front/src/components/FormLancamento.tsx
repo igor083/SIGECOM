@@ -30,7 +30,8 @@ function hoje(): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-// mesmas regras do LancamentoRequest no back (@NotNull, @Positive, @NotBlank)
+// mesmas regras do LancamentoRequest no back (@NotNull, @Positive).
+// Descrição é opcional (só @Size 255, garantido pelo maxLength do campo).
 const CAMPOS = {
   tipo:      { id: "lanc-tipo",      regra: obrigatorio("Selecione o tipo.") },
   valor:     { id: "lanc-valor",     regra: regras(
@@ -44,7 +45,6 @@ const CAMPOS = {
   ) },
   categoria: { id: "lanc-categoria", regra: obrigatorio("Selecione uma categoria.") },
   forma:     { id: "lanc-forma",     regra: obrigatorio("Selecione a forma de pagamento.") },
-  descricao: { id: "lanc-descricao", regra: obrigatorio("Informe uma descrição.") },
 };
 
 interface FormLancamentoProps {
@@ -71,7 +71,7 @@ export default function FormLancamento({
   const [sucesso,   setSucesso]   = useState(false);
 
   const { mensagem, propsCampo, validarTudo, limpar } = useValidacaoFormulario(CAMPOS, {
-    tipo, valor, data, categoria: catId, forma, descricao,
+    tipo, valor, data, categoria: catId, forma,
   });
 
   // categorias do tipo selecionado — cada categoria ja carrega o proprio tipo
@@ -234,7 +234,7 @@ export default function FormLancamento({
       </div>
 
       <div className={styles.field}>
-        <label className={styles.label} htmlFor="lanc-descricao">Descrição *</label>
+        <label className={styles.label} htmlFor="lanc-descricao">Descrição</label>
         <input
           id="lanc-descricao"
           className={styles.input}
@@ -244,11 +244,7 @@ export default function FormLancamento({
           value={descricao}
           onChange={(e) => setDescricao(e.target.value)}
           disabled={desabilitado}
-          required
-          aria-required="true"
-          {...propsCampo("descricao")}
         />
-        <ErroCampo idCampo="lanc-descricao" mensagem={mensagem("descricao")} />
       </div>
 
       {erroLocal && (

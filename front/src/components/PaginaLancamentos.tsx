@@ -274,7 +274,7 @@ export default function PaginaLancamentos() {
               >
                 <div>
                   <div style={{ fontWeight: 500, color: "var(--color-text)" }}>
-                    {l.descricao}
+                    {l.descricao || "Sem descrição"}
                   </div>
                   <div style={{ fontSize: "12px", color: "var(--color-text-muted)", marginTop: "2px" }}>
                     {l.categoria.nome}
