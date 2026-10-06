@@ -458,7 +458,7 @@ export default function GestaoProdutosPage() {
                   <div className={styles.row}>
                     <div className={styles.formGroup}>
                       <label htmlFor="c-cmv">Custo (CMV) (R$)</label>
-                      <input id="c-cmv" className={`${styles.formInput} ${styles.campoMonetario}`} type="text" inputMode="decimal" placeholder="0,00" value={formCmv} onChange={(e) => setFormCmv(mascararMoeda(e.target.value))} disabled={mutating} {...propsCampo("cmv")} />
+                      <input id="c-cmv" className={`${styles.formInput} ${styles.campoMonetario}`} type="text" inputMode="decimal" maxLength={10} placeholder="0,00" value={formCmv} onChange={(e) => setFormCmv(mascararMoeda(e.target.value))} disabled={mutating} {...propsCampo("cmv")} />
                       <ErroCampo idCampo="c-cmv" mensagem={mensagem("cmv")} />
                     </div>
                     <div className={styles.formGroup} style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
@@ -499,18 +499,18 @@ export default function GestaoProdutosPage() {
                   )}
                   <div className={styles.formGroup}>
                     <label htmlFor="c-preco">Preço de Venda (R$) *</label>
-                    <input id="c-preco" className={`${styles.formInput} ${styles.campoMonetario}`} type="text" inputMode="decimal" placeholder="0,00" value={formPreco} onChange={(e) => setFormPreco(mascararMoeda(e.target.value))} disabled={mutating} required aria-required="true" {...propsCampo("preco")} />
+                    <input id="c-preco" className={`${styles.formInput} ${styles.campoMonetario}`} type="text" inputMode="decimal" maxLength={10} placeholder="0,00" value={formPreco} onChange={(e) => setFormPreco(mascararMoeda(e.target.value))} disabled={mutating} required aria-required="true" {...propsCampo("preco")} />
                     <ErroCampo idCampo="c-preco" mensagem={mensagem("preco")} />
                   </div>
                   <div className={styles.row}>
                     <div className={styles.formGroup}>
                       <label htmlFor="c-estmin">Estoque Mínimo *</label>
-                      <input id="c-estmin" className={`${styles.formInput} ${styles.campoQuantidade}`} type="number" min="0" placeholder="5" value={formEstoqueMinimo} onChange={(e) => setFormEstoqueMinimo(e.target.value)} disabled={mutating} required aria-required="true" {...propsCampo("estoqueMinimo")} />
+                      <input id="c-estmin" className={`${styles.formInput} ${styles.campoQuantidade}`} type="text" inputMode="numeric" maxLength={4} placeholder="5" value={formEstoqueMinimo} onChange={(e) => setFormEstoqueMinimo(e.target.value)} disabled={mutating} required aria-required="true" {...propsCampo("estoqueMinimo")} />
                       <ErroCampo idCampo="c-estmin" mensagem={mensagem("estoqueMinimo")} />
                     </div>
                     <div className={styles.formGroup}>
                       <label htmlFor="c-qtdinicial">Quantidade em Estoque</label>
-                      <input id="c-qtdinicial" className={`${styles.formInput} ${styles.campoQuantidade}`} type="number" min="0" placeholder="0" value={formQtdInicial} onChange={(e) => setFormQtdInicial(e.target.value)} disabled={mutating} {...propsCampo("qtdInicial")} />
+                      <input id="c-qtdinicial" className={`${styles.formInput} ${styles.campoQuantidade}`} type="text" inputMode="numeric" maxLength={4} placeholder="0" value={formQtdInicial} onChange={(e) => setFormQtdInicial(e.target.value)} disabled={mutating} {...propsCampo("qtdInicial")} />
                       <ErroCampo idCampo="c-qtdinicial" mensagem={mensagem("qtdInicial")} />
                     </div>
                   </div>
