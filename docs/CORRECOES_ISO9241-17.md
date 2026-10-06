@@ -12,7 +12,7 @@ Stack do front: Next.js 16 (App Router), React 19, TypeScript, CSS Modules com o
 
 | Cláusula | Não conformidade original | Correção implementada | Arquivos alterados | Commit |
 |---|---|---|---|---|
-| 5.3.2 | "Novo lançamento" sem asterisco nos obrigatórios. Nenhum dos 3 formulários tinha legenda. Faltava `aria-required` | Asterisco em Tipo, Valor (R$), Data, Categoria, Forma de pagamento e Descrição. Legenda "* Campos obrigatórios" antes do primeiro campo nos 3 formulários. `required` + `aria-required="true"` em todos os obrigatórios. `role="radiogroup"` no Perfil | `components/FormLancamento.tsx`, `components/LegendaObrigatorios.tsx` (novo), `components/campoFormulario.module.css` (novo), `app/produtos/page.tsx`, `app/usuarios/page.tsx` | `550a4f8` |
+| 5.3.2 | "Novo lançamento" sem asterisco nos obrigatórios. Nenhum dos 3 formulários tinha legenda. Faltava `aria-required` | Asterisco em Tipo, Valor (R$), Data, Categoria e Forma de pagamento (Descrição passou a ser opcional no front e na API). Legenda "* Campos obrigatórios" antes do primeiro campo nos 3 formulários. `required` + `aria-required="true"` em todos os obrigatórios. `role="radiogroup"` no Perfil | `components/FormLancamento.tsx`, `components/LegendaObrigatorios.tsx` (novo), `components/campoFormulario.module.css` (novo), `app/produtos/page.tsx`, `app/usuarios/page.tsx`, `components/PaginaLancamentos.tsx`, `api/.../LancamentoRequest.java`, `api/.../LancamentoService.java` | `550a4f8`, `96a7109`, `e8fcb20` |
 | 5.3.1 | Estoque Mínimo e Quantidade em Estoque com a largura total do modal e sem limite de tamanho. Custo e Preço com larguras diferentes | Campos de comprimento fixo com o comprimento visível: Estoque Mínimo e Quantidade com `maxLength` 4 e largura de 4 dígitos, lado a lado. Custo (CMV) e Preço de Venda com `maxLength` 10 (`9999999,99`) e a mesma largura. Usa `max-width`, então em tela estreita o campo não passa da coluna | `app/produtos/page.tsx`, `app/produtos/produtos.module.css` | `d4b9c15`, `86e731b` |
 | 6.4.2 / 7.3 | Erros só apareciam no envio, num alerta genérico no topo ("Todos os campos obrigatórios devem ser preenchidos."), um por vez. Os botões ficavam desabilitados sem explicar o motivo | Validação no blur, só em campo já visitado. Borda vermelha e mensagem curta abaixo do campo, que some ao corrigir. No envio, valida tudo e foca o primeiro inválido. `aria-invalid` + `aria-describedby`. Regras e hook reutilizáveis | `lib/validacao.ts` (novo), `hooks/useValidacaoFormulario.ts` (novo), `components/ErroCampo.tsx` (novo), `app/globals.css`, os 3 formulários | `80497d6` |
 | 8.2 / 8.4 | Os modais de Produto e Usuário não recebiam o foco. O Tab percorria busca, filtros e tabela atrás do overlay antes de chegar ao Nome e saía do modal depois do último botão | Ao abrir, o foco vai para o Nome. Tab e Shift+Tab ficam presos ao modal, e ao fechar o foco volta ao botão que o abriu. Ao criar ou cancelar uma nova categoria, o foco volta ao select de Categoria. Nenhum `tabindex` positivo | `hooks/useFocoNoModal.ts` (novo), `app/produtos/page.tsx`, `app/usuarios/page.tsx` | `18bd33b` |
@@ -25,7 +25,7 @@ Stack do front: Next.js 16 (App Router), React 19, TypeScript, CSS Modules com o
 
 **Decisões tomadas com o responsável (divergências entre o pedido e o código):**
 
-- **Descrição do lançamento.** O back exige o campo (`@NotBlank` em `LancamentoRequest`), então ele foi marcado como obrigatório em vez de continuar sem asterisco.
+- **Descrição do lançamento.** Passou a ser opcional, como no inventário do relatório de auditoria. Na API, saiu o `@NotBlank` de `LancamentoRequest` (o `@Size(max = 255)` continua) e o service grava `""` quando ela vem vazia, porque a coluna segue `NOT NULL` e assim não é preciso migração. No front, o campo ficou sem asterisco, e a lista mostra "Sem descrição" quando ela está vazia.
 - **Botão "+ Nova".** Só existe no cadastro de Produto, e lá já vinha logo depois do select de Categoria. Nenhum botão novo foi criado no lançamento.
 - **Botões de envio.** "Salvar Produto" e "Criar Usuário" não ficam mais desabilitados por campo vazio. Assim a submissão consegue mostrar todos os erros e focar o primeiro.
 
@@ -206,7 +206,7 @@ export function mascararMoeda(texto: string): string {
 Pré-requisito: API e front rodando, login como ADMIN.
 
 **NC1 — 5.3.2 (obrigatórios)**
-1. Abra `/financeiro`. Confira "* Campos obrigatórios" abaixo de "Novo lançamento" e o asterisco em Tipo, Valor (R$), Data, Categoria, Forma de pagamento e Descrição.
+1. Abra `/financeiro`. Confira "* Campos obrigatórios" abaixo de "Novo lançamento" e o asterisco em Tipo, Valor (R$), Data, Categoria e Forma de pagamento. Descrição fica sem asterisco (opcional).
 2. Abra `/produtos` → "+ Adicionar produto". Confira a mesma legenda, no mesmo lugar (antes do primeiro campo) e no mesmo estilo.
 3. Abra `/usuarios` → "+ Novo Usuário". Faça a mesma conferência.
 4. (Opcional) No DevTools, confira `aria-required="true"` nos campos com asterisco.
@@ -223,7 +223,7 @@ Pré-requisito: API e front rodando, login como ADMIN.
 4. Estoque Mínimo `1.5` + Tab dá "Use um número inteiro igual ou maior que zero.". Com `-2`, mesma mensagem.
 5. Preço `0` + Tab dá "O preço de venda deve ser maior que zero.".
 6. Esvazie Nome, Preço e Estoque Mínimo e clique em "Salvar Produto". Os três erros aparecem juntos e o foco vai para o Nome.
-7. Em `/financeiro`, clique em "Salvar" com tudo vazio. Aparecem erros em Valor, Categoria e Descrição, e o foco vai para o Valor.
+7. Em `/financeiro`, clique em "Salvar" com tudo vazio. Aparecem erros em Valor e Categoria (Descrição é opcional), e o foco vai para o Valor. Preencha só os obrigatórios e salve: o lançamento aparece na lista como "Sem descrição".
 8. Valor `0` + Tab dá "O valor deve ser maior que zero.". Na Data, apague o dia e aperte Tab: "Informe uma data válida.".
 9. Em "Novo Usuário", E-mail `nome@` + Tab dá "Digite um e-mail válido, ex.: nome@empresa.com". Senha `123` + Tab dá "A senha deve ter no mínimo 6 caracteres.".
 10. Com leitor de tela (NVDA): ao focar um campo com erro, a mensagem é lida junto com o rótulo.
