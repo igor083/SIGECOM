@@ -2,7 +2,6 @@ package com.sigecom.model.request.lancamento;
 
 import com.sigecom.domain.enums.FormaPagamentoLancamento;
 import com.sigecom.domain.enums.TipoLancamento;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -24,7 +23,7 @@ public record LancamentoRequest(
         @NotNull(message = "A categoria é obrigatória")
         Long categoriaId,
 
-        @NotBlank(message = "A descrição é obrigatória")
+        // opcional: sem descrição, a categoria identifica o lançamento
         @Size(max = 255, message = "A descrição deve ter no máximo 255 caracteres")
         String descricao,
 

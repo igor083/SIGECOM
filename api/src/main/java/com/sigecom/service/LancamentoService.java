@@ -50,7 +50,8 @@ public class LancamentoService {
                 .usuario(responsavel)
                 .categoria(categoria)
                 .tipo(request.tipo())
-                .descricao(request.descricao().trim())
+                // descrição é opcional; a coluna é NOT NULL, então vazio vira ""
+                .descricao(request.descricao() == null ? "" : request.descricao().trim())
                 .valor(request.valor())
                 .formaPagamento(request.formaPagamento())
                 .dataHora(resolverDataHora(request.data()))
