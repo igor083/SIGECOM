@@ -397,18 +397,16 @@ export default function UsuariosPage() {
                     </div>
                   </div>
                 </div>
+                <label className={s.checkboxRow}>
+                  <input
+                    type="checkbox"
+                    checked={confirmouPermissoes}
+                    onChange={(e) => setConfirmouPermissoes(e.target.checked)}
+                    disabled={mutating}
+                  />
+                  Confirmo a veracidade dos dados e a permissão de acesso deste perfil
+                </label>
               </div>
-              <div className={s.formGroupFull} style={{ marginTop: "10px" }}>
-                    <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.85rem", userSelect: "none" }}>
-                      <input
-                        type="checkbox"
-                        checked={confirmouPermissoes}
-                        onChange={(e) => setConfirmouPermissoes(e.target.checked)}
-                        disabled={mutating}
-                      />
-                      Confirmo a veracidade dos dados e a permissão de acesso deste perfil
-                    </label>
-                  </div>
               <div className={s.modalFooter}>
                 <button type="button" className={s.secondaryBtn} onClick={fecharModal} disabled={mutating}>Cancelar</button>
                 <button type="submit" className={s.primaryBtn} disabled={mutating || !confirmouPermissoes}>
