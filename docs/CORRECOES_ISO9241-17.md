@@ -13,7 +13,7 @@ Stack do front: Next.js 16 (App Router), React 19, TypeScript, CSS Modules com o
 | Cláusula | Não conformidade original | Correção implementada | Arquivos alterados | Commit |
 |---|---|---|---|---|
 | 5.3.2 | "Novo lançamento" sem asterisco nos obrigatórios. Nenhum dos 3 formulários tinha legenda. Faltava `aria-required` | Asterisco em Tipo, Valor (R$), Data, Categoria, Forma de pagamento e Descrição. Legenda "* Campos obrigatórios" antes do primeiro campo nos 3 formulários. `required` + `aria-required="true"` em todos os obrigatórios. `role="radiogroup"` no Perfil | `components/FormLancamento.tsx`, `components/LegendaObrigatorios.tsx` (novo), `components/campoFormulario.module.css` (novo), `app/produtos/page.tsx`, `app/usuarios/page.tsx` | `550a4f8` |
-| 5.3.1 | Estoque Mínimo e Quantidade em Estoque com a largura total do modal. Custo e Preço com larguras diferentes | Estoque Mínimo e Quantidade lado a lado, com largura para 1 a 4 dígitos. Custo (CMV) e Preço de Venda com a mesma largura, adequada a valores monetários. Usa `max-width`, então em tela estreita o campo não passa da coluna | `app/produtos/page.tsx`, `app/produtos/produtos.module.css` | `d4b9c15` |
+| 5.3.1 | Estoque Mínimo e Quantidade em Estoque com a largura total do modal e sem limite de tamanho. Custo e Preço com larguras diferentes | Campos de comprimento fixo com o comprimento visível: Estoque Mínimo e Quantidade com `maxLength` 4 e largura de 4 dígitos, lado a lado. Custo (CMV) e Preço de Venda com `maxLength` 10 (`9999999,99`) e a mesma largura. Usa `max-width`, então em tela estreita o campo não passa da coluna | `app/produtos/page.tsx`, `app/produtos/produtos.module.css` | `d4b9c15`, `86e731b` |
 | 6.4.2 / 7.3 | Erros só apareciam no envio, num alerta genérico no topo ("Todos os campos obrigatórios devem ser preenchidos."), um por vez. Os botões ficavam desabilitados sem explicar o motivo | Validação no blur, só em campo já visitado. Borda vermelha e mensagem curta abaixo do campo, que some ao corrigir. No envio, valida tudo e foca o primeiro inválido. `aria-invalid` + `aria-describedby`. Regras e hook reutilizáveis | `lib/validacao.ts` (novo), `hooks/useValidacaoFormulario.ts` (novo), `components/ErroCampo.tsx` (novo), `app/globals.css`, os 3 formulários | `80497d6` |
 | 8.2 / 8.4 | Os modais de Produto e Usuário não recebiam o foco. O Tab percorria busca, filtros e tabela atrás do overlay antes de chegar ao Nome e saía do modal depois do último botão | Ao abrir, o foco vai para o Nome. Tab e Shift+Tab ficam presos ao modal, e ao fechar o foco volta ao botão que o abriu. Ao criar ou cancelar uma nova categoria, o foco volta ao select de Categoria. Nenhum `tabindex` positivo | `hooks/useFocoNoModal.ts` (novo), `app/produtos/page.tsx`, `app/usuarios/page.tsx` | `18bd33b` |
 | 6.4.4 | Verificado: **já conforme** na versão auditada (ver nota) | Nenhuma alteração necessária (NC5 não se aplica). O gate do checkbox foi mantido quando o botão deixou de ser travado por campo vazio | — | — |
@@ -50,18 +50,18 @@ export default function LegendaObrigatorios() {
 ### 5.3.1 — largura dos campos
 
 ```css
-/* app/produtos/produtos.module.css */
-.campoMonetario  { max-width: calc(12ch + 3rem); }   /* até "9.999.999,99" */
-.campoQuantidade { max-width: calc(4ch + 3.5rem); }  /* 1 a 4 dígitos + setas */
+/* app/produtos/produtos.module.css — largura = maxLength do campo */
+.campoMonetario  { max-width: calc(10ch + 2.5rem); } /* maxLength 10: "9999999,99" */
+.campoQuantidade { max-width: calc(4ch + 2.5rem); }  /* maxLength 4: "9999" */
 ```
 
 ```tsx
 <div className={styles.row}>
   <div className={styles.formGroup}> {/* Estoque Mínimo */}
-    <input id="c-estmin" className={`${styles.formInput} ${styles.campoQuantidade}`} … />
+    <input id="c-estmin" className={`${styles.formInput} ${styles.campoQuantidade}`} type="text" inputMode="numeric" maxLength={4} … />
   </div>
   <div className={styles.formGroup}> {/* Quantidade em Estoque */}
-    <input id="c-qtdinicial" className={`${styles.formInput} ${styles.campoQuantidade}`} … />
+    <input id="c-qtdinicial" className={`${styles.formInput} ${styles.campoQuantidade}`} type="text" inputMode="numeric" maxLength={4} … />
   </div>
 </div>
 ```
@@ -144,7 +144,7 @@ return () => { document.removeEventListener("keydown", onKeyDown); anterior?.foc
 | 1 | 5.1.1 — título do formulário | Conforme | ✅ Conforme | "Novo lançamento" (`FormLancamento.tsx`), "Novo Usuário" (`usuarios/page.tsx`) mantidos |
 | 2 | 5.3.6 — unidade no rótulo | Conforme | ✅ Conforme | "Valor (R$)", "Preço de Venda (R$)", "Custo (CMV) (R$)" |
 | 3 | 5.3.2 — identificação de obrigatórios | Não conforme | ✅ Conforme | Asterisco + legenda nas 3 telas, `aria-required` |
-| 4 | 5.3.1 — tamanho físico do campo | Não conforme | ✅ Conforme | `campoQuantidade` e `campoMonetario` |
+| 4 | 5.3.1 — tamanho físico do campo | Não conforme | ✅ Conforme | `maxLength` 4/10 com largura correspondente (`campoQuantidade`, `campoMonetario`) |
 | 5 | 6.1.3 — valores padrão | Conforme | ✅ Conforme | Estoque Mínimo `5` e Quantidade `0` (`abrirCriar`). Custo e Preço exibem `0,00` como *placeholder* (já era assim e foi mantido; um valor `0,00` real dispararia o erro de preço zero) |
 | 6 | 5.3.7 — exemplos/placeholder | Conforme | ✅ Conforme | "Ex: Arroz 1kg", "https://exemplo.com/foto.jpg", "Ex.: venda do balcão" |
 | 7 | 6.3.6 — botões de rádio | Conforme | ✅ Conforme | Funcionário/Administrador (`type="radio"`), agora com `role="radiogroup"` |
@@ -212,8 +212,8 @@ Pré-requisito: API e front rodando, login como ADMIN.
 4. (Opcional) No DevTools, confira `aria-required="true"` nos campos com asterisco.
 
 **NC2 — 5.3.1 (largura)**
-1. No modal "Novo Produto", confira Estoque Mínimo e Quantidade em Estoque lado a lado, estreitos (cabem 4 dígitos, ex.: `9999`).
-2. Confira que Custo (CMV) (R$) e Preço de Venda (R$) têm a mesma largura e que `9.999.999,99` cabe inteiro.
+1. No modal "Novo Produto", confira Estoque Mínimo e Quantidade em Estoque lado a lado, estreitos. Digite `12345`: só entram 4 dígitos, e `9999` ocupa o campo inteiro.
+2. Confira que Custo (CMV) (R$) e Preço de Venda (R$) têm a mesma largura e que `9999999,99` (limite de 10 caracteres) cabe inteiro.
 3. Reduza a janela para ~375 px. Os campos empilham, nenhum ultrapassa o modal e não surge rolagem horizontal.
 
 **NC3 — 6.4.2/7.3 (erros)**
