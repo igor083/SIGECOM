@@ -491,6 +491,20 @@
   flex: 1;
 }
 
+/* ISO 9241-17 5.3.1: campo de comprimento fixo mostra esse comprimento.
+   A largura acompanha o maxLength do input (+ padding e borda); max-width
+   (e não width) para nunca estourar a coluna em tela estreita. */
+
+/* Valores em R$: maxLength 10 ("9999999,99") */
+.campoMonetario {
+  max-width: calc(10ch + 2.5rem);
+}
+
+/* Quantidades inteiras: maxLength 4 ("9999") */
+.campoQuantidade {
+  max-width: calc(4ch + 2.5rem);
+}
+
 .inputHint {
   font-size: 0.75rem;
   color: var(--color-text-secondary);

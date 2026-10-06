@@ -169,6 +169,27 @@ class LancamentoServiceTest {
     }
 
     @Test
+    void registrar_DeveAceitarDescricaoAusente() {
+        when(usuarioRepository.findByEmail("admin@sigecom.com")).thenReturn(Optional.of(admin));
+        when(categoriaFinanceiraRepository.findById(10L)).thenReturn(Optional.of(categoriaReceita));
+        when(lancamentoFinanceiroRepository.save(any(LancamentoFinanceiro.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        LancamentoRequest request = new LancamentoRequest(
+                new BigDecimal("150.00"),
+                LocalDate.now(),
+                categoriaReceita.getId(),
+                null,
+                TipoLancamento.RECEITA,
+                FormaPagamentoLancamento.DINHEIRO
+        );
+
+        lancamentoService.registrar(request);
+
+        verify(lancamentoFinanceiroRepository).save(argThat(
+                l -> l.getDescricao().isEmpty()));
+    }
+
+    @Test
     void registrar_DeveUsarInicioDoDia_QuandoDataForRetroativa() {
         LocalDate ontem = LocalDate.now().minusDays(1);
         when(usuarioRepository.findByEmail("admin@sigecom.com")).thenReturn(Optional.of(admin));

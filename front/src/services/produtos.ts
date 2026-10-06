@@ -82,8 +82,11 @@ export async function listarCategorias(): Promise<CategoriaProduto[]> {
   return response.data;
 }
 
-export async function listarProdutosPorTipo(categoriaId: number): Promise<Produto[]> {
-  const response = await api.get<Produto[]>(`/produtos/por-tipo/${categoriaId}`);
+export async function listarProdutosPorTipo(
+  categoriaId: number,
+  params: { page?: number; size?: number } = {}
+): Promise<PageProduto> {
+  const response = await api.get<PageProduto>(`/produtos/por-tipo/${categoriaId}`, { params });
   return response.data;
 }
 

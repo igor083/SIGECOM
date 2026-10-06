@@ -184,6 +184,20 @@ textarea::placeholder {
   opacity: 1;
 }
 
+/* ── Campos com erro de validação ────────────────────────
+   ISO 9241-17, 7.3: borda vermelha no campo inválido. O aria-invalid vem
+   do useValidacaoFormulario. Seletor de atributo porque CSS Module não
+   aceita seletor sem classe; a especificidade (0,1,1)/(0,2,1) vence o
+   .formInput/.formInput:focus dos módulos das três telas. */
+:is(input, select, textarea)[aria-invalid="true"],
+:is(input, select, textarea)[aria-invalid="true"]:focus {
+  border-color: var(--color-error);
+}
+
+:is(input, select, textarea)[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-error) 20%, transparent);
+}
+
 /* ── Campos de data ──────────────────────────────────────
    O ícone de calendário do input[type=date] é um glifo nativo de cor fixa:
    fica quase preto sobre o card claro e some no escuro, além de destoar do

@@ -10,6 +10,11 @@ import {
 import { mensagemDeErro } from "@/lib/apiError";
 import AppShell from "@/components/AppShell";
 import Paginacao from "@/components/Paginacao";
+import LegendaObrigatorios from "@/components/LegendaObrigatorios";
+import ErroCampo from "@/components/ErroCampo";
+import { useValidacaoFormulario } from "@/hooks/useValidacaoFormulario";
+import { useFocoNoModal } from "@/hooks/useFocoNoModal";
+import { regras, obrigatorio, email, tamanhoMinimo } from "@/lib/validacao";
 import s from "./usuarios.module.css";
 
 const X_ICON = (
@@ -21,6 +26,17 @@ const X_ICON = (
 function formatarData(iso: string) {
   return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
+
+// Novo usuário, na ordem da tela. Regras do CadastroRequest no back
+// (@NotBlank, @Email, @Size(min = 6)). Perfil é rádio e sempre tem valor.
+const CAMPOS_CRIAR = {
+  nome:  { id: "c-nome",  regra: obrigatorio("Informe o nome do usuário.") },
+  email: { id: "c-email", regra: regras(obrigatorio("Informe o e-mail."), email) },
+  senha: { id: "c-senha", regra: regras(
+    obrigatorio("Informe a senha."),
+    tamanhoMinimo(6, "A senha deve ter no mínimo 6 caracteres."),
+  ) },
+};
 
 export default function UsuariosPage() {
   const router = useRouter();
@@ -49,6 +65,12 @@ export default function UsuariosPage() {
   const [formEmail, setFormEmail] = useState("");
   const [formSenha, setFormSenha] = useState("");
   const [formPerfil, setFormPerfil] = useState<PerfilUsuario>("FUNCIONARIO");
+  const [confirmouPermissoes, setConfirmouPermissoes] = useState(false);
+  const validacaoCriar = useValidacaoFormulario(CAMPOS_CRIAR, {
+    nome: formNome, email: formEmail, senha: formSenha,
+  });
+  const { mensagem, propsCampo } = validacaoCriar;
+  const modalCriarRef = useFocoNoModal<HTMLDivElement>(modalAberto === "criar");
 
   // Form editar
   const [editNome, setEditNome] = useState("");
@@ -96,6 +118,8 @@ export default function UsuariosPage() {
 
   function abrirCriar() {
     setFormNome(""); setFormEmail(""); setFormSenha(""); setFormPerfil("FUNCIONARIO");
+    setConfirmouPermissoes(false);
+    validacaoCriar.limpar();
     setModalErro(null); setModalSucesso(null);
     setModalAberto("criar");
   }
@@ -121,7 +145,7 @@ export default function UsuariosPage() {
 
   async function handleCriar(e: FormEvent) {
     e.preventDefault();
-    if (formSenha.length < 6) { setModalErro("A senha deve ter no mínimo 6 caracteres."); return; }
+    if (!validacaoCriar.validarTudo()) return;
     setMutating(true); setModalErro(null);
     try {
       await criarUsuario({ nome: formNome.trim(), email: formEmail.trim(), senha: formSenha, perfil: formPerfil });
@@ -317,40 +341,75 @@ export default function UsuariosPage() {
       {/* ── MODAL CRIAR ── */}
       {modalAberto === "criar" && (
         <div className={s.modalOverlay}>
-          <div className={s.modal}>
+          <div className={s.modal} ref={modalCriarRef} role="dialog" aria-modal="true" aria-labelledby="c-titulo">
             <div className={s.modalHeader}>
-              <h2>Novo Usuário</h2>
-              <button className={s.closeBtn} onClick={fecharModal} disabled={mutating}>{X_ICON}</button>
+              <h2 id="c-titulo">Novo Usuário</h2>
+              <button type="button" className={s.closeBtn} onClick={fecharModal} disabled={mutating} aria-label="Fechar">{X_ICON}</button>
             </div>
-            <form onSubmit={handleCriar}>
+            <form onSubmit={handleCriar} noValidate>
               <div className={s.modalBody}>
                 {modalErro && <div className={`${s.alert} ${s.alertError}`}>{modalErro}</div>}
                 {modalSucesso && <div className={`${s.alert} ${s.alertSuccess}`}>{modalSucesso}</div>}
+                <LegendaObrigatorios />
                 <div className={s.formGrid}>
                   <div className={s.formGroupFull}>
                     <label htmlFor="c-nome">Nome *</label>
-                    <input id="c-nome" className={s.formInput} type="text" placeholder="Nome completo" value={formNome} onChange={(e) => setFormNome(e.target.value)} disabled={mutating} required />
+                    <input id="c-nome" className={s.formInput} type="text" placeholder="Nome completo" value={formNome} onChange={(e) => setFormNome(e.target.value)} disabled={mutating} required aria-required="true" {...propsCampo("nome")} />
+                    <ErroCampo idCampo="c-nome" mensagem={mensagem("nome")} />
                   </div>
                   <div className={s.formGroupFull}>
                     <label htmlFor="c-email">E-mail *</label>
-                    <input id="c-email" className={s.formInput} type="email" placeholder="email@exemplo.com" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} disabled={mutating} required />
+                    <input id="c-email" className={s.formInput} type="email" placeholder="email@exemplo.com" value={formEmail} onChange={(e) => setFormEmail(e.target.value)} disabled={mutating} required aria-required="true" {...propsCampo("email")} />
+                    <ErroCampo idCampo="c-email" mensagem={mensagem("email")} />
                   </div>
                   <div className={s.formGroup}>
                     <label htmlFor="c-senha">Senha *</label>
-                    <input id="c-senha" className={s.formInput} type="password" placeholder="Mínimo 6 caracteres" value={formSenha} onChange={(e) => setFormSenha(e.target.value)} disabled={mutating} required minLength={6} />
+                    <input id="c-senha" className={s.formInput} type="password" placeholder="Mínimo 6 caracteres" value={formSenha} onChange={(e) => setFormSenha(e.target.value)} disabled={mutating} required aria-required="true" minLength={6} {...propsCampo("senha")} />
+                    <ErroCampo idCampo="c-senha" mensagem={mensagem("senha")} />
                   </div>
                   <div className={s.formGroup}>
-                    <label htmlFor="c-perfil">Perfil *</label>
-                    <select id="c-perfil" className={s.formSelect} value={formPerfil} onChange={(e) => setFormPerfil(e.target.value as PerfilUsuario)} disabled={mutating} required>
-                      <option value="FUNCIONARIO">Funcionário</option>
-                      <option value="ADMIN">Administrador</option>
-                    </select>
+                    <label id="c-perfil-rotulo">Perfil *</label>
+                    <div role="radiogroup" aria-labelledby="c-perfil-rotulo" aria-required="true" style={{ display: "flex", gap: "16px", marginTop: "8px", alignItems: "center" }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "0.875rem" }}>
+                        <input
+                          type="radio"
+                          name="formPerfil"
+                          value="FUNCIONARIO"
+                          checked={formPerfil === "FUNCIONARIO"}
+                          onChange={() => setFormPerfil("FUNCIONARIO")}
+                          disabled={mutating}
+                          required
+                        />
+                        Funcionário
+                      </label>
+                      <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "0.875rem" }}>
+                        <input
+                          type="radio"
+                          name="formPerfil"
+                          value="ADMIN"
+                          checked={formPerfil === "ADMIN"}
+                          onChange={() => setFormPerfil("ADMIN")}
+                          disabled={mutating}
+                          required
+                        />
+                        Administrador
+                      </label>
+                    </div>
                   </div>
                 </div>
+                <label className={s.checkboxRow}>
+                  <input
+                    type="checkbox"
+                    checked={confirmouPermissoes}
+                    onChange={(e) => setConfirmouPermissoes(e.target.checked)}
+                    disabled={mutating}
+                  />
+                  Confirmo a veracidade dos dados e a permissão de acesso deste perfil
+                </label>
               </div>
               <div className={s.modalFooter}>
                 <button type="button" className={s.secondaryBtn} onClick={fecharModal} disabled={mutating}>Cancelar</button>
-                <button type="submit" className={s.primaryBtn} disabled={mutating || !formNome.trim() || !formEmail.trim() || !formSenha}>
+                <button type="submit" className={s.primaryBtn} disabled={mutating || !confirmouPermissoes}>
                   {mutating ? "Salvando..." : "Criar Usuário"}
                 </button>
               </div>
@@ -382,10 +441,30 @@ export default function UsuariosPage() {
                   </div>
                   <div className={s.formGroup}>
                     <label htmlFor="e-perfil">Perfil *</label>
-                    <select id="e-perfil" className={s.formSelect} value={editPerfil} onChange={(e) => setEditPerfil(e.target.value as PerfilUsuario)} disabled={mutating}>
-                      <option value="FUNCIONARIO">Funcionário</option>
-                      <option value="ADMIN">Administrador</option>
-                    </select>
+                    <div style={{ display: "flex", gap: "16px", marginTop: "8px", alignItems: "center" }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "0.875rem" }}>
+                        <input
+                          type="radio"
+                          name="editPerfil"
+                          value="FUNCIONARIO"
+                          checked={editPerfil === "FUNCIONARIO"}
+                          onChange={() => setEditPerfil("FUNCIONARIO")}
+                          disabled={mutating}
+                        />
+                        Funcionário
+                      </label>
+                      <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer", fontSize: "0.875rem" }}>
+                        <input
+                          type="radio"
+                          name="editPerfil"
+                          value="ADMIN"
+                          checked={editPerfil === "ADMIN"}
+                          onChange={() => setEditPerfil("ADMIN")}
+                          disabled={mutating}
+                        />
+                        Administrador
+                      </label>
+                    </div>
                   </div>
                   {/* O toggle "Conta ativa" saiu daqui: desligá-lo era uma
                       segunda forma de remover, sem passar pela guarda que
